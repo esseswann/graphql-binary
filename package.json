@@ -1,6 +1,13 @@
 {
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon --experimental-modules --es-module-specifier-resolution=node test.js"
+  },
   "dependencies": {
     "graphql": "14.5.4",
     "lodash": "4.17.15"
+  },
+  "devDependencies": {
+    "nodemon": "1.19.2"
   }
 }
