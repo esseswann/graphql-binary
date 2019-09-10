@@ -74,17 +74,6 @@ export const decode = (byteArray, mapKey) => {
   return recursive(byteArray, 0, [])
 }
 
-export const binaryToStringsReducer = (result, object) =>
-  concat(
-    result,
-    object.name,
-    map(object.args, arg => `${object.name}:${arg.name}:${arg.type.name + 'Value'}`))
-
-export const mapBinaryToStrings = input => reduce(input, binaryToStringsReducer, [])
-
-export const mapStringsToBinary = input =>
-  reduce(mapBinaryToStrings(input), (result, value, index) => ({  ...result, [value]: index }), {})
-
 export const generateDictionaries = fields =>
   reduce(fields, generateDictionariesReducer, { encode: {}, decode: [] })
 

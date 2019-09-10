@@ -1,5 +1,5 @@
 import { buildSchema, parse } from 'graphql'
-import { encode, decode, encodeField, mapBinaryToStrings, mapStringsToBinary, generateDictionaries } from './index'
+import { encode, decode, encodeField, generateDictionaries } from './index'
 
 const schema = buildSchema(`
   type YellosArgs {
@@ -27,25 +27,11 @@ const query = `
 
 const parsedQuery = parse(query)
 const schemaQueryFields = schema.getQueryType().getFields()
-const binaryToStrings = mapBinaryToStrings(schemaQueryFields)
-const stringsToBinary = mapStringsToBinary(schemaQueryFields)
 
 // const encoded = encode(parsedQuery.definitions[0], stringsToBinary)
 // const decoded = decode(encoded, binaryToStrings)
-const newMap = {
-  hello: {
-    byte: 0
-  },
-  yello: {
-    byte: 2,
-    arguments: {
-      arg1: { 
-        byte: 3,
-        type: 'IntValue'
-      }
-    }
-  }
-}
+const newMap = generateDictionaries(schemaQueryFields).encode
 const result = []
-const encodedField = encodeField(parsedQuery.definitions[0].selectionSet.selections[2], newMap, result)
-console.log(generateDictionaries(schemaQueryFields))
+const encodedField = []
+encodeField(parsedQuery.definitions[0].selectionSet.selections[2], newMap, encodedField)
+console.log(encodedField)
