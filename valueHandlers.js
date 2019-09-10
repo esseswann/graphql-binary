@@ -12,7 +12,7 @@ const types = {
       return [value, offset]
     },
     encode: (value, result) => {
-      const encodedValue = value
+      const encodedValue = parseInt(value, 10)
       result.push(encodedValue)
     }
   }
