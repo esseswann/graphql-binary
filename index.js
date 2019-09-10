@@ -74,6 +74,34 @@ export const decode = (byteArray, mapKey) => {
   return recursive(byteArray, 0, [])
 }
 
+export const decodeField = (
+  byteArray,
+  dictionary,
+  index = 0,
+) => {
+  const definition = dictionary[byteArray[index]]
+  if (definition === undefined)
+    throw new Error(`Code ${byteArray[0]} not present in schema`)
+
+  const result = ast[definition.type](definition.key)
+  index += 1
+
+  const arg = dictionary[byteArray[index]]
+  
+  if (arg === undefined)
+    throw new Error(`Code ${byteArray[0]} not present in schema`)
+
+  if (arg.type === 'argument') {
+    if (arg.parent !== definition.key)
+      throw new Error(`Invalid argument ${arg.name} for ${definition.key}`)
+      result.arguments.push(ast[arg.type](arg.key, arg.kind, 1))
+  }
+    // while (arg.parent === definition.key) {
+    //   result.arguments.push(ast[arg.type](arg.key, arg.kind, 1))
+    // }
+  return [result, index]
+} 
+
 export const generateDictionaries = fields =>
   reduce(fields, generateDictionariesReducer, { encode: {}, decode: [] })
 
@@ -92,6 +120,7 @@ const generateDictionariesReducer = (result, field) => {
       result.decode.push({
         key: arg.name,
         type: 'argument',
+        kind: arg.type.name,
         parent: field.name
       })
       set(result, ['encode', field.name, 'arguments', arg.name], {
