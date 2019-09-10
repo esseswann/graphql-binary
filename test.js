@@ -34,4 +34,4 @@ const newMap = generateDictionaries(schemaQueryFields)
 const result = []
 const encodedField = []
 encodeField(parsedQuery.definitions[0].selectionSet.selections[2], newMap.encode, encodedField)
-console.log(decodeField(encodedField, newMap.decode)[0].arguments)
+console.log(decodeField(encodedField, newMap.decode))

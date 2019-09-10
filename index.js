@@ -4,6 +4,7 @@ import concat from 'lodash/concat'
 import map from 'lodash/map'
 import reduce from 'lodash/reduce'
 import set from 'lodash/set'
+import { decodeValue, encodeValue } from './valueHandlers'
 import * as ast from './ast'
 
 const END = 255
@@ -75,26 +76,29 @@ export const decode = (byteArray, mapKey) => {
 }
 
 export const decodeField = (
-  byteArray,
+  bytes,
   dictionary,
   index = 0,
 ) => {
-  const definition = dictionary[byteArray[index]]
+  const definition = dictionary[bytes[index]]
   if (definition === undefined)
-    throw new Error(`Code ${byteArray[0]} not present in schema`)
+    throw new Error(`Code ${bytes[0]} not present in schema`)
 
   const result = ast[definition.type](definition.key)
   index += 1
 
-  const arg = dictionary[byteArray[index]]
+  const arg = dictionary[bytes[index]]
   
   if (arg === undefined)
-    throw new Error(`Code ${byteArray[0]} not present in schema`)
+    throw new Error(`Code ${bytes[0]} not present in schema`)
 
   if (arg.type === 'argument') {
     if (arg.parent !== definition.key)
       throw new Error(`Invalid argument ${arg.name} for ${definition.key}`)
-      result.arguments.push(ast[arg.type](arg.key, arg.kind, 1))
+    index += 1
+    const [value, offset] = decodeValue(bytes, index, arg.kind)
+    result.arguments.push(ast[arg.type](arg.key, arg.kind, value))
+    index = offset
   }
     // while (arg.parent === definition.key) {
     //   result.arguments.push(ast[arg.type](arg.key, arg.kind, 1))
