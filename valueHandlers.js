@@ -1,8 +1,8 @@
 export const decodeValue = (bytes, index, type) =>
   types[type].decode(bytes, index)
 
-export const encodeValue = (bytes, index, type) =>
-  types[type].encode(bytes, index)
+export const encodeValue = (type, value, result) =>
+  types[type].encode(value, result)
 
 const types = {
   Int: {
@@ -11,8 +11,9 @@ const types = {
       const offset = index + 1
       return [value, offset]
     },
-    encode: (value) => {
-      return [encodedValue, offset]
+    encode: (value, result) => {
+      const encodedValue = value
+      result.push(encodedValue)
     }
   }
 }

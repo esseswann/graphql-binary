@@ -40,8 +40,8 @@ export function encodeField(field, parent, result) {
         forEach(field.arguments, argument => {
           const argumentDefinition = definition.arguments[argument.name.value]
           if (argumentDefinition !== undefined) {
-            result.push(argumentDefinition.byte),
-            cast(result, argumentDefinition.type, argument.value.value)
+            result.push(argumentDefinition.byte)
+            encodeValue(argumentDefinition.kind, argument.value.value, result)
           } else throw new Error(`Argument ${argument.name.value} for field ${field.name.value} is not present in the schema`)
         })
       } else throw new Error(`Field ${field.name.value} should not have arguments`)
