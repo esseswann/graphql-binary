@@ -3,6 +3,7 @@ import isEmpty from 'lodash/isEmpty'
 import concat from 'lodash/concat'
 import map from 'lodash/map'
 import reduce from 'lodash/reduce'
+import set from 'lodash/set'
 import * as ast from './ast'
 
 const END = 255
@@ -83,3 +84,31 @@ export const mapBinaryToStrings = input => reduce(input, binaryToStringsReducer,
 
 export const mapStringsToBinary = input =>
   reduce(mapBinaryToStrings(input), (result, value, index) => ({  ...result, [value]: index }), {})
+
+export const generateDictionaries = fields =>
+  reduce(fields, generateDictionariesReducer, { encode: {}, decode: [] })
+
+const generateDictionariesReducer = (result, field) => {
+  result.decode.push({
+    key: field.name,
+    type: 'field'
+  })
+
+  result.encode[field.name] = {
+    byte: result.decode.length - 1
+  }
+
+  if (field.args.length > 0)
+    forEach(field.args, arg => {
+      result.decode.push({
+        key: arg.name,
+        type: 'argument',
+        parent: field.name
+      })
+      set(result, ['encode', field.name, 'args', arg.name], {
+        byte: result.decode.length - 1,
+        kind: arg.type.name
+      })
+    })
+  return result
+}
