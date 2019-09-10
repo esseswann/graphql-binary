@@ -34,30 +34,18 @@ export function encodeField(field, parent, result) {
   } else throw new Error(`Field ${field.name.value} is not present in the schema`)
 }
 
-const cast = (result, type, value) => result.push(parseInt(value, 10))
+export const decode = (
+  bytes,
+  dictionary,
+  accumulator = [],
+  index = 0
+) => {
+  if (bytes[index] === END)
+    return accumulator
+  const [field, offset] = decodeField(bytes, dictionary, index)
+  accumulator.push(field)
 
-export const decode = (byteArray, mapKey) => {
-  const recursive = (bytes, index, accumulator, currentFieldWithArgs) => {
-    const byte = bytes[index]
-    if (byte === END)
-      return accumulator
-    const next = mapKey[byte]
-    if (next !== undefined) {
-      const [nextField, nextArg, nextKind] = next.split(':')
-      if (nextArg) {
-        if (!currentFieldWithArgs) // FIXME probably not neccessary
-          currentFieldWithArgs = accumulator[accumulator.length - 1] // FIXME previous might be elsewhere
-        currentFieldWithArgs.arguments.push(ast.argument(nextArg, nextKind, 1))
-        index += 1 // FIXME increment to skip the value with proper value length
-      } else {
-        currentFieldWithArgs = null
-        accumulator.push(ast.field(next))
-      }
-      return recursive(bytes, index + 1, accumulator, currentFieldWithArgs)
-    } else throw new Error('Not present in scheme')
-
-  }
-  return recursive(byteArray, 0, [])
+  return decode(bytes, dictionary, accumulator, offset)
 }
 
 export const decodeField = (
@@ -72,6 +60,9 @@ export const decodeField = (
   const result = ast[definition.type](definition.key)
   index += 1
 
+  if (bytes[index] === END)
+    return [result, index]
+  
   const arg = dictionary[bytes[index]]
   
   if (arg === undefined)
