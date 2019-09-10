@@ -29,6 +29,26 @@ export const encode = (definition, keyMap, result = []) => {
   return new Uint8Array(result)
 }
 
+export function encodeField(field, parent, result) {
+  const definition = parent[field.name.value]
+  if (definition) {
+    result.push(definition.byte)
+    if (field.arguments.length > 0) {
+      if (!isEmpty(definition.arguments)) {
+        forEach(field.arguments, argument => {
+          const argumentDefinition = definition.arguments[argument.name.value]
+          if (argumentDefinition !== undefined) {
+            result.push(argumentDefinition.byte),
+            cast(result, argumentDefinition.type, argument.value.value)
+          } else throw new Error(`Argument ${argument.name.value} for field ${field.name.value} is not present in the schema`)
+        })
+      } else throw new Error(`Field ${field.name.value} should not have arguments`)
+    }
+  } else throw new Error(`Field ${field.name.value} is not present in the schema`)
+}
+
+const cast = (result, type, value) => result.push(parseInt(value, 10))
+
 export const decode = (byteArray, mapKey) => {
   const recursive = (bytes, index, accumulator, currentFieldWithArgs) => {
     const byte = bytes[index]
