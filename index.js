@@ -9,24 +9,9 @@ import * as ast from './ast'
 
 const END = 255
 
-export const encode = (definition, keyMap, result = []) => {
-  forEach(definition.selectionSet.selections, (field, index) => {
-    const name = keyMap[field.name.value]
-    if (name !== undefined) {
-      result.push(name)
-      if (field.arguments.length > 0)
-        forEach(field.arguments, argument => {
-          const argName = `${field.name.value}:${argument.name.value}:${argument.value.kind}`
-          console.log(argName)
-          if (argName !== undefined) {
-            result.push(argName)
-            result.push(argument.value.value) // FIXME Cast to bytes corresponding to type
-          } else throw new Error(`Argument ${argument.name.value} is not present in the schema`)
-        })
-      // if (children = field.selectionSet && field.slectionSet.selections)
-      //     result.push(field, keyMap, result)
-    } else throw new Error(`Field ${field.name.value} is not present in the schema`)
-  })
+export const encode = (definition, parent, result = []) => {
+  forEach(definition.selectionSet.selections, field =>
+    encodeField(field, parent, result))
   result.push(END)
   return new Uint8Array(result)
 }
