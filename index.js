@@ -105,7 +105,7 @@ const generateDictionariesReducer = (result, field) => {
         type: 'argument',
         parent: field.name
       })
-      set(result, ['encode', field.name, 'args', arg.name], {
+      set(result, ['encode', field.name, 'arguments', arg.name], {
         byte: result.decode.length - 1,
         kind: arg.type.name
       })
