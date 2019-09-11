@@ -1,8 +1,20 @@
-export const decodeValue = (bytes, index, type) =>
-  types[type].decode(bytes, index)
+import slice from 'lodash/slice'
+import concat from 'lodash/concat'
+import msgPack from '@msgpack/msgpack'
 
-export const encodeValue = (type, value, result) =>
-  types[type].encode(value, result)
+export const decodeValue = (bytes, index, type) =>{
+  const length = bytes[index]
+  index += 1
+  const end = index + length
+  const value = msgPack.decode(slice(bytes, index, end))
+  return [value, end + 1]
+}
+
+export const encodeValue = (type, value, result) => {
+  const encodedValue = msgPack.encode(value)
+  result.push(encodedValue.length)
+  encodedValue.forEach(value => result.push(value))
+}
 
 const types = {
   Int: {

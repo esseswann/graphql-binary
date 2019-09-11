@@ -1,7 +1,5 @@
 import forEach from 'lodash/forEach'
 import isEmpty from 'lodash/isEmpty'
-import concat from 'lodash/concat'
-import map from 'lodash/map'
 import reduce from 'lodash/reduce'
 import set from 'lodash/set'
 import { decodeValue, encodeValue } from './valueHandlers'

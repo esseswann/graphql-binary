@@ -29,6 +29,7 @@ const parsedQuery = parse(query)
 const schemaQueryFields = schema.getQueryType().getFields()
 
 const newMap = generateDictionaries(schemaQueryFields)
+// arg = parsedQuery.definitions[0].selectionSet.selections[3].arguments[0]
 const encoded = encode(parsedQuery.definitions[0], newMap.encode)
 const decoded = decode(encoded, newMap.decode)
 console.log(encoded, decoded)
