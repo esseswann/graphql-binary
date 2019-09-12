@@ -16,20 +16,25 @@ export const encode = (definition, parent, result = []) => {
 
 export function encodeField(field, parent, result) {
   const definition = parent[field.name.value]
-  if (definition) {
+
+  if (!definition)
+    throw new Error(`Field ${field.name.value} is not present in the schema`)
+  else
     result.push(definition.byte)
-    if (field.arguments.length > 0) {
-      if (!isEmpty(definition.arguments)) {
-        forEach(field.arguments, argument => {
-          const argumentDefinition = definition.arguments[argument.name.value]
-          if (argumentDefinition !== undefined) {
-            result.push(argumentDefinition.byte)
-            encodeValue(argumentDefinition.kind, argument.value.value, result)
-          } else throw new Error(`Argument ${argument.name.value} for field ${field.name.value} is not present in the schema`)
-        })
-      } else throw new Error(`Field ${field.name.value} should not have arguments`)
-    }
-  } else throw new Error(`Field ${field.name.value} is not present in the schema`)
+  
+  if (field.arguments.length > 0) {
+    if (isEmpty(definition.arguments))
+      throw new Error(`Field ${field.name.value} should not have arguments`)
+
+    forEach(field.arguments, argument => {
+      const argumentDefinition = definition.arguments[argument.name.value]
+      if (argumentDefinition === undefined)
+        throw new Error(`Argument ${argument.name.value} for field ${field.name.value} is not present in the schema`)
+              
+      result.push(argumentDefinition.byte)
+      encodeValue(argumentDefinition.kind, argument.value.value, result)
+    })
+  }
 }
 
 export const decode = (
