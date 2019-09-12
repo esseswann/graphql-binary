@@ -21,7 +21,7 @@ export function encodeField(field, parent, result) {
     throw new Error(`Field ${field.name.value} is not present in the schema`)
   else
     result.push(definition.byte)
-  
+
   if (field.arguments.length > 0) {
     if (isEmpty(definition.arguments))
       throw new Error(`Field ${field.name.value} should not have arguments`)
@@ -30,7 +30,7 @@ export function encodeField(field, parent, result) {
       const argumentDefinition = definition.arguments[argument.name.value]
       if (argumentDefinition === undefined)
         throw new Error(`Argument ${argument.name.value} for field ${field.name.value} is not present in the schema`)
-              
+
       result.push(argumentDefinition.byte)
       encodeValue(argumentDefinition.kind, argument.value.value, result)
     })
