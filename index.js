@@ -11,6 +11,7 @@ export const encode = (definition, parent, result = []) => {
   forEach(definition.selectionSet.selections, field =>
     encodeField(field, parent, result))
   result.push(END)
+  console.log(result)
   return new Uint8Array(result)
 }
 
@@ -62,23 +63,30 @@ export const decodeField = (
 
   const result = ast[definition.type](definition.key)
   index += 1
-
-  if (bytes[index] === END)
-    return [result, index]
   
-  const arg = dictionary[bytes[index]]
-  
-  if (arg === undefined)
-    throw new Error(`Code ${bytes[0]} not present in schema`)
+  let hasArg = true
+  while (hasArg) {
 
-  if (arg.type === 'argument') {
-    if (arg.parent !== definition.key)
-      throw new Error(`Invalid argument ${arg.name} for ${definition.key}`)
-    index += 1
-    const [value, offset] = decodeValue(bytes, index, arg.kind)
-    result.arguments.push(ast[arg.type](arg.key, arg.kind, value))
-    index = offset
+    console.log(bytes[index])
+    if (bytes[index] === END)
+      return [result, index]
+
+    const arg = dictionary[bytes[index]]
+
+    if (arg === undefined)
+      throw new Error(`Code ${bytes[0]} not present in schema`)
+
+    if (arg.type === 'argument') {
+      if (arg.parent !== definition.key)
+        throw new Error(`Invalid argument ${arg.name} for ${definition.key}`)
+      index += 1
+      const [value, offset] = decodeValue(bytes, index, arg.kind)
+      result.arguments.push(ast[arg.type](arg.key, arg.kind, value))
+      index = offset - 1  // FIXME this is bad
+    } else
+      hasArg = false
   }
+
     // while (arg.parent === definition.key) {
     //   result.arguments.push(ast[arg.type](arg.key, arg.kind, 1))
     // }

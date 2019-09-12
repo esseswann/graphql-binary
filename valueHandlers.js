@@ -11,6 +11,8 @@ export const decodeValue = (bytes, index, type) =>{
 }
 
 export const encodeValue = (type, value, result) => {
+  if (type === 'Int')
+    value = parseInt(value, 10)
   const encodedValue = msgPack.encode(value)
   result.push(encodedValue.length)
   encodedValue.forEach(value => result.push(value)) // FIXME find a way not to use extra byte
