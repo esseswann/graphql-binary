@@ -11,7 +11,6 @@ export const encode = (definition, parent, result = []) => {
   forEach(definition.selectionSet.selections, field =>
     encodeField(field, parent, result))
   result.push(END)
-  console.log(result)
   return new Uint8Array(result)
 }
 
@@ -44,7 +43,7 @@ export const decode = (
   accumulator = [],
   index = 0
 ) => {
-  if (bytes[index] === END)
+  if (bytes[index] === END) // FIXME doing this twice is wrong
     return accumulator
   const [field, offset] = decodeField(bytes, dictionary, index)
   accumulator.push(field)
@@ -67,7 +66,6 @@ export const decodeField = (
   let hasArg = true
   while (hasArg) {
 
-    console.log(bytes[index])
     if (bytes[index] === END)
       return [result, index]
 
@@ -86,10 +84,6 @@ export const decodeField = (
     } else
       hasArg = false
   }
-
-    // while (arg.parent === definition.key) {
-    //   result.arguments.push(ast[arg.type](arg.key, arg.kind, 1))
-    // }
   return [result, index]
 } 
 
