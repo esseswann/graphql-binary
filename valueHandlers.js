@@ -13,7 +13,7 @@ export const decodeValue = (bytes, index, type) =>{
 export const encodeValue = (type, value, result) => {
   const encodedValue = msgPack.encode(value)
   result.push(encodedValue.length)
-  encodedValue.forEach(value => result.push(value))
+  encodedValue.forEach(value => result.push(value)) // FIXME find a way not to use extra byte
 }
 
 const types = {
