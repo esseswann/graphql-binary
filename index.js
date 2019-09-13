@@ -1,9 +1,5 @@
 import forEach from 'lodash/forEach'
 import isEmpty from 'lodash/isEmpty'
-import filter from 'lodash/filter'
-import reduce from 'lodash/reduce'
-import set from 'lodash/set'
-import { getNamedType } from 'graphql'
 import { decodeValue, encodeValue } from './valueHandlers'
 import * as ast from './ast'
 
@@ -87,76 +83,4 @@ export const decodeField = (
       hasArg = false
   }
   return [result, index]
-} 
-
-export const generateDictionaries = ({ data }) =>
-  reduce(data.__schema.types, typeReducer, { encode: {}, decode: {} })
-
-const typeReducer = (
-  result,
-{
-  name,
-  kind,
-  enumValues,
-  fields,
-}) => {
-  if (!name.match('__') && (kind === 'OBJECT' || kind === 'LIST')) {
-    if (!result.decode[name])
-      result.decode[name] = []
-
-    if (!result.encode[name])
-      result.encode[name] = {}
-
-    const encodeWithList = ({ type, ...field }) =>
-      result.decode[name].push({
-        name: field.name,
-        ...type.kind === 'LIST'
-          ? { kind: type.ofType.kind, type: type.ofType.name  }
-          : { kind: type.kind, type: type.name }
-      })
- 
-    forEach(fields, field => {
-      encodeWithList(field)
-      result.encode[name][field.name] = {
-        byte: result.decode[name].length - 1
-      }
-      if (field.args.length > 0)
-        forEach(field.args, arg => {
-          result.encode[name][field.name].arguments = {}
-          result.encode[name][field.name].arguments[arg.name] = {
-            byte: result.decode[name].length - 1
-          }
-          encodeWithList(arg)
-        })
-    })
-  }
-
-  return result
-}
-  // reduce(fields, generateDictionariesReducer, { encode: {}, decode: [] })
-
-const generateDictionariesReducer = (result, field) => {
-  result.decode.push({
-    key: field.name,
-    type: 'field'
-  })
-
-  result.encode[field.name] = {
-    byte: result.decode.length - 1
-  }
-
-  if (field.args.length > 0)
-    forEach(field.args, arg => {
-      result.decode.push({
-        key: arg.name,
-        type: 'argument',
-        kind: arg.type.name,
-        parent: field.name
-      })
-      set(result, ['encode', field.name, 'arguments', arg.name], {
-        byte: result.decode.length - 1,
-        kind: arg.type.name
-      })
-    })
-  return result
 }
