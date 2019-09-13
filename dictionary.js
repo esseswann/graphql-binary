@@ -30,7 +30,8 @@ const typeReducer = (
       }
       if (field.args.length > 0)
         forEach(arg => {
-          result.encode[name][field.name].arguments = {}
+          if (!result.encode[name][field.name].arguments)
+            result.encode[name][field.name].arguments = {}
           result.encode[name][field.name].arguments[arg.name] = {
             byte: result.decode[name].length - 1
           }

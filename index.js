@@ -5,15 +5,20 @@ import * as ast from './ast'
 
 const END = 255
 
-export const encode = (definition, parent, result = []) => {
-  forEach(definition.selectionSet.selections, field =>
-    encodeField(field, parent, result))
-  result.push(END)
+export const encode = (definition, dictionary) => {
+  const result = []
+  encodeFields(definition, dictionary, 'Query', result)
   return new Uint8Array(result)
 }
 
-export function encodeField(field, parent, result) {
-  const definition = parent[field.name.value]
+function encodeFields(definition, dictionary, parentKey, result) {
+  forEach(definition.selectionSet.selections, field =>
+    encodeField(field, dictionary, parentKey, result))
+  result.push(END)
+}
+
+function encodeField(field, dictionary, parentKey, result) {
+  const definition = dictionary[parentKey][field.name.value]
 
   if (!definition)
     throw new Error(`Field ${field.name.value} is not present in the schema`)
