@@ -38,6 +38,9 @@ function encodeField(field, dictionary, parentKey, result) {
       encodeValue(argumentDefinition.kind, argument.value.value, result)
     })
   }
+
+  if (field.selectionSet)
+    encodeFields(field, dictionary, definition.type, result)
 }
 
 export const decode = (

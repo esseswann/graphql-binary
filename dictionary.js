@@ -24,19 +24,25 @@ const typeReducer = (
       result.encode[name] = {}
 
     forEach(field => {
-      encodeWithList(field, result.decode[name])
-      result.encode[name][field.name] = {
-        byte: result.decode[name].length - 1
-      }
-      if (field.args.length > 0)
+      const fieldDefinition = generateDefinition(field)
+      result.decode[name].push(fieldDefinition)
+      result.encode[name][field.name] = fieldDefinition
+      result.encode[name][field.name].byte = result.decode[name].length - 1
+      if (field.args.length > 0) {
+        if (!result.encode[name][field.name].arguments)
+          result.encode[name][field.name].arguments = {}
         forEach(arg => {
-          if (!result.encode[name][field.name].arguments)
-            result.encode[name][field.name].arguments = {}
-          result.encode[name][field.name].arguments[arg.name] = {
-            byte: result.decode[name].length - 1
-          }
-          encodeWithList(arg, result.decode[name])
+          const argDefinition = generateDefinition(arg)
+          result.decode[name].push({
+            ...argDefinition,
+            parent: field.name
+          })
+          if (!result.encode[name][field.name].arguments[arg.name])
+            result.encode[name][field.name].arguments[arg.name] = {}
+          result.encode[name][field.name].arguments[arg.name] = argDefinition
+          result.encode[name][field.name].arguments[arg.name].byte = result.decode[name].length - 1
         }, field.args)
+      }
     }, fields)
   }
 
@@ -50,6 +56,13 @@ const encodeWithList = ({ type, ...field }, result) =>
       ? { kind: type.ofType.kind, type: type.ofType.name  }
       : { kind: type.kind, type: type.name }
   })
+
+const generateDefinition = ({ type, ...field }) => ({
+  name: field.name,
+  ...type.kind === 'LIST'
+    ? { kind: type.ofType.kind, type: type.ofType.name  }
+    : { kind: type.kind, type: type.name }
+})
 
 const query = `{
   __schema {
