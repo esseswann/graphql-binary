@@ -26,9 +26,9 @@ const typeReducer = (
     forEach(field => {
       addField(field, result[name], [field.name])
       if (field.args.length > 0)
-        forEach(arg => {
-          addField(arg, result[name], [field.name, 'arguments', arg.name])
-        }, field.args)
+        forEach(arg =>
+          addField(arg, result[name], [field.name, 'arguments', arg.name]),
+          field.args)
     }, fields)
   }
 
