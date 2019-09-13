@@ -1,8 +1,9 @@
-import { buildSchema, parse } from 'graphql'
+import reduce from 'lodash/reduce'
+import { graphql, buildSchema, parse } from 'graphql'
 import { encode, decode, generateDictionaries } from './index'
 
 const schema = buildSchema(`
-  type YellosArgs {
+  input YellosArgs {
     test: String
   }
   type Entity {
@@ -25,11 +26,41 @@ const query = `
   yellos
 }`
 
+const introspectionQuery = `{
+  __schema {
+    types {	
+      name
+      kind
+      enumValues {
+      	name
+      }
+      fields {
+        name
+        args {
+          name
+          type {
+            name
+          }
+        }
+        type {
+          kind
+          name
+          ofType {
+            name
+          }
+        }
+      }
+    }
+  }
+}`
+
 const parsedQuery = parse(query)
 const schemaQueryFields = schema.getQueryType().getFields()
 
-const newMap = generateDictionaries(schemaQueryFields)
+graphql(schema, introspectionQuery)
+  .then(generateDictionaries)
+  .then(console.log)
+
 // arg = parsedQuery.definitions[0].selectionSet.selections[3].arguments[0]
-const encoded = encode(parsedQuery.definitions[0], newMap.encode)
-const decoded = decode(encoded, newMap.decode)
-console.log(encoded, decoded)
+// const encoded = encode(parsedQuery.definitions[0], newMap.encode)
+// const decoded = decode(encoded, newfieldMap.decode)
