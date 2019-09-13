@@ -18,7 +18,7 @@ function encodeFields(definition, dictionary, parentKey, result) {
 }
 
 function encodeField(field, dictionary, parentKey, result) {
-  const definition = dictionary[parentKey][field.name.value]
+  const definition = dictionary[parentKey].encode[field.name.value]
 
   if (!definition)
     throw new Error(`Field ${field.name.value} is not present in the schema`)

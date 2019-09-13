@@ -2,6 +2,7 @@ import { graphql } from 'graphql'
 import reduce from 'lodash/fp/reduce'
 import forEach from 'lodash/fp/forEach'
 import get from 'lodash/fp/get'
+import set from 'lodash/set'
 
 export default schema =>
   graphql(schema, query)
@@ -17,45 +18,38 @@ const typeReducer = (
   fields,
 }) => {
   if (!name.match('__') && (kind === 'OBJECT' || kind === 'LIST')) {
-    if (!result.decode[name])
-      result.decode[name] = []
-
-    if (!result.encode[name])
-      result.encode[name] = {}
+    result[name] = {
+      encode: {},
+      decode: []
+    }
 
     forEach(field => {
-      const fieldDefinition = generateDefinition(field)
-      result.decode[name].push(fieldDefinition)
-      result.encode[name][field.name] = fieldDefinition
-      result.encode[name][field.name].byte = result.decode[name].length - 1
-      if (field.args.length > 0) {
-        if (!result.encode[name][field.name].arguments)
-          result.encode[name][field.name].arguments = {}
+      addField(field, result[name], [field.name])
+      if (field.args.length > 0)
         forEach(arg => {
-          const argDefinition = generateDefinition(arg)
-          result.decode[name].push({
-            ...argDefinition,
-            parent: field.name
-          })
-          if (!result.encode[name][field.name].arguments[arg.name])
-            result.encode[name][field.name].arguments[arg.name] = {}
-          result.encode[name][field.name].arguments[arg.name] = argDefinition
-          result.encode[name][field.name].arguments[arg.name].byte = result.decode[name].length - 1
+          addField(arg, result[name], [field.name, 'arguments', arg.name])
         }, field.args)
-      }
     }, fields)
   }
 
   return result
 }
 
-const encodeWithList = ({ type, ...field }, result) =>
-  result.push({
+const addField = (
+  { type, ...field },
+  destination,
+  path = []
+) => {
+  const definition = {
     name: field.name,
+    byte: destination.decode.length,
     ...type.kind === 'LIST'
       ? { kind: type.ofType.kind, type: type.ofType.name  }
       : { kind: type.kind, type: type.name }
-  })
+  }
+  destination.decode.push(definition)
+  set(destination, ['encode', ...path], definition)
+}
 
 const generateDefinition = ({ type, ...field }) => ({
   name: field.name,
