@@ -1,4 +1,5 @@
 import reduce from 'lodash/reduce'
+import map from 'lodash/fp/map'
 import { graphql, buildSchema, parse } from 'graphql'
 import { encode, decode, generateDictionaries } from './index'
 
@@ -39,13 +40,19 @@ const introspectionQuery = `{
         args {
           name
           type {
+            kind
             name
+            ofType {
+              kind
+              name
+            }
           }
         }
         type {
           kind
           name
           ofType {
+            kind
             name
           }
         }
@@ -59,7 +66,7 @@ const schemaQueryFields = schema.getQueryType().getFields()
 
 graphql(schema, introspectionQuery)
   .then(generateDictionaries)
-  .then(console.log)
+  .then(map(map(console.log)))
 
 // arg = parsedQuery.definitions[0].selectionSet.selections[3].arguments[0]
 // const encoded = encode(parsedQuery.definitions[0], newMap.encode)
