@@ -46,27 +46,29 @@ function encodeField(field, dictionary, parentKey, result) {
 export const decode = (
   bytes,
   dictionary,
+  parentKey = 'Query',
   accumulator = [],
   index = 0
 ) => {
   if (bytes[index] === END) // FIXME doing this twice is wrong
-    return accumulator
-  const [field, offset] = decodeField(bytes, dictionary, index)
+    return [accumulator, index + 1]
+  const [field, offset] = decodeField(bytes, dictionary, parentKey, index)
   accumulator.push(field)
 
-  return decode(bytes, dictionary, accumulator, offset)
+  return decode(bytes, dictionary, parentKey, accumulator, offset)
 }
 
 export const decodeField = (
   bytes,
   dictionary,
+  parentKey,
   index = 0,
 ) => {
-  const definition = dictionary[bytes[index]]
+  const definition = dictionary[parentKey].decode[bytes[index]]
   if (definition === undefined)
     throw new Error(`Code ${bytes[0]} not present in schema`)
 
-  const result = ast[definition.type](definition.key)
+  const result = ast[definition.kind](definition.name)
   index += 1
   
   let hasArg = true
@@ -81,11 +83,11 @@ export const decodeField = (
       throw new Error(`Code ${bytes[0]} not present in schema`)
 
     if (arg.type === 'argument') {
-      if (arg.parent !== definition.key)
-        throw new Error(`Invalid argument ${arg.name} for ${definition.key}`)
+      // if (arg.parent !== definition.name)
+      //   throw new Error(`Invalid argument ${arg.name} for ${definition.name}`)
       index += 1
       const [value, offset] = decodeValue(bytes, index, arg.kind)
-      result.arguments.push(ast[arg.type](arg.key, arg.kind, value))
+      result.arguments.push(ast[arg.ARGUMENT](arg.key, arg.kind, value))
       index = offset - 1  // FIXME this is bad
     } else
       hasArg = false

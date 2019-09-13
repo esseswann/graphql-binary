@@ -31,5 +31,10 @@ const parsedQuery = parse(query)
 const schemaQueryFields = schema.getQueryType().getFields()
 
 generate(schema)
-  .then(parsed => encode(parsedQuery, parsed))
+  .then(parsed => {
+    const encoded = encode(parsedQuery, parsed)
+    const decoded = decode(encoded, parsed)
+
+    return { encoded, decoded }
+  })
   .then(console.log)

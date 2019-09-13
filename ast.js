@@ -1,19 +1,19 @@
-export const field = name => ({
+export const SCALAR = name => ({
   kind: 'Field',
   arguments: [],
   directives: [],
   name: { kind: 'Name', value: name }
 })
 
-export const object = name => ({
-  ...field(name),
+export const OBJECT = name => ({
+  ...SCALAR(name),
   selectionSet: {
     kind: 'SelectionSet',
     selections: []
   }
 })
 
-export const argument = (name, kind, value) => ({
+export const ARGUMENT = (name, kind, value) => ({
   kind: 'Argument',
   name: { kind: 'Name', value: name },
   value: { kind, value }
