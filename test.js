@@ -31,8 +31,5 @@ const parsedQuery = parse(query)
 const schemaQueryFields = schema.getQueryType().getFields()
 
 generate(schema)
+  .then(parsed => encode(parsedQuery, parsed))
   .then(console.log)
-
-// arg = parsedQuery.definitions[0].selectionSet.selections[3].arguments[0]
-// const encoded = encode(parsedQuery.definitions[0], newMap.encode)
-// const decoded = decode(encoded, newfieldMap.decode)

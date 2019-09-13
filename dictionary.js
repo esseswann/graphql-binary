@@ -7,7 +7,7 @@ import set from 'lodash/set'
 export default schema =>
   graphql(schema, query)
     .then(get('data.__schema.types'))
-    .then(reduce(typeReducer, { encode: {}, decode: {} }))
+    .then(reduce(typeReducer, {}))
 
 const typeReducer = (
   result,

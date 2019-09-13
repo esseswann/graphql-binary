@@ -7,7 +7,7 @@ const END = 255
 
 export const encode = (definition, dictionary) => {
   const result = []
-  encodeFields(definition, dictionary, 'Query', result)
+  encodeFields(definition.definitions[0], dictionary, 'Query', result)
   return new Uint8Array(result)
 }
 
