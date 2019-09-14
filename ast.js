@@ -13,13 +13,13 @@ export const OBJECT = name => ({
   selectionSet: {
     kind: 'SelectionSet',
     selections: [],
-    loc: undefined,
+    loc: undefined
   }
 })
 
 export const ARGUMENT = (name, kind, value) => ({
   kind: 'Argument',
-  name: { kind: 'Name', value: name },
-  value: { kind, value },
+  name: { kind: 'Name', value: name, loc: undefined },
+  value: { kind: kind + 'Value', value, loc: undefined, ...kind === 'String' && { block: false } },
   loc: undefined
 })

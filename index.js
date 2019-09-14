@@ -75,7 +75,7 @@ export const decodeField = (
     const next = dictionary[parentKey].decode[bytes[index]]
     if (next && next.isArg) {
       const [value, offset] = decodeValue(bytes, index + 1, next.kind)
-      result.arguments.push(ast.ARGUMENT(next.name, next.kind, value))
+      result.arguments.push(ast.ARGUMENT(next.name, next.type, value))
       index = offset - 1
       return subFields()
     }

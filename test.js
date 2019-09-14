@@ -46,8 +46,8 @@ generate(schema)
   })
   .then(result => {
     const valuesToCompare = [
-      result[2].arguments[0],
-      parsedQuery.definitions[0].selectionSet.selections[2].arguments[0]
+      result[2].arguments,
+      parsedQuery.definitions[0].selectionSet.selections[2].arguments
     ]
     console.log(valuesToCompare)
     const test = isEqual(valuesToCompare[0], valuesToCompare[1])
