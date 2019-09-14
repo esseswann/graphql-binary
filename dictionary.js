@@ -43,6 +43,7 @@ const addField = (
   const definition = {
     name: field.name,
     byte: destination.decode.length,
+    isArg: path.length > 1,
     ...type.kind === 'LIST'
       ? { kind: type.ofType.kind, type: type.ofType.name  }
       : { kind: type.kind, type: type.name }

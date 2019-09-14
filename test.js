@@ -6,9 +6,13 @@ const schema = buildSchema(`
   input YellosArgs {
     test: String
   }
+  type Name {
+    text: String
+    url: String
+  }
   type Entity {
     id: Int
-    name: String
+    name: Name
   }
   type Query {
     hello: Entity,
@@ -21,7 +25,7 @@ const schema = buildSchema(`
 const query = `
 {
   hello { id }
-  hellos { id }
+  hellos { id name { text url } }
   yello(arg1: 1 arg2: "test")
   yellos
 }`
@@ -35,6 +39,6 @@ generate(schema)
     const encoded = encode(parsedQuery, parsed)
     const decoded = decode(encoded, parsed)
 
-    return { encoded, decoded }
+    return decoded
   })
   .then(console.log)

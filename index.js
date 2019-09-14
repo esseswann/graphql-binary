@@ -69,28 +69,22 @@ export const decodeField = (
     throw new Error(`Code ${bytes[0]} not present in schema`)
 
   const result = ast[definition.kind](definition.name)
+
   index += 1
-  
-  let hasArg = true
-  while (hasArg) {
-
-    if (bytes[index] === END)
-      return [result, index]
-
-    const arg = dictionary[bytes[index]]
-
-    if (arg === undefined)
-      throw new Error(`Code ${bytes[0]} not present in schema`)
-
-    if (arg.type === 'argument') {
-      // if (arg.parent !== definition.name)
-      //   throw new Error(`Invalid argument ${arg.name} for ${definition.name}`)
-      index += 1
-      const [value, offset] = decodeValue(bytes, index, arg.kind)
-      result.arguments.push(ast[arg.ARGUMENT](arg.key, arg.kind, value))
-      index = offset - 1  // FIXME this is bad
-    } else
-      hasArg = false
+  function subFields() { // FIXME this is a bad implementation
+    const next = dictionary[parentKey].decode[bytes[index]]
+    if (next && next.isArg) {
+      const [value, offset] = decodeValue(bytes, index + 1, next.kind)
+      result.arguments.push(ast.ARGUMENT(next.name, next.kind, value))
+      index = offset - 1
+      return subFields()
+    }
+    else if (definition.kind === 'OBJECT') {
+      const [fields, offset] = decode(bytes, dictionary, definition.type, result.selectionSet.selections, index)
+      index = offset
+    }
+    return
   }
+  subFields()
   return [result, index]
 }
