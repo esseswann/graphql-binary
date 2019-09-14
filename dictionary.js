@@ -44,7 +44,7 @@ const addField = (
     name: field.name,
     byte: destination.decode.length,
     isArg: path.length > 1,
-    ...type.kind === 'LIST'
+    ...type.kind === 'LIST' || type.kind === 'NON_NULL'
       ? { kind: type.ofType.kind, type: type.ofType.name  }
       : { kind: type.kind, type: type.name }
   }
