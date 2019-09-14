@@ -1,6 +1,7 @@
 import { buildSchema, parse } from 'graphql'
 import generate from './dictionary'
 import { encode, decode } from './index'
+import isEqual from 'lodash/isEqual'
 
 const schema = buildSchema(`
   input YellosArgs {
@@ -31,7 +32,9 @@ const query = `
 }`
 
 
-const parsedQuery = parse(query)
+const parsedQuery = parse(query, {
+  noLocation: true
+})
 const schemaQueryFields = schema.getQueryType().getFields()
 
 generate(schema)
@@ -39,6 +42,17 @@ generate(schema)
     const encoded = encode(parsedQuery, parsed)
     const decoded = decode(encoded, parsed)
 
-    return decoded
+    return decoded[0]
   })
-  .then(console.log)
+  .then(result => {
+    const valuesToCompare = [
+      result[2].arguments[0],
+      parsedQuery.definitions[0].selectionSet.selections[2].arguments[0]
+    ]
+    console.log(valuesToCompare)
+    const test = isEqual(valuesToCompare[0], valuesToCompare[1])
+    console.log(
+      test
+        ? 'Generated AST is valid'
+        : 'Generated AST is invalid')
+  })
