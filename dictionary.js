@@ -52,13 +52,6 @@ const addField = (
   set(destination, ['encode', ...path], definition)
 }
 
-const generateDefinition = ({ type, ...field }) => ({
-  name: field.name,
-  ...type.kind === 'LIST'
-    ? { kind: type.ofType.kind, type: type.ofType.name  }
-    : { kind: type.kind, type: type.name }
-})
-
 const query = `{
   __schema {
     types {	
