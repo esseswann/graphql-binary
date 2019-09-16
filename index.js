@@ -36,7 +36,7 @@ function encodeField(field, dictionary, parentKey, result) {
         throw new Error(`Argument ${argument.name.value} for field ${field.name.value} is not present in the schema`)
 
       result.push(argumentDefinition.byte)
-      encodeValue(argumentDefinition.kind, argument.value.value, result)
+      encodeValue(argumentDefinition.type, argument.value.value, result)
     })
   }
 

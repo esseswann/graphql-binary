@@ -27,7 +27,7 @@ const query = `
 {
   hello { id }
   hellos { id name { text url } }
-  yello(arg1: 1 arg2: "test")
+  yello(arg1: 1.2 arg2: "test")
   yellos
 }`
 
@@ -43,10 +43,11 @@ generate(schema)
     const decoded = decode(encoded, parsed)
 
     const valuesToCompare = [
-      decoded[0],
-      parsedQuery.definitions[0].selectionSet.selections
+      decoded[0][2].arguments[0],
+      parsedQuery.definitions[0].selectionSet.selections[2].arguments[0]
     ]
     const test = isEqual(valuesToCompare[0], valuesToCompare[1])
+    console.log(valuesToCompare)
     console.log(
       test
         ? `Generated AST is valid. Query was ${(print(parsedQuery).length / encoded.length).toPrecision(3)} smaller in size`

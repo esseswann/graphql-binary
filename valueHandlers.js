@@ -7,7 +7,7 @@ export const decodeValue = (bytes, index, type) =>{
   index += 1
   const end = index + length
   const value = msgPack.decode(slice(bytes, index, end))
-  return [value, end + 1, typeof value]
+  return [value, end + 1, typeof value] // FIXME should use availableTypes
 }
 
 export const encodeValue = (type, value, result) => {
@@ -16,6 +16,18 @@ export const encodeValue = (type, value, result) => {
   const encodedValue = msgPack.encode(value)
   result.push(encodedValue.length)
   encodedValue.forEach(value => result.push(value)) // FIXME find a way not to use extra byte
+}
+
+const availableTypes = {
+  INT: 'IntValue',
+  FLOAT: 'FloatValue',
+  STRING: 'StringValue',
+  BOOLEAN: 'BooleanValue',
+  NULL: 'NullValue',
+  ENUM: 'EnumValue',
+  LIST: 'ListValue', // Unsupported yet
+  OBJECT: 'ObjectValue', // Use structured object
+  OBJECT_FIELD: 'ObjectField', // Not neccesary?
 }
 
 const types = {
