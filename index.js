@@ -1,5 +1,6 @@
 import forEach from 'lodash/forEach'
 import isEmpty from 'lodash/isEmpty'
+import capitalize from 'lodash/capitalize'
 import { decodeValue, encodeValue } from './valueHandlers'
 import * as ast from './ast'
 
@@ -74,8 +75,8 @@ export const decodeField = (
   function subFields() { // FIXME this is a bad implementation
     const next = dictionary[parentKey].decode[bytes[index]]
     if (next && next.isArg) {
-      const [value, offset] = decodeValue(bytes, index + 1, next.kind)
-      result.arguments.push(ast.ARGUMENT(next.name, next.type, value))
+      const [value, offset, kind] = decodeValue(bytes, index + 1)
+      result.arguments.push(ast.ARGUMENT(next.name, capitalize(kind), value))
       index = offset - 1
       return subFields()
     }

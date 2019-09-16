@@ -7,7 +7,7 @@ export const decodeValue = (bytes, index, type) =>{
   index += 1
   const end = index + length
   const value = msgPack.decode(slice(bytes, index, end))
-  return [value, end + 1]
+  return [value, end + 1, typeof value]
 }
 
 export const encodeValue = (type, value, result) => {
