@@ -11,7 +11,7 @@ Clone repository and execute
 yarn && yarn dev
 ```
 
-# Suppport
+# Support
 All contributions are warmly welcome. This is a list of things we need right now
 - Test coverage compatible to graphql-js
 - TypeScript implementation (might need consideration)
