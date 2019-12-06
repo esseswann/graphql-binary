@@ -1,8 +1,11 @@
 import slice from 'lodash/slice'
 import concat from 'lodash/concat'
+import isString from 'lodash/isString'
+import isNull from 'lodash/isNull'
+import isBoolean from 'lodash/isBoolean'
 import msgPack from '@msgpack/msgpack'
 
-export const decodeValue = (bytes, index, type) =>{
+export const decodeValue = (bytes, index, type) => {
   const length = bytes[index]
   index += 1
   const end = index + length
@@ -11,23 +14,64 @@ export const decodeValue = (bytes, index, type) =>{
 }
 
 export const encodeValue = (type, value, result) => {
-  if (type === 'Int')
-    value = parseInt(value, 10)
+  const availableType = availableTypes[type]
+
+  if (!availableType)
+    throw new Error(`Unknown type: ${type}`)
+
+  if (!availableType.check(value))
+    throw new Error(`Expected type ${type}, found ${value}`)
+
+  
+  value = availableType.parse(value)
   const encodedValue = msgPack.encode(value)
   result.push(encodedValue.length)
   encodedValue.forEach(value => result.push(value)) // FIXME find a way not to use extra byte
 }
 
 const availableTypes = {
-  INT: 'IntValue',
-  FLOAT: 'FloatValue',
-  STRING: 'StringValue',
-  BOOLEAN: 'BooleanValue',
-  NULL: 'NullValue',
-  ENUM: 'EnumValue',
-  LIST: 'ListValue', // Unsupported yet
-  OBJECT: 'ObjectValue', // Use structured object
-  OBJECT_FIELD: 'ObjectField', // Not neccesary?
+  Int: {
+    astName: 'IntValue',
+    check: value => !isNaN(value) && !value.match(/\D/),
+    parse: value => parseInt(value, 10)
+  },
+  Float: {
+    astName: 'FloatValue',
+    check: n => Number(n) === n && n % 1 !== 0,
+    parse: value => parseFloat(value, 10)
+  },
+  String: {
+    astName: 'StringValue',
+    check: isString,
+    parse: value => value
+  },
+  BOOLEAN: {
+    astName: 'BooleanValue',
+    check: isBoolean,
+    parse: value => !!value
+  },
+  NULL: {
+    astName: 'NullValue',
+    check: isNull,
+    parse: () => null
+  },
+  ENUM: {
+    astName: 'EnumValue',
+    // TODO enum checks
+    check: () => true
+  },
+  LIST: {
+    astName: 'ListValue',
+    check: () => true
+  }, // Unsupported yet
+  OBJECT: {
+    astName: 'ObjectValue',
+    check: () => true
+  }, // Use structured object
+  OBJECT_FIELD: {
+    astName: 'ObjectField',
+    check: () => true
+  }, // Not neccesary?
 }
 
 const types = {

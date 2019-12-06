@@ -38,9 +38,9 @@ const parsedQuery = parse(query, {
 const schemaQueryFields = schema.getQueryType().getFields()
 
 generate(schema)
-  .then(parsed => {
-    const encoded = encode(parsedQuery, parsed)
-    const decoded = decode(encoded, parsed)
+  .then(parsedScheme => {
+    const encoded = encode(parsedQuery, parsedScheme)
+    const decoded = decode(encoded, parsedScheme)
 
     const valuesToCompare = [
       decoded[0][2].arguments[0],
