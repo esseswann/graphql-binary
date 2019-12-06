@@ -12,8 +12,10 @@ export const decodeValue = (bytes, index, type) => {
   const length = bytes[index]
   index += 1
   const end = index + length
-  const value = msgPack.decode(slice(bytes, index, end))
-  return [value, end + 1, availableTypes[type].astName] // FIXME should use availableTypes
+  let value = msgPack.decode(slice(bytes, index, end))
+  if (type !== 'Boolean')  // FIXME For some reason vanilla parser stringifies integers and doesn't Booleans
+    value = JSON.stringify(value)
+  return [value, end + 1, availableTypes[type].astName]
 }
 
 export const encodeValue = (type, value, result) => {
