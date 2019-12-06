@@ -28,7 +28,7 @@ const query = `
 {
   hello { id }
   hellos { id name { text url } }
-  yello(arg1: 1 arg2: "test")
+  yello(arg1: 1 arg2: "testasd")
   yellos
 }`
 
@@ -44,8 +44,8 @@ generate(schema)
     const decoded = decode(encoded, parsedScheme)
 
     const valuesToCompare = [
-      decoded[0][2].arguments[0],
-      parsedQuery.definitions[0].selectionSet.selections[2].arguments[0]
+      decoded[0][2].arguments,
+      parsedQuery.definitions[0].selectionSet.selections[2].arguments
     ]
     const test = isEqual(valuesToCompare[0], valuesToCompare[1])
     console.log(valuesToCompare)

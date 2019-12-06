@@ -13,7 +13,7 @@ export const decodeValue = (bytes, index, type) => {
   index += 1
   const end = index + length
   let value = msgPack.decode(slice(bytes, index, end))
-  if (type !== 'Boolean')  // FIXME For some reason vanilla parser stringifies integers and doesn't Booleans
+  if (type !== 'Boolean' && type !== 'String')  // FIXME For some reason vanilla parser stringifies integers and doesn't Booleans
     value = JSON.stringify(value)
   return [value, end + 1, availableTypes[type].astName]
 }
