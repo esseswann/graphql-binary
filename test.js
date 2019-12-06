@@ -1,5 +1,6 @@
 import { buildSchema, parse, print } from 'graphql'
 import generate from './dictionary'
+import compress from 'graphql-query-compress' // Send it to test suite
 import { encode, decode } from './index'
 import isEqual from 'lodash/isEqual'
 
@@ -50,6 +51,6 @@ generate(schema)
     console.log(valuesToCompare)
     console.log(
       test
-        ? `Generated AST is valid. Query was ${(print(parsedQuery).length / encoded.length).toPrecision(3)} smaller in size`
+        ? `Generated AST is valid. Query was ${(compress(print(parsedQuery)).length / encoded.length).toPrecision(3)} smaller in size`
         : 'Generated AST is invalid')
   })

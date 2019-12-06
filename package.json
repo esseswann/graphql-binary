@@ -9,6 +9,7 @@
     "lodash": "4.17.15"
   },
   "devDependencies": {
+    "graphql-query-compress": "1.2.2",
     "nodemon": "2.0.1"
   },
   "name": "graphql-binary",
