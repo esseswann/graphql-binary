@@ -44,11 +44,10 @@ generate(schema)
     const decoded = decode(encoded, parsedScheme)
 
     const valuesToCompare = [
-      decoded[0][2].arguments,
-      parsedQuery.definitions[0].selectionSet.selections[2].arguments
+      decoded[0],
+      parsedQuery.definitions[0].selectionSet.selections
     ]
     const test = isEqual(valuesToCompare[0], valuesToCompare[1])
-    console.log(valuesToCompare)
     console.log(
       test
         ? `Generated AST is valid. Query was ${(compress(print(parsedQuery)).length / encoded.length).toPrecision(3)} smaller in size`
