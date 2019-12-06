@@ -20,6 +20,6 @@ export const OBJECT = name => ({
 export const ARGUMENT = (name, kind, value) => ({
   kind: 'Argument',
   name: { kind: 'Name', value: name, loc: undefined },
-  value: { kind: kind + 'Value', value, loc: undefined, ...kind === 'String' && { block: false } },
+  value: { kind, value, loc: undefined, ...kind === 'String' && { block: false } },
   loc: undefined
 })

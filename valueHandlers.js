@@ -6,16 +6,19 @@ import isBoolean from 'lodash/isBoolean'
 import msgPack from '@msgpack/msgpack'
 
 export const decodeValue = (bytes, index, type) => {
+  if (!availableTypes[type])
+    throw new Error(`Unknown type: ${type}`) // TODO can be slightly optimised
+
   const length = bytes[index]
   index += 1
   const end = index + length
   const value = msgPack.decode(slice(bytes, index, end))
-  return [value, end + 1, typeof value] // FIXME should use availableTypes
+  return [value, end + 1, availableTypes[type].astName] // FIXME should use availableTypes
 }
 
 export const encodeValue = (type, value, result) => {
   const availableType = availableTypes[type]
-
+  
   if (!availableType)
     throw new Error(`Unknown type: ${type}`)
 
@@ -32,7 +35,7 @@ export const encodeValue = (type, value, result) => {
 const availableTypes = {
   Int: {
     astName: 'IntValue',
-    check: value => !isNaN(value) && !value.match(/\D/),
+    check: value => !isNaN(value) && isString(value) && !value.match(/\D/),
     parse: value => parseInt(value, 10)
   },
   Float: {
@@ -45,12 +48,12 @@ const availableTypes = {
     check: isString,
     parse: value => value
   },
-  BOOLEAN: {
+  Boolean: {
     astName: 'BooleanValue',
     check: isBoolean,
     parse: value => !!value
   },
-  NULL: {
+  Null: {
     astName: 'NullValue',
     check: isNull,
     parse: () => null

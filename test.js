@@ -27,7 +27,7 @@ const query = `
 {
   hello { id }
   hellos { id name { text url } }
-  yello(arg1: 1.2 arg2: "test")
+  yello(arg1: 1 arg2: "test")
   yellos
 }`
 
