@@ -1,6 +1,5 @@
 import forEach from 'lodash/forEach'
 import isEmpty from 'lodash/isEmpty'
-import capitalize from 'lodash/capitalize'
 import { decodeValue, encodeValue } from './valueHandlers'
 import * as ast from './ast'
 
