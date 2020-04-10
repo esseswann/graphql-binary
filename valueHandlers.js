@@ -1,9 +1,12 @@
+import {
+  encode as msgPackEncode,
+  decode as msgPackDecode
+} from '@msgpack/msgpack'
 import slice from 'lodash/slice'
 import concat from 'lodash/concat'
 import isString from 'lodash/isString'
 import isNull from 'lodash/isNull'
 import isBoolean from 'lodash/isBoolean'
-import msgPack from '@msgpack/msgpack'
 
 export const decodeValue = (bytes, index, type) => {
   if (!availableTypes[type])
@@ -12,7 +15,7 @@ export const decodeValue = (bytes, index, type) => {
   const length = bytes[index]
   index += 1
   const end = index + length
-  let value = msgPack.decode(slice(bytes, index, end))
+  let value = msgPackDecode(slice(bytes, index, end))
   if (type !== 'Boolean' && type !== 'String')  // FIXME For some reason vanilla parser stringifies integers and doesn't Booleans
     value = JSON.stringify(value)
   return [value, end + 1, availableTypes[type].astName]
@@ -29,7 +32,7 @@ export const encodeValue = (type, value, result) => {
 
   
   value = availableType.parse(value)
-  const encodedValue = msgPack.encode(value)
+  const encodedValue = msgPackEncode(value)
   result.push(encodedValue.length)
   encodedValue.forEach(value => result.push(value)) // FIXME find a way not to use extra byte
 }
