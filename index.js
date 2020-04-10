@@ -55,6 +55,10 @@ export const decode = (
   const [field, offset] = decodeField(bytes, dictionary, parentKey, index)
   accumulator.push(field)
 
+  if (field.selectionSet && bytes[index + 1] === END)
+    // FIXME should use graphql-js error
+    throw new Error (`Field ${field.name.value} of type ${field.name.kind} must have a selection of subfields`)
+
   return decode(bytes, dictionary, parentKey, accumulator, offset)
 }
 
@@ -66,7 +70,7 @@ export const decodeField = (
 ) => {
   const definition = dictionary[parentKey].decode[bytes[index]]
   if (definition === undefined)
-    throw new Error(`Code ${bytes[0]} not present in schema`)
+    throw new Error(`Code ${bytes[index]} not present in schema`)
 
   const result = ast[definition.kind](definition.name)
 
