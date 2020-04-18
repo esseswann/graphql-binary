@@ -8,7 +8,7 @@
   "license": "MIT",
   "private": false,
   "scripts": {
-    "dev": "jest --watch"
+    "dev": "jest --watch --runInBand"
   },
   "dependencies": {
     "@msgpack/msgpack": "1.12.1",
