@@ -8,7 +8,7 @@
   "license":"MIT",
   "private":false,
   "scripts":{
-    "dev":"nodemon -e js,graphql -r esm test.js"
+    "dev":"jest --watch"
   },
   "dependencies":{
     "@msgpack/msgpack":"1.12.1",
@@ -20,10 +20,8 @@
     "babel-jest":"25.3.0",
     "babel-plugin-import-graphql":"2.7.0",
     "babel-plugin-module-resolver":"4.0.0",
-    "esm":"3.2.25",
     "graphql-query-compress":"1.2.3",
-    "jest":"25.3.0",
-    "nodemon":"2.0.3"
+    "jest":"25.3.0"
   },
   "babel":{
     "plugins":[
