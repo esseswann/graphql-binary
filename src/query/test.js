@@ -1,10 +1,10 @@
 import encode from './encode'
 import decode from './decode'
-import query from 'fixtures/basicQuery.graphql'
 import compress from 'graphql-query-compress'
 import { print } from 'graphql/language/printer'
 import { buildSchema } from 'graphql'
 import generateDictionary from 'dictionary'
+import query from 'fixtures/basicQuery.graphql'
 import schema from 'fixtures/schema.graphql'
 
 const generatedDictonary = generateDictionary(buildSchema(schema))
@@ -15,7 +15,7 @@ test('encodes without errors', () =>
       expect(encode(query, dictonary))
         .toBeInstanceOf(Uint8Array)))
 
-test('decoded matches encoded', () =>
+test('decoded query matches encoded', () =>
   generatedDictonary
     .then(dictionary =>
       expect(decode(encode(query, dictionary), dictionary)[0])

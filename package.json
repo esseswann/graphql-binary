@@ -1,46 +1,47 @@
 {
-  "name":"graphql-binary",
-  "version":"0.1.0",
-  "description":"GraphQL binary protocol for smaller network traffic and parsing performance",
-  "main":"index.js",
-  "repository":"https://github.com/esseswann/graphql-binary",
-  "author":"jsus <esseswann@gmail.com>",
-  "license":"MIT",
-  "private":false,
-  "scripts":{
-    "dev":"jest --watch"
+  "name": "graphql-binary",
+  "version": "0.1.0",
+  "description": "GraphQL binary protocol for smaller network traffic and parsing performance",
+  "main": "index.js",
+  "repository": "https://github.com/esseswann/graphql-binary",
+  "author": "jsus <esseswann@gmail.com>",
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "dev": "jest --watch"
   },
-  "dependencies":{
-    "@msgpack/msgpack":"1.12.1",
-    "graphql":"15.0.0",
-    "lodash":"4.17.15"
+  "dependencies": {
+    "@msgpack/msgpack": "1.12.1",
+    "graphql": "15.0.0",
+    "lodash": "4.17.15"
   },
-  "devDependencies":{
-    "@babel/preset-env":"7.9.5",
-    "babel-jest":"25.3.0",
-    "babel-plugin-import-graphql":"2.7.0",
-    "babel-plugin-module-resolver":"4.0.0",
-    "graphql-query-compress":"1.2.3",
-    "jest":"25.3.0"
+  "devDependencies": {
+    "@babel/preset-env": "7.9.5",
+    "babel-jest": "25.3.0",
+    "babel-plugin-import-graphql": "2.7.0",
+    "babel-plugin-module-resolver": "4.0.0",
+    "graphql-query-compress": "1.2.3",
+    "graphql-tools": "^5.0.0",
+    "jest": "25.3.0"
   },
-  "babel":{
-    "plugins":[
+  "babel": {
+    "plugins": [
       "import-graphql",
       [
         "module-resolver",
         {
-          "root":[
+          "root": [
             "./src"
           ]
         }
       ]
     ],
-    "presets":[
+    "presets": [
       [
         "@babel/preset-env",
         {
-          "targets":{
-            "node":"current"
+          "targets": {
+            "node": "current"
           }
         }
       ]
