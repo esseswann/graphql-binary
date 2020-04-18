@@ -1,0 +1,21 @@
+query BasicQuery {
+  int
+  float
+  boolean
+  string
+  withArgs (
+    int: 1
+    # float: 1.5
+    boolean: true
+    string: "string"
+  )
+  map {
+    id
+    map {
+      id
+      map {
+        id
+      }
+    }
+  }
+}

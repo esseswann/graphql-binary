@@ -3,9 +3,10 @@ import reduce from 'lodash/fp/reduce'
 import forEach from 'lodash/fp/forEach'
 import get from 'lodash/fp/get'
 import set from 'lodash/set'
+import introspectionQuery from './introspectionQuery.graphql'
 
 export default schema =>
-  graphql(schema, query)
+  graphql(schema, introspectionQuery)
     .then(get('data.__schema.types'))
     .then(reduce(typeReducer, {}))
 
@@ -51,37 +52,3 @@ const addField = (
   destination.decode.push(definition)
   set(destination, ['encode', ...path], definition)
 }
-
-const query = `{
-  __schema {
-    types {	
-      name
-      kind
-      enumValues {
-      	name
-      }
-      fields {
-        name
-        args {
-          name
-          type {
-            kind
-            name
-            ofType {
-              kind
-              name
-            }
-          }
-        }
-        type {
-          kind
-          name
-          ofType {
-            kind
-            name
-          }
-        }
-      }
-    }
-  }
-}`

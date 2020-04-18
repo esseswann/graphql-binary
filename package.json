@@ -1,23 +1,51 @@
 {
-  "scripts": {
-    "dev": "nodemon -e js,graphql -r esm test.js"
+  "name":"graphql-binary",
+  "version":"0.1.0",
+  "description":"GraphQL binary protocol for smaller network traffic and parsing performance",
+  "main":"index.js",
+  "repository":"https://github.com/esseswann/graphql-binary",
+  "author":"jsus <esseswann@gmail.com>",
+  "license":"MIT",
+  "private":false,
+  "scripts":{
+    "dev":"nodemon -e js,graphql -r esm test.js"
   },
-  "dependencies": {
-    "@msgpack/msgpack": "1.12.1",
-    "graphql": "15.0.0",
-    "lodash": "4.17.15"
+  "dependencies":{
+    "@msgpack/msgpack":"1.12.1",
+    "graphql":"15.0.0",
+    "lodash":"4.17.15"
   },
-  "devDependencies": {
-    "esm": "3.2.25",
-    "graphql-query-compress": "1.2.3",
-    "nodemon": "2.0.3"
+  "devDependencies":{
+    "@babel/preset-env":"7.9.5",
+    "babel-jest":"25.3.0",
+    "babel-plugin-import-graphql":"2.7.0",
+    "babel-plugin-module-resolver":"4.0.0",
+    "esm":"3.2.25",
+    "graphql-query-compress":"1.2.3",
+    "jest":"25.3.0",
+    "nodemon":"2.0.3"
   },
-  "name": "graphql-binary",
-  "version": "0.1.0",
-  "description": "GraphQL binary protocol for smaller network traffic and parsing performance",
-  "main": "index.js",
-  "repository": "https://github.com/esseswann/graphql-binary",
-  "author": "jsus <esseswann@gmail.com>",
-  "license": "MIT",
-  "private": false
+  "babel":{
+    "plugins":[
+      "import-graphql",
+      [
+        "module-resolver",
+        {
+          "root":[
+            "./src"
+          ]
+        }
+      ]
+    ],
+    "presets":[
+      [
+        "@babel/preset-env",
+        {
+          "targets":{
+            "node":"current"
+          }
+        }
+      ]
+    ]
+  }
 }

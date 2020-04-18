@@ -29,7 +29,6 @@ export const encodeValue = (type, value, result) => {
 
   if (!availableType.check(value))
     throw new Error(`Expected type ${type}, found ${value}`)
-
   
   value = availableType.parse(value)
   const encodedValue = msgPackEncode(value)
@@ -82,16 +81,16 @@ const availableTypes = {
   }, // Not neccesary?
 }
 
-const types = {
-  Int: {
-    decode: (bytes, index) => {
-      const value = bytes[index]
-      const offset = index + 1
-      return [value, offset]
-    },
-    encode: (value, result) => {
-      const encodedValue = parseInt(value, 10)
-      result.push(encodedValue)
-    }
-  }
-}
+// const types = {
+//   Int: {
+//     decode: (bytes, index) => {
+//       const value = bytes[index]
+//       const offset = index + 1
+//       return [value, offset]
+//     },
+//     encode: (value, result) => {
+//       const encodedValue = parseInt(value, 10)
+//       result.push(encodedValue)
+//     }
+//   }
+// }

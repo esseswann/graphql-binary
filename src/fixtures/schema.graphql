@@ -1,0 +1,18 @@
+type Query {
+  int: Int
+  float: Float
+  boolean: Boolean
+  string: String
+  map: Map
+  withArgs ( 
+    int: Int
+    float: Float
+    boolean: Boolean
+    string: String
+  ): String
+}
+
+type Map {
+  id: ID
+  map: Map
+}
