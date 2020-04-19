@@ -3,7 +3,7 @@
 import isString from 'lodash/isString'
 import isNull from 'lodash/isNull'
 import isBoolean from 'lodash/isBoolean'
-// import { utf8EncodeJs, utf8Count } from '@msgpack/msgpack/src/utils/utf8'
+import { TextEncoder } from 'util'
 
 export default {
   Int: {
@@ -16,17 +16,24 @@ export default {
       (data & 0x0000ff00) >> 8,
       (data & 0x000000ff)
     ]),
-    decode: (offset, data) =>
-      [new Uint32Array(data.slice(offset, offset + 4))[0], 4]
+    decode: (offset, data) => {
+      const view = new DataView(data.buffer)
+      return [view.getInt32(offset), offset + 4]
+    }
   },
   Float: {
     astName: 'FloatValue',
     check: n => Number(n) === n && n % 1 !== 0,
     parse: value => parseFloat(value, 10),
-    // FIXME encode
+    encode: data => {
+      const array = new Float64Array(1) // FIXME we need to make precision variable
+      array[0] = data
+      return new Uint8Array(array.buffer)
+    },
     decode: (offset, data) => {
       const view = new DataView(data.buffer)
-      return [view.getFloat32(offset), 4]
+      // Why getFloat64 is littleEndian while new Float64Array is not?
+      return [view.getFloat64(offset, true), offset + 8]
     }
   },
   String: {
@@ -34,17 +41,22 @@ export default {
     check: isString,
     parse: value => value,
     encode: data => {
-      return new Uint8Array(data.length) // FIXME
+      const textEncoder = new TextEncoder()
+      const result = textEncoder.encode(data)
+      return new Uint8Array([result.length, ...result])
     },
     decode: (offset, data) => {
-      return ['test', 4]  // FIXME
+      // FIXME this should allow variable string length, now it's 255
+      const result = String.fromCharCode.apply(null, data.slice(offset + 1, offset + 1 + data[offset]))
+      return [result, offset + result.length + 1]  // Why do I need to add this 1?
     }
   },
   Boolean: {
     astName: 'BooleanValue',
     check: isBoolean,
     parse: value => !!value,
-    decode: (offset, data) => [data[offset] > 0, 1]
+    encode: data => new Uint8Array([data ? 0 : 1]),
+    decode: (offset, data) => [data[offset] === 0, offset + 1]
   },
   Null: {
     astName: 'NullValue',
