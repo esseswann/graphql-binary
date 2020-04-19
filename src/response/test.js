@@ -5,15 +5,18 @@ import get from 'lodash/fp/get'
 
 import encodeResponse from './encode'
 import decodeResponse from './decode'
+import generateDictionary from 'dictionary'
 import query from 'fixtures/basicQuery.graphql'
 import schema from 'fixtures/schema.graphql'
 
 const executableSchema = makeExecutableSchema({ typeDefs: schema })
 addMocksToSchema({ schema: executableSchema })
 
-test('decoded response matches encoded ', () =>
-  graphql(executableSchema, print(query))
-    .then(get('data'))
-    .then(response =>
-      expect(decodeResponse(query, encodeResponse(query, response)))
-        .toEqual(response)))
+test('decoded response matches encoded', () =>
+  Promise.all([
+    graphql(executableSchema, print(query)),
+    generateDictionary(buildSchema(schema))
+  ])
+    .then(([{ data }, dictionary]) =>
+      expect(decodeResponse(query, dictionary, encodeResponse(query, dictionary, data)))
+        .toEqual(data)))
