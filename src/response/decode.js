@@ -13,6 +13,8 @@ const decodeResponse = (
   forEach(
     ({ name }) => {
       const metadata = find({ name: name.value, isArg: false }, dictionary.Query.decode)
+      if (metadata.kind !== 'Scalar')
+        return // FIXME
       if (!metadata)
         throw new Error(`Field ${name.value} was not found in the dictionary`)
       if (!metadata.typeHandler)
@@ -21,10 +23,11 @@ const decodeResponse = (
         throw new Error(`No decoder for ${name.value}: ${metadata.type}`)
 
       const [value, nextOffset] = metadata.typeHandler.decode(offset, response)
-      result[name] = value
+      result[name.value] = value
       offset = nextOffset
     },
     query.definitions[0].selectionSet.selections)
+  console.log(result)
   return decode(response)
 }
 
