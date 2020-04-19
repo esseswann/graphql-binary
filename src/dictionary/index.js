@@ -4,6 +4,7 @@ import forEach from 'lodash/fp/forEach'
 import get from 'lodash/fp/get'
 import set from 'lodash/set'
 import introspectionQuery from './introspectionQuery.graphql'
+import types from 'types'
 
 export default schema =>
   graphql(schema, introspectionQuery)
@@ -49,6 +50,7 @@ const addField = (
       ? { kind: type.ofType.kind, type: type.ofType.name  }
       : { kind: type.kind, type: type.name }
   }
+  definition.typeHandler = types[definition.type]
   destination.decode.push(definition)
   set(destination, ['encode', ...path], definition)
 }
