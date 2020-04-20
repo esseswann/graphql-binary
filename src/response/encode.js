@@ -1,4 +1,3 @@
-import { encode } from '@msgpack/msgpack'
 import forEach from 'lodash/fp/forEach'
 import find from 'lodash/fp/find'
 

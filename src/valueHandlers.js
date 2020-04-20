@@ -1,5 +1,5 @@
 import {
-  encode as msgPackEncode,
+  encode as msgPackEncode, // FIXME should remove in favor of custom types.js
   decode as msgPackDecode
 } from '@msgpack/msgpack'
 import slice from 'lodash/slice'
