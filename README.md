@@ -15,5 +15,7 @@ yarn && yarn dev
 All contributions are warmly welcome. This is a list of things we need right now
 - Test coverage compatible to graphql-js
 - TypeScript implementation (might need consideration)
-- Pack\Unpack query result
+- Mutations
+- Variables
 - Documentation
+- Ports for other languages
