@@ -20,3 +20,12 @@ test('decoded response matches encoded', () =>
     .then(([{ data }, dictionary]) =>
       expect(decodeResponse(query, dictionary, encodeResponse(query, dictionary, data)))
         .toEqual(data)))
+
+test('encoded response is at least 30% smaller', () =>
+  Promise.all([
+    graphql(executableSchema, print(query)),
+    generateDictionary(buildSchema(schema))
+  ])
+    .then(([{ data }, dictionary]) =>
+      expect(encodeResponse(query, dictionary, data).length / JSON.stringify(data).length)
+        .toBeLessThan(0.66)))
