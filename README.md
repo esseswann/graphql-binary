@@ -3,7 +3,7 @@ GraphQL Binary protocol packs and unpacks GraphQL query into a schema tied ByteA
 Msgpack is currently in use for argument values packing\unpacking
 
 # Stage
-This project is currently in proof on concept stage. Only raw queries with inline arguments are currently supported. See test.js for further information
+This project is currently in proof on concept stage. Mutations, Query Arguments, Variables, custom types are not supported
 
 # Usage ⚗️
 Clone repository and execute
