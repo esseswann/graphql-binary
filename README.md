@@ -12,8 +12,7 @@ yarn && yarn dev
 ```
 
 # Support
-All contributions are warmly welcome. This is a list of things we need right now
+All contributions are warmly welcome. Please follow issues section or consider these:
 - Test coverage compatible to graphql-js
-- TypeScript implementation (might need consideration)
-- Pack\Unpack query result
 - Documentation
+- Ports for other languages
