@@ -8,32 +8,29 @@ const encodeResponse = (
   response
 ) => {
   let result = new Uint8Array()
+  query.definitions[0].name.value = 'Query' // FIXME
   const callback = nextData =>
     result = concatTypedArrays(result, nextData)
-  forEach(
-    ({ name }) => encodeResponseField(name.value, dictionary.Query.decode, response, callback),
-    query.definitions[0].selectionSet.selections)
+  encodeMap(query.definitions[0], dictionary, response, callback)
   return result
 }
 
-// const encodeFields = (fields, dictionary, data, callback) =>
-//   forEach(
-//     ({ name }) => encodeResponseField(name.value, dictionary.decode, data, callback),
-//     fields)
-
-const encodeResponseField = (name, dictionary, data, callback) => {
-  if (data[name] === undefined)
-    throw new Error(`Field ${name} was not found in response`)
-  const metadata = find({ name, isArg: false }, dictionary)
-  if (!metadata)
-    throw new Error(`Field ${name} was not found in the dictionary`)
-  if (metadata.kind !== 'SCALAR')
-    return // FIXME
-  if (!metadata.typeHandler)
-    throw new Error(`No handler for ${name}: ${metadata.type}`)
-  if (!metadata.typeHandler.encode)
-    throw new Error(`No encoder for ${name}: ${metadata.type}`)
-  callback(metadata.typeHandler.encode(data[name]))
+// FIXME this whole block is a bad way, we need to put handlers into query definitons
+const encodeMap = (definition, dictionary, data, callback) => {
+  const metadata = dictionary[definition.name.value].decode
+  forEach(
+    field => {
+      const name = field.name.value
+      const { typeHandler, kind, type } = find({ name, isArg: false }, metadata)
+      if (kind === 'SCALAR')
+        callback(typeHandler.encode(data[name]))
+      else {
+        // FIXME fix this utter bullshit
+        const subfield = { ...field, name: { ...field.name, value: type }}
+        encodeMap(subfield, dictionary, data[name], callback)
+      }
+    },
+    definition.selectionSet.selections)
 }
 
 const concatTypedArrays = (left, right) => {

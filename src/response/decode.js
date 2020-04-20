@@ -9,25 +9,34 @@ const decodeResponse = (
   response
 ) => {
   const result = {}
-  let offset = 0
-  forEach(
-    ({ name: { value: name  }}) => {
-      const metadata = find({ name, isArg: false }, dictionary.Query.decode)
-      if (!metadata)
-        throw new Error(`Field ${name} was not found in the dictionary`)
-      if (metadata.kind !== 'SCALAR')
-        return // FIXME
-      if (!metadata.typeHandler)
-        throw new Error(`No handler for ${name}: ${metadata.type}`)
-      if (!metadata.typeHandler.decode)
-        throw new Error(`No decoder for ${name}: ${metadata.type}`)
-    
-      const [value, nextOffset] = metadata.typeHandler.decode(offset, response)
-      result[name] = value
-      offset = nextOffset
-    },
-    query.definitions[0].selectionSet.selections)
+  offset = 0
+  const callback = (key, value) =>
+    result[key] = value
+
+  decodeMap(query.definitions[0], 'Query', dictionary, response, callback)
   return result
+}
+
+let offset = 0 // FIXME this is super temporary
+
+const decodeMap = (definition, type, dictionary, data, callback) => {
+  const metadata = dictionary[type].decode
+  forEach(
+    field => {
+      const name = field.name.value
+      const fieldMetadata = find({ name, isArg: false }, metadata)
+      if (fieldMetadata.kind === 'SCALAR') {
+        const [value, nextOffset] = fieldMetadata.typeHandler.decode(offset, data)
+        offset = nextOffset
+        callback(name, value)
+      }
+      else {
+        let localResult = {}
+        decodeMap(field, fieldMetadata.type, dictionary, data, (key, value) => localResult[key] = value)
+        callback(name, localResult)
+      }
+    },
+    definition.selectionSet.selections)
 }
 
 export default decodeResponse

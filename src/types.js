@@ -5,6 +5,22 @@ import isNull from 'lodash/isNull'
 import isBoolean from 'lodash/isBoolean'
 import { TextEncoder } from 'util'
 
+const stringType = {
+  astName: 'StringValue',
+  check: isString,
+  parse: value => value,
+  encode: data => {
+    const textEncoder = new TextEncoder()
+    const result = textEncoder.encode(data)
+    return new Uint8Array([result.length, ...result])
+  },
+  decode: (offset, data) => {
+    // FIXME this should allow variable string length, now it's 255
+    const result = String.fromCharCode.apply(null, data.slice(offset + 1, offset + 1 + data[offset]))
+    return [result, offset + result.length + 1]  // Why do I need to add this 1?
+  }
+}
+
 export default {
   Int: {
     astName: 'IntValue',
@@ -36,21 +52,8 @@ export default {
       return [view.getFloat64(offset, true), offset + 8]
     }
   },
-  String: {
-    astName: 'StringValue',
-    check: isString,
-    parse: value => value,
-    encode: data => {
-      const textEncoder = new TextEncoder()
-      const result = textEncoder.encode(data)
-      return new Uint8Array([result.length, ...result])
-    },
-    decode: (offset, data) => {
-      // FIXME this should allow variable string length, now it's 255
-      const result = String.fromCharCode.apply(null, data.slice(offset + 1, offset + 1 + data[offset]))
-      return [result, offset + result.length + 1]  // Why do I need to add this 1?
-    }
-  },
+  String: stringType,
+  ID: stringType,
   Boolean: {
     astName: 'BooleanValue',
     check: isBoolean,
