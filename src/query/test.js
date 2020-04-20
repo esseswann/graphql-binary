@@ -1,8 +1,9 @@
-import encode from './encode'
-import decode from './decode'
 import compress from 'graphql-query-compress'
 import { print } from 'graphql/language/printer'
 import { buildSchema } from 'graphql'
+
+import encode from './encode'
+import decode from './decode'
 import generateDictionary from 'dictionary'
 import query from 'fixtures/basicQuery.graphql'
 import schema from 'fixtures/schema.graphql'
