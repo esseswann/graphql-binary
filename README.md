@@ -56,6 +56,8 @@ int: {
   }
 }
 ```
+Obviously it can be optimised yet
+
 # Usage ⚗️
 Clone repository and execute
 ```shell
