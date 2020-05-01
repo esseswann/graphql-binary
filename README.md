@@ -37,7 +37,7 @@ Uint8Array(30) [
   4, 0, 1, 0, 1, 0, 255, 255, 255, 255
 ]
 ```
-by using a recursive dictionary generated from GraphQL schema where each Field is assigned a 8-bit integer index starting from top level Type definitions and boiling down to each individual type. Besides the indeces the dictionary generates value helper definitions which allow encoding\decoding arguments and response fields.
+by using a recursive dictionary generated from GraphQL schema where each Field is assigned a 8-bit integer index starting from top level Type definitions and boiling down to each individual type. Besides the indices the dictionary generates value helper definitions which allow encoding\decoding arguments and response fields.
 
 Here is an example of the dictionary entry
 ```js
