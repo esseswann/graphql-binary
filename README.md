@@ -5,6 +5,57 @@ Msgpack is currently in use for argument values packing\unpacking
 # Stage
 This project is currently in proof on concept stage. Mutations, Query Arguments, Variables, custom types are not supported
 
+# Concept 
+```graphql
+query BasicQuery {
+  int
+  float
+  boolean
+  string
+  withArgs (
+    int: 1
+    boolean: true
+    string: "string"
+  )
+  map {
+    id
+    map {
+      id
+      map {
+        id
+      }
+    }
+  }
+}
+```
+
+is converted to this
+```javascript
+Uint8Array(30) [
+  0, 1, 2, 3, 5, 6, 1, 1, 8, 1,
+  195, 9, 7, 166, 115, 116, 114, 105, 110, 103,
+  4, 0, 1, 0, 1, 0, 255, 255, 255, 255
+]
+```
+by using a recursive dictionary generated from GraphQL schema where each Field is assigned a 8-bit integer index starting from top level Type definitions and boiling down to each individual type. Besides the indeces the dictionary generates value helper definitions which allow encoding\decoding arguments and response fields.
+
+Here is an example of the dictionary entry
+```js
+int: {
+  name: 'int',
+  byte: 0,
+  isArg: false,
+  kind: 'SCALAR',
+  type: 'Int',
+  typeHandler: {
+    astName: 'IntValue',
+    check: [Function: check],
+    parse: [Function: parse],
+    encode: [Function: encode],
+    decode: [Function: decode]
+  }
+}
+```
 # Usage ⚗️
 Clone repository and execute
 ```shell
