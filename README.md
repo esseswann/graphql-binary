@@ -1,6 +1,5 @@
 # GraphQL Binary
-GraphQL Binary protocol packs and unpacks GraphQL query into a schema tied ByteArrays which allows up to 5x traffic reduction and significant parsing (unpack stage) performance boost.
-Msgpack is currently in use for argument values packing\unpacking
+GraphQL Binary protocol packs and unpacks GraphQL query into a schema tied ByteArrays which allows up to 5x traffic reduction and significant parsing (unpack stage) performance boost
 
 # Stage
 This project is currently in proof on concept stage. Mutations, Query Arguments, Variables, custom types are not supported
