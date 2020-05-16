@@ -5,7 +5,7 @@ query BasicQuery {
   string
   withArgs (
     int: 1
-    # float: 1.5
+    float: 1.5
     boolean: true
     string: "string"
   )
