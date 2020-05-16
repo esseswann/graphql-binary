@@ -12,7 +12,7 @@ export default (schema) =>
     .then(get('data.__schema.types'))
     .then(reduce(typeReducer, {}))
 
-const typeReducer = (result, { name, kind, enumValues, fields }) => {
+const typeReducer = (result, { name, kind, fields }) => {
   if (!name.match('__') && (kind === 'OBJECT' || kind === 'LIST')) {
     result[name] = {
       encode: {},

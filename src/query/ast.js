@@ -1,11 +1,11 @@
+import isString from 'lodash/fp/isString'
+import isBoolean from 'lodash/fp/isBoolean'
+
 export const SCALAR = (name) => ({
   kind: 'Field',
-  alias: undefined,
-  name: { kind: 'Name', value: name, loc: undefined },
+  name: { kind: 'Name', value: name },
   arguments: [],
   directives: [],
-  selectionSet: undefined,
-  loc: undefined,
 })
 
 export const OBJECT = (name) => ({
@@ -13,18 +13,15 @@ export const OBJECT = (name) => ({
   selectionSet: {
     kind: 'SelectionSet',
     selections: [],
-    loc: undefined,
-  },
+  }
 })
 
 export const ARGUMENT = (name, kind, value) => ({
   kind: 'Argument',
-  name: { kind: 'Name', value: name, loc: undefined },
+  name: { kind: 'Name', value: name },
   value: {
     kind,
-    value,
-    loc: undefined,
+    value: isString(value) || isBoolean(value) ? value : JSON.stringify(value),
     ...(kind === 'StringValue' && { block: false }),
   },
-  loc: undefined,
 })

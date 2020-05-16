@@ -1,6 +1,6 @@
 import forEach from 'lodash/forEach'
 import isEmpty from 'lodash/isEmpty'
-import { encodeValue } from 'valueHandlers'
+// import { encodeValue } from 'valueHandlers'
 
 const END = 255
 
@@ -36,7 +36,8 @@ function encodeField(field, dictionary, parentKey, result) {
         )
 
       result.push(argumentDefinition.byte)
-      encodeValue(argumentDefinition.type, argument.value.value, result)
+      const value = argumentDefinition.typeHandler.encode(argumentDefinition.typeHandler.parse(argument.value.value))
+      value.forEach(value => result.push(value))
     })
   }
 

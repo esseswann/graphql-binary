@@ -11,7 +11,6 @@
     "dev": "jest --watch --runInBand"
   },
   "dependencies": {
-    "@msgpack/msgpack": "1.12.1",
     "graphql": "15.0.0",
     "lodash": "4.17.15"
   },

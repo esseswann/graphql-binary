@@ -1,4 +1,4 @@
-import { decodeValue } from 'valueHandlers'
+// import { decodeValue } from 'valueHandlers'
 import * as ast from './ast'
 
 const END = 255
@@ -8,7 +8,8 @@ const decode = (
   dictionary,
   parentKey = 'Query',
   accumulator = [],
-  index = 0
+  index = 0,
+  ...rest
 ) => {
   if (bytes[index] === END)
     // FIXME doing this twice is wrong
@@ -37,9 +38,9 @@ export const decodeField = (bytes, dictionary, parentKey, index = 0) => {
     // FIXME this is a bad implementation
     const next = dictionary[parentKey].decode[bytes[index]]
     if (next && next.isArg) {
-      const [value, offset, kind] = decodeValue(bytes, index + 1, next.type)
-      result.arguments.push(ast.ARGUMENT(next.name, kind, value))
-      index = offset - 1
+      const [value, offset] = next.typeHandler.decode(index + 1, bytes)
+      result.arguments.push(ast.ARGUMENT(next.name, next.typeHandler.astName, value))
+      index = offset
       return subFields()
     } else if (definition.kind === 'OBJECT') {
       const [fields, offset] = decode(
