@@ -1,6 +1,5 @@
 import forEach from 'lodash/forEach'
 import isEmpty from 'lodash/isEmpty'
-// import { encodeValue } from 'valueHandlers'
 
 const END = 255
 

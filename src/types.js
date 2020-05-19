@@ -1,5 +1,3 @@
-// import slice from 'lodash/slice'
-// import concat from 'lodash/concat'
 import isString from 'lodash/isString'
 import isNull from 'lodash/isNull'
 import isBoolean from 'lodash/isBoolean'
