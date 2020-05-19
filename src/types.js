@@ -3,6 +3,7 @@
 import isString from 'lodash/isString'
 import isNull from 'lodash/isNull'
 import isBoolean from 'lodash/isBoolean'
+import { encodeLength, decodeLength } from 'length'
 import { TextEncoder } from 'util'
 
 const stringType = {
@@ -12,15 +13,15 @@ const stringType = {
   encode: (data) => {
     const textEncoder = new TextEncoder()
     const result = textEncoder.encode(data)
-    return new Uint8Array([result.length, ...result])
+    return new Uint8Array([...encodeLength(result.length), ...result])
   },
   decode: (offset, data) => {
-    // FIXME this should allow variable string length, now it's 255
+    const [length, dataOffset] = decodeLength(data, offset)
     const result = String.fromCharCode.apply(
       null,
-      data.slice(offset + 1, offset + 1 + data[offset])
+      data.slice(dataOffset, dataOffset + length)
     )
-    return [result, offset + result.length + 1] // Why do I need to add this 1?
+    return [result, dataOffset + length]
   },
 }
 

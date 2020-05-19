@@ -8,7 +8,7 @@ export const decodeLength = (data, offset = 0) => {
 
     length += (byte & 0x7f) << (index * 7)
 
-    if (byte >> 7 === 0){
+    if (byte >> 7 === 0) {
       break;
     }
   }
