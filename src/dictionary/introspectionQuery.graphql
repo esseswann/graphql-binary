@@ -8,6 +8,9 @@
       }
       fields {
         name
+        type {
+          kind
+        }
         args {
           name
           type {
