@@ -4,6 +4,8 @@ type Query {
   boolean: Boolean
   string: String
   map: Map
+  scalarArray: [String]
+  mapArray: [Map]
   withArgs ( 
     int: Int
     float: Float
@@ -15,4 +17,5 @@ type Query {
 type Map {
   id: ID
   map: Map
+  maps: [Map]
 }

@@ -9,6 +9,16 @@ query BasicQuery {
     boolean: true
     string: "string"
   )
+  scalarArray 
+  mapArray {
+    id
+    map {
+      id
+      maps {
+        id
+      }
+    }
+  }
   map {
     id
     map {
