@@ -1,5 +1,8 @@
 import forEach from 'lodash/fp/forEach'
 import find from 'lodash/fp/find'
+import map from 'lodash/fp/map'
+
+import { encodeLength } from 'length'
 
 const encodeResponse = (query, dictionary, response) => {
   let result = new Uint8Array()
@@ -14,8 +17,20 @@ const encodeMap = (definition, dictionary, data, callback) => {
   const metadata = dictionary[definition.name.value].decode
   forEach((field) => {
     const name = field.name.value
-    const { typeHandler, kind, type } = find({ name, isArg: false }, metadata)
-    if (kind === 'SCALAR') callback(typeHandler.encode(data[name]))
+    const { typeHandler, kind, type, isList } = find({ name, isArg: false }, metadata)
+    if (isList) {
+      let result = new Uint8Array(encodeLength(data[name].length))
+      forEach(value => {
+        if (kind === 'SCALAR')
+          result = concatTypedArrays(result, typeHandler.encode(value))
+        else
+          encodeMap({ ...field, name: { ...field.name, value: type } }, dictionary, value,
+            localValue => result = concatTypedArrays(result, localValue))
+        },
+        data[name])
+      callback(result)
+    } else if (kind === 'SCALAR')
+      callback(typeHandler.encode(data[name]))
     else {
       // FIXME fix this utter bullshit
       const subfield = { ...field, name: { ...field.name, value: type } }
