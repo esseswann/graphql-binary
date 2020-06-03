@@ -31,7 +31,7 @@ export const decodeField = (bytes, dictionary, parentKey, index = 0) => {
   if (definition === undefined)
     throw new Error(`Code ${bytes[index]} not present in schema`)
 
-  const result = ast[definition.kind](definition.name)
+  const result = ast[definition.listKind || definition.kind](definition.name)
 
   index += 1
   function subFields() {
