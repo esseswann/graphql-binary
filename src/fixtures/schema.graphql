@@ -11,6 +11,7 @@ type Query {
     float: Float
     boolean: Boolean
     string: String
+    enum: Enum
   ): String
 }
 
@@ -18,4 +19,10 @@ type Map {
   id: ID
   map: Map
   maps: [Map]
+}
+
+enum Enum {
+  FIRST
+  SECOND
+  THIRD
 }
