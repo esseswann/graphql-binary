@@ -11,17 +11,17 @@
     "dev": "jest --watch --runInBand"
   },
   "dependencies": {
-    "graphql": "15.0.0",
-    "lodash": "4.17.15"
+    "graphql": "15.3.0",
+    "lodash": "4.17.19"
   },
   "devDependencies": {
-    "@babel/preset-env": "7.9.5",
-    "babel-jest": "25.3.0",
+    "@babel/preset-env": "7.10.4",
+    "babel-jest": "26.1.0",
     "babel-plugin-import-graphql": "2.7.0",
     "babel-plugin-module-resolver": "4.0.0",
-    "graphql-query-compress": "1.2.3",
-    "graphql-tools": "^5.0.0",
-    "jest": "25.3.0"
+    "graphql-query-compress": "1.2.4",
+    "graphql-tools": "6.0.14",
+    "jest": "26.1.0"
   },
   "babel": {
     "plugins": [
