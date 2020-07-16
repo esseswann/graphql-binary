@@ -1,7 +1,7 @@
 # GraphQL Binary
 GraphQL Binary protocol packs and unpacks GraphQL query into a schema tied ByteArrays which allows up to 5x traffic reduction and significant parsing (unpack stage) performance boost
 
-Moreover the response is also optimised by removing the keys, storing integers in bytes, having c-like strings and arrays and so on similarly to Protobuf in terms of schema and to MessagePack in terms of values encoding
+Moreover the response is also optimised by removing the keys, storing integers in bytes, having c-like strings\arrays and so on similarly to Protobuf in terms of schema and to MessagePack in terms of values encoding
 
 # Stage
 This project is currently in proof on concept stage. Mutations, Query Arguments, Variables, custom types are not supported. We are currently have no intent on supporting Union and Interface types
