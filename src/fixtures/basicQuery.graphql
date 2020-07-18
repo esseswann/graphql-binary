@@ -8,6 +8,7 @@ query BasicQuery {
     float: 1.5
     boolean: true
     string: "string"
+    enum: FIRST
   )
   scalarArray 
   mapArray {

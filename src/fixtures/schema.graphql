@@ -11,7 +11,7 @@ type Query {
     float: Float
     boolean: Boolean
     string: String
-    enum: Enum
+    enum: Enumerable
   ): String
 }
 
@@ -21,7 +21,7 @@ type Map {
   maps: [Map]
 }
 
-enum Enum {
+enum Enumerable {
   FIRST
   SECOND
   THIRD
