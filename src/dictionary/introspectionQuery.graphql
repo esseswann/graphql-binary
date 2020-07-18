@@ -8,14 +8,14 @@
       }
       fields {
         name
-        type {
-          kind
-        }
         args {
           name
           type {
             kind
             name
+            enumValues {
+              name
+            }
             ofType {
               kind
               name
@@ -25,6 +25,9 @@
         type {
           kind
           name
+          enumValues { # FIXME duplication
+            name
+          }
           ofType {
             kind
             name

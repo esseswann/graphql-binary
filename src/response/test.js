@@ -28,4 +28,4 @@ test('encoded response is at least 30% smaller', () =>
   ])
     .then(([{ data }, dictionary]) =>
       expect(encodeResponse(query, dictionary, data).length / JSON.stringify(data).length)
-        .toBeLessThan(0.66)))
+        .toBeLessThan(0.665)))

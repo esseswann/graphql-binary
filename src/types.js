@@ -23,6 +23,27 @@ const stringType = {
   },
 }
 
+export const generateEnum = (enumValues) => {
+  const keys = {}
+  const indices = []
+  for (let index = 0; index < enumValues.length; index++) {
+    const { name } = enumValues[index]
+    keys[name] = index
+    indices[index] = name
+  }
+  return {
+    astName: 'EnumValue',
+    encode: (value) => keys[value]
+      ? new Uint8Array([value])
+      : new Error(`Enum key ${value} not present in schema`),
+    decode: (offset, data) => indices[data[offset]]
+      ? [indices[data[offset]], offset + 1]
+      : new Error(`Enum index ${data[offset]} not present in schema`),
+    parse: (value) => value
+    // check: (value) => find(enumValues)
+  }
+}
+
 export default {
   Int: {
     astName: 'IntValue',

@@ -8,20 +8,25 @@
   "license": "MIT",
   "private": false,
   "scripts": {
-    "dev": "jest --watch --runInBand"
+    "test": "jest --watch --runInBand",
+    "dev": "nodemon --exec babel-node"
   },
   "dependencies": {
-    "graphql": "15.0.0",
-    "lodash": "4.17.15"
+    "graphql": "15.3.0",
+    "lodash": "4.17.19"
   },
   "devDependencies": {
-    "@babel/preset-env": "7.9.5",
-    "babel-jest": "25.3.0",
+    "@babel/cli": "7.10.5",
+    "@babel/core": "7.10.5",
+    "@babel/node": "7.10.5",
+    "@babel/preset-env": "7.10.4",
+    "babel-jest": "26.1.0",
     "babel-plugin-import-graphql": "2.7.0",
     "babel-plugin-module-resolver": "4.0.0",
-    "graphql-query-compress": "1.2.3",
-    "graphql-tools": "^5.0.0",
-    "jest": "25.3.0"
+    "graphql-query-compress": "1.2.4",
+    "graphql-tools": "5.0.0",
+    "jest": "26.1.0",
+    "nodemon": "2.0.4"
   },
   "babel": {
     "plugins": [
