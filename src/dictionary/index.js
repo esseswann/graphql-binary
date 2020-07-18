@@ -5,7 +5,7 @@ import get from 'lodash/fp/get'
 import set from 'lodash/set'
 
 import introspectionQuery from './introspectionQuery.graphql'
-import types from 'types'
+import types, { generateEnum } from 'types'
 
 export default (schema) =>
   graphql(schema, introspectionQuery)
@@ -43,6 +43,11 @@ const addField = ({ type, ...field }, destination, path = []) => {
       ? { kind: type.ofType.kind, type: type.ofType.name }
       : { kind: type.kind, type: type.name }),
   }
+
+  if (type.enumValues && !types[definition.type])
+    // FIXME this is dangerous
+    types[definition.type] = generateEnum(type.enumValues)
+
   definition.typeHandler = types[definition.type]
   destination.decode.push(definition)
   set(destination, ['encode', ...path], definition)
