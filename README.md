@@ -62,8 +62,13 @@ Obviously it can be optimised yet
 # Usage ⚗️
 Clone repository and execute
 ```shell
-yarn && yarn dev
+yarn && yarn dev <file you want to be working on>
 ```
+Then after you're finished 
+```shell
+yarn test
+```
+Don't forget to force Jest to rerun tests by inputting `a` in the Jest console
 
 # Support
 All contributions are warmly welcome. Please follow issues section or consider these:
