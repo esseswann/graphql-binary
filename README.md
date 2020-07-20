@@ -3,6 +3,8 @@ GraphQL Binary protocol packs and unpacks GraphQL query into a schema-tied ByteA
 
 Moreover the response is also optimised by removing the keys, storing integers in bytes, having c-like strings\arrays and so on similarly to Protobuf in terms of schema and to MessagePack in terms of values encoding
 
+For some developrs the most interesting feature is encoding\decoding custom types, e.g. [Date type with seconds precision taking only 4 bytes](https://github.com/esseswann/graphql-binary/blob/master/src/fixtures/extendableTypes/types.js#L2)
+
 # Stage
 This project is currently in proof on concept stage. Mutations, Query Arguments, Variables, custom types are not supported. We have no intent on supporting Union and Interface types in the first release
 
