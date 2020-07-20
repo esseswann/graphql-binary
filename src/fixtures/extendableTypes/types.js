@@ -1,4 +1,4 @@
-export default {
+export const definitions = {
   // Date with seconds precision spanning from Jan 01 1970 till ~Feb 07 2106
   UDateS: {
     astName: 'IntValue',
@@ -16,4 +16,8 @@ export default {
       return [new Date(view.getInt32(offset) * 1000), offset + 4]
     },
   },
+}
+
+export const data = {
+  date: new Date()
 }
