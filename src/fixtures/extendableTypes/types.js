@@ -19,5 +19,6 @@ export const definitions = {
 }
 
 export const data = {
-  date: new Date()
+   // Note that we set seconds to zero or tests will fail because we loose precision
+  date: new Date('December 17, 1995 03:24:00') 
 }

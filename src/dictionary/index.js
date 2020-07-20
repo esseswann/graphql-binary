@@ -2,15 +2,20 @@ import { graphql } from 'graphql'
 import reduce from 'lodash/fp/reduce'
 import forEach from 'lodash/fp/forEach'
 import get from 'lodash/fp/get'
+import defaultsDeep from 'lodash/fp/defaultsDeep'
 import set from 'lodash/set'
 
 import introspectionQuery from './introspectionQuery.graphql'
-import types, { generateEnum } from 'types'
+import defaultTypes, { generateEnum } from 'types'
 
-export default (schema) =>
-  graphql(schema, introspectionQuery)
+let types = {} // FIXME this should be inside the function composition context
+
+export default (schema, extendableTypes) => {
+  types = defaultsDeep(defaultTypes, extendableTypes)
+  return graphql(schema, introspectionQuery)
     .then(get('data.__schema.types'))
     .then(reduce(typeReducer, {}))
+}
 
 const typeReducer = (result, { name, kind, fields }) => {
   if (!name.match('__') && (kind === 'OBJECT' || kind === 'LIST')) {
