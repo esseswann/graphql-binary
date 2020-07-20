@@ -1,7 +1,6 @@
 import { makeExecutableSchema, addMocksToSchema } from 'graphql-tools'
 import { graphql, buildSchema } from 'graphql'
 import { print } from 'graphql/language/printer'
-import get from 'lodash/fp/get'
 
 import encodeResponse from './encode'
 import decodeResponse from './decode'
