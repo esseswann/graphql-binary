@@ -33,9 +33,9 @@ export const generateEnum = (enumValues) => {
   }
   return {
     astName: 'EnumValue',
-    encode: (value) => keys[value]
-      ? new Uint8Array([value])
-      : new Error(`Enum key ${value} not present in schema`),
+    encode: (data) => keys[data]
+      ? new Uint8Array([data])
+      : new Error(`Enum key ${data} not present in schema`),
     decode: (offset, data) => indices[data[offset]]
       ? [indices[data[offset]], offset + 1]
       : new Error(`Enum index ${data[offset]} not present in schema`),
