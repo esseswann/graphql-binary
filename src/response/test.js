@@ -7,6 +7,9 @@ import decodeResponse from './decode'
 import generateDictionary from 'dictionary'
 import query from 'fixtures/basicQuery.graphql'
 import schema from 'fixtures/schema.graphql'
+import extendableTypesSchema from 'fixtures/extendableTypes/schema.graphql'
+import extendableTypesQuery from 'fixtures/extendableTypes/query.graphql'
+import * as extendableTypes from 'fixtures/extendableTypes/types'
 
 const executableSchema = makeExecutableSchema({ typeDefs: schema })
 addMocksToSchema({ schema: executableSchema })
@@ -28,3 +31,9 @@ test('encoded response is at least 30% smaller', () =>
     .then(([{ data }, dictionary]) =>
       expect(encodeResponse(query, dictionary, data).length / JSON.stringify(data).length)
         .toBeLessThan(0.665)))
+
+test('extendable types are applied', () =>
+  generateDictionary(buildSchema(extendableTypesSchema), extendableTypes.definitions)
+    .then(dictionary =>
+        expect(decodeResponse(extendableTypesQuery, dictionary, encodeResponse(extendableTypesQuery, dictionary, extendableTypes.data)))
+          .toEqual(extendableTypes.data)))
