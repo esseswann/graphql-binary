@@ -1,6 +1,6 @@
 export const definitions = {
   // Date with seconds precision spanning from Jan 01 1970 till ~Feb 07 2106
-  // that takes up an 4 byte integer unlike JSON representation which would
+  // that takes up a 4 byte integer unlike JSON representation which would
   // take 10 bytes for seconds or 13 bytes for milliseconds timestamp.
   // It is also nicely decoded directly to Date() object
   UDateS: {
