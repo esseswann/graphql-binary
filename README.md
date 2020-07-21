@@ -77,3 +77,4 @@ All contributions are warmly welcome. Please follow issues section or consider t
 - Test coverage compatible to graphql-js
 - Documentation
 - Ports for other languages
+Please follow the Functional style
