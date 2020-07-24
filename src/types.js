@@ -5,7 +5,7 @@ import { TextEncoder } from 'util'
 
 import { decodeLength, encodeLength } from 'length'
 
-const stringType = {
+export const stringType = {
   astName: 'StringValue',
   check: isString,
   parse: (value) => value,
