@@ -1,12 +1,15 @@
+import { buildSchema } from 'graphql'
 import compress from 'graphql-query-compress'
 import { print } from 'graphql/language/printer'
-import { buildSchema } from 'graphql'
 
-import encode from './encode'
-import decode from './decode'
 import generateDictionary from 'dictionary'
 import query from 'fixtures/basicQuery.graphql'
 import schema from 'fixtures/schema.graphql'
+
+import decode from './decode'
+import encode from './encode'
+
+delete query.loc // We do not store the source data
 
 const generatedDictonary = generateDictionary(buildSchema(schema))
 
@@ -19,11 +22,11 @@ test('encodes without errors', () =>
 test('decoded query matches encoded', () =>
   generatedDictonary
     .then(dictionary =>
-      expect(decode(encode(query, dictionary), dictionary)[0])
-        .toEqual(query.definitions[0].selectionSet.selections)))
+      expect(decode(encode(query, dictionary), dictionary))
+        .toEqual(query)))
 
 test('binary representation at least twice smaller than string representation', () =>
   generatedDictonary
     .then(dictionary =>
-      expect(decode(encode(query, dictionary), dictionary)[0].length / compress(print(query)).length)
+      expect(encode(query, dictionary).length / compress(print(query)).length)
         .toBeLessThan(0.5)))

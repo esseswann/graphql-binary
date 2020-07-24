@@ -19,8 +19,9 @@ const decode = (
   } = queryTypes.decode(bytes[0])
 
   const result = ast.OPERATION(operation)
-  result.definitions[0].selectionSet.selections =
-    decodeFields(bytes, dictionary, capitalize(operation), [], 1)
+  const [fields] = decodeFields(bytes, dictionary, capitalize(operation), [], 1)
+  result.definitions[0].selectionSet.selections = fields
+    
   return result
 }
 
