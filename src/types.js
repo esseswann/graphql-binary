@@ -1,8 +1,9 @@
-import isString from 'lodash/isString'
-import isNull from 'lodash/isNull'
 import isBoolean from 'lodash/isBoolean'
-import { encodeLength, decodeLength } from 'length'
+import isNull from 'lodash/isNull'
+import isString from 'lodash/isString'
 import { TextEncoder } from 'util'
+
+import { decodeLength, encodeLength } from 'length'
 
 const stringType = {
   astName: 'StringValue',
@@ -33,7 +34,7 @@ export const generateEnum = (enumValues) => {
   }
   return {
     astName: 'EnumValue',
-    encode: (data) => keys[data]
+    encode: (data) => keys[data] !== undefined
       ? new Uint8Array([data])
       : new Error(`Enum key ${data} not present in schema`),
     decode: (offset, data) => indices[data[offset]]
