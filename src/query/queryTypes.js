@@ -27,7 +27,7 @@ bools.forEach((type, index) =>
 
 export const encode = ({ operation, ...settings }) => {
   const operationMask = encodeTypes.get(operation)
-  if (!operationMask) 
+  if (!operationMask)
     throw new Error(`Unknown operation ${operation}`)
   else
     return reduce(encodeReducer, operationMask, entries(settings))

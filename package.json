@@ -12,6 +12,7 @@
     "dev": "nodemon --exec babel-node"
   },
   "dependencies": {
+    "capitalize": "2.0.3",
     "graphql": "15.3.0",
     "lodash": "4.17.19"
   },

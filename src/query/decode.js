@@ -1,14 +1,35 @@
+import capitalize from 'capitalize'
+
 // import { decodeValue } from 'valueHandlers'
 import * as ast from './ast'
+import * as queryTypes from './queryTypes'
 
 const END = 255
 
 const decode = (
   bytes,
+  dictionary
+) => {
+
+  const {
+    operation,
+    hasName,
+    hasVariables,
+    // hasDirectives
+  } = queryTypes.decode(bytes[0])
+
+  const result = ast.OPERATION(operation)
+  result.definitions[0].selectionSet.selections =
+    decodeFields(bytes, dictionary, capitalize(operation), [], 1)
+  return result
+}
+
+const decodeFields = (
+  bytes,
   dictionary,
-  parentKey = 'Query',
-  accumulator = [],
-  index = 0,
+  parentKey,
+  accumulator,
+  index,
   ...rest
 ) => {
   if (bytes[index] === END)
@@ -23,7 +44,7 @@ const decode = (
       `Field ${field.name.value} of type ${field.name.kind} must have a selection of subfields`
     )
 
-  return decode(bytes, dictionary, parentKey, accumulator, offset)
+  return decodeFields(bytes, dictionary, parentKey, accumulator, offset)
 }
 
 export const decodeField = (bytes, dictionary, parentKey, index = 0) => {
@@ -43,7 +64,7 @@ export const decodeField = (bytes, dictionary, parentKey, index = 0) => {
       index = offset
       return subFields()
     } else if (definition.kind === 'OBJECT') {
-      const [fields, offset] = decode(
+      const [fields, offset] = decodeFields(
         bytes,
         dictionary,
         definition.type,

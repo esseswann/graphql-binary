@@ -1,11 +1,20 @@
+import capitalize from 'capitalize'
 import forEach from 'lodash/forEach'
 import isEmpty from 'lodash/isEmpty'
 
+import * as queryTypes from './queryTypes'
+
 const END = 255
 
-function encode(definition, dictionary) {
-  const result = []
-  encodeFields(definition.definitions[0], dictionary, 'Query', result)
+function encode({ definitions }, dictionary) {
+  if (definitions.length > 1)
+    throw new Error('Multiple operations per request are not supported')
+  
+  const result = [queryTypes.encode({
+    operation: definitions[0].operation,
+  })]
+
+  encodeFields(definitions[0], dictionary, capitalize(definitions[0].operation), result)
   return new Uint8Array(result)
 }
 
