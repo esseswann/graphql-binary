@@ -3,6 +3,7 @@ import capitalize from 'capitalize'
 // import { decodeValue } from 'valueHandlers'
 import * as ast from './ast'
 import * as queryTypes from './queryTypes'
+import { stringType } from 'types'
 
 const END = 255
 
@@ -10,16 +11,27 @@ const decode = (
   bytes,
   dictionary
 ) => {
-
+  let index = 0
+  
   const {
     operation,
     hasName,
-    hasVariables,
+    // hasVariables,
     // hasDirectives
-  } = queryTypes.decode(bytes[0])
+  } = queryTypes.decode(bytes[index])
+  
+  index += 1
 
-  const result = ast.OPERATION(operation)
-  const [fields] = decodeFields(bytes, dictionary, capitalize(operation), [], 1)
+  let result
+
+  if (hasName) {
+    const [name, offset] = stringType.decode(index, bytes)
+    index = offset
+    result = ast.OPERATION(operation, name)
+  } else
+    result = ast.OPERATION(operation)
+
+  const [fields] = decodeFields(bytes, dictionary, capitalize(operation), [], index)
   result.definitions[0].selectionSet.selections = fields
     
   return result

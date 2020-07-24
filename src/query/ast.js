@@ -11,6 +11,12 @@ export const OPERATION = (operation = 'query', name) => ({
     selectionSet: {
       kind: 'SelectionSet',
       selections: []
+    },
+    ...name && {
+      name: {
+        kind: 'Name',
+        value: name,
+      }
     }
   }]
 })

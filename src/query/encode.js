@@ -3,6 +3,7 @@ import forEach from 'lodash/forEach'
 import isEmpty from 'lodash/isEmpty'
 
 import * as queryTypes from './queryTypes'
+import { stringType } from 'types'
 
 const END = 255
 
@@ -10,11 +11,17 @@ function encode({ definitions }, dictionary) {
   if (definitions.length > 1)
     throw new Error('Multiple operations per request are not supported')
   
-  const result = [queryTypes.encode({
-    operation: definitions[0].operation,
+  const [definiton] = definitions
+
+  let result = [queryTypes.encode({
+    operation: definiton.operation,
+    hasName: !!definiton.name
   })]
 
-  encodeFields(definitions[0], dictionary, capitalize(definitions[0].operation), result)
+  if (definiton.name)
+    result = [...result, ...stringType.encode(definiton.name.value)]
+
+  encodeFields(definiton, dictionary, capitalize(definiton.operation), result)
   return new Uint8Array(result)
 }
 
