@@ -15,6 +15,14 @@ type Query {
   ): String
 }
 
+type Mutation {
+  noArgs: String
+}
+
+type Subscription {
+  noArgs: String
+}
+
 type Map {
   id: ID
   map: Map

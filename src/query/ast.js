@@ -1,5 +1,25 @@
-import isString from 'lodash/fp/isString'
 import isBoolean from 'lodash/fp/isBoolean'
+import isString from 'lodash/fp/isString'
+
+export const OPERATION = (operation = 'query', name) => ({
+  kind: 'Document',
+  definitions: [{
+    operation,
+    kind: 'OperationDefinition',
+    variableDefinitions: [],
+    directives: [],
+    selectionSet: {
+      kind: 'SelectionSet',
+      selections: []
+    },
+    ...name && {
+      name: {
+        kind: 'Name',
+        value: name,
+      }
+    }
+  }]
+})
 
 export const SCALAR = (name) => ({
   kind: 'Field',

@@ -1,14 +1,48 @@
+import capitalize from 'capitalize'
+
 // import { decodeValue } from 'valueHandlers'
 import * as ast from './ast'
+import * as queryTypes from './queryTypes'
+import { stringType } from 'types'
 
 const END = 255
 
 const decode = (
   bytes,
+  dictionary
+) => {
+  let index = 0
+  
+  const {
+    operation,
+    hasName,
+    // hasVariables,
+    // hasDirectives
+  } = queryTypes.decode(bytes[index])
+  
+  index += 1
+
+  let result
+
+  if (hasName) {
+    const [name, offset] = stringType.decode(index, bytes)
+    index = offset
+    result = ast.OPERATION(operation, name)
+  } else
+    result = ast.OPERATION(operation)
+
+  const [fields] = decodeFields(bytes, dictionary, capitalize(operation), [], index)
+  result.definitions[0].selectionSet.selections = fields
+    
+  return result
+}
+
+const decodeFields = (
+  bytes,
   dictionary,
-  parentKey = 'Query',
-  accumulator = [],
-  index = 0,
+  parentKey,
+  accumulator,
+  index,
   ...rest
 ) => {
   if (bytes[index] === END)
@@ -23,7 +57,7 @@ const decode = (
       `Field ${field.name.value} of type ${field.name.kind} must have a selection of subfields`
     )
 
-  return decode(bytes, dictionary, parentKey, accumulator, offset)
+  return decodeFields(bytes, dictionary, parentKey, accumulator, offset)
 }
 
 export const decodeField = (bytes, dictionary, parentKey, index = 0) => {
@@ -43,7 +77,7 @@ export const decodeField = (bytes, dictionary, parentKey, index = 0) => {
       index = offset
       return subFields()
     } else if (definition.kind === 'OBJECT') {
-      const [fields, offset] = decode(
+      const [fields, offset] = decodeFields(
         bytes,
         dictionary,
         definition.type,
