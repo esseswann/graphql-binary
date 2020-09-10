@@ -4,6 +4,7 @@ import { print } from 'graphql/language/printer'
 
 import generateDictionary from 'dictionary'
 import query from 'fixtures/basicQuery.graphql'
+import queryWithVariables from 'fixtures/queryWithVariables.graphql'
 import mutation from 'fixtures/mutation.graphql'
 import schema from 'fixtures/schema.graphql'
 import subscription from 'fixtures/subscription.graphql'
@@ -29,17 +30,23 @@ test('decoded query matches encoded', () =>
       expect(decode(encode(query, dictionary), dictionary))
         .toEqual(query)))
 
-test('mutation type is encoded', () =>
+test('mutation type is encoded/decoded', () =>
   generatedDictonary
     .then(dictionary => 
       expect(decode(encode(mutation, dictionary), dictionary))
         .toEqual(mutation)))
 
-test('subscription type is encoded', () =>
+test('subscription type is encoded/decoded', () =>
   generatedDictonary
     .then(dictionary => 
       expect(decode(encode(subscription, dictionary), dictionary))
         .toEqual(subscription)))
+
+test('simple variables encoded/decoded', () =>
+  generatedDictonary
+    .then(dictionary => 
+      expect(decode(encode(queryWithVariables, dictionary), dictionary))
+        .toEqual(queryWithVariables)))
 
 test('binary representation at least twice smaller than string representation', () =>
   generatedDictonary

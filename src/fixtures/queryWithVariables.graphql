@@ -1,0 +1,5 @@
+query QueryWithVariables(
+  $intVariable: Int 
+) {
+  withArgs(int: $int)
+}
