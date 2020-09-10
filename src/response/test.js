@@ -1,15 +1,16 @@
-import { makeExecutableSchema, addMocksToSchema } from 'graphql-tools'
-import { graphql, buildSchema } from 'graphql'
+import { buildSchema, graphql } from 'graphql'
+import { addMocksToSchema, makeExecutableSchema } from 'graphql-tools'
 import { print } from 'graphql/language/printer'
 
-import encodeResponse from './encode'
-import decodeResponse from './decode'
 import generateDictionary from 'dictionary'
 import query from 'fixtures/basicQuery.graphql'
-import schema from 'fixtures/schema.graphql'
-import extendableTypesSchema from 'fixtures/extendableTypes/schema.graphql'
 import extendableTypesQuery from 'fixtures/extendableTypes/query.graphql'
+import extendableTypesSchema from 'fixtures/extendableTypes/schema.graphql'
 import * as extendableTypes from 'fixtures/extendableTypes/types'
+import schema from 'fixtures/schema.graphql'
+
+import decodeResponse from './decode'
+import encodeResponse from './encode'
 
 const executableSchema = makeExecutableSchema({ typeDefs: schema })
 addMocksToSchema({ schema: executableSchema })

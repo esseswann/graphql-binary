@@ -2,8 +2,9 @@ import capitalize from 'capitalize'
 import forEach from 'lodash/forEach'
 import isEmpty from 'lodash/isEmpty'
 
-import * as queryTypes from './queryTypes'
 import { stringType } from 'types'
+
+import * as queryTypes from './queryTypes'
 
 const END = 255
 

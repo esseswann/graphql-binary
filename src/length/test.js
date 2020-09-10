@@ -1,4 +1,4 @@
-import { encodeLength, decodeLength } from './'
+import { decodeLength, encodeLength } from './'
 
 const lengths = [
   2 ** 7 - 1,
