@@ -1,9 +1,10 @@
 import capitalize from 'capitalize'
 
+import { stringType } from 'types'
+
 // import { decodeValue } from 'valueHandlers'
 import * as ast from './ast'
 import * as queryTypes from './queryTypes'
-import { stringType } from 'types'
 
 const END = 255
 

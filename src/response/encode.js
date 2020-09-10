@@ -1,5 +1,5 @@
-import forEach from 'lodash/fp/forEach'
 import find from 'lodash/fp/find'
+import forEach from 'lodash/fp/forEach'
 import map from 'lodash/fp/map'
 
 import { encodeLength } from 'length'
