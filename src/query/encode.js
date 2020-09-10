@@ -12,17 +12,18 @@ function encode({ definitions }, dictionary) {
   if (definitions.length > 1)
     throw new Error('Multiple operations per request are not supported')
   
-  const [definiton] = definitions
-
+  const [definition] = definitions
+  
   let result = [queryTypes.encode({
-    operation: definiton.operation,
-    hasName: !!definiton.name
+    operation: definition.operation,
+    hasName: !!definition.name,
+    hasVariables: definition.variableDefinitions?.length > 0 
   })]
 
-  if (definiton.name)
-    result = [...result, ...stringType.encode(definiton.name.value)]
+  if (definition.name)
+    result = [...result, ...stringType.encode(definition.name.value)]
 
-  encodeFields(definiton, dictionary, capitalize(definiton.operation), result)
+  encodeFields(definition, dictionary, capitalize(definition.operation), result)
   return new Uint8Array(result)
 }
 

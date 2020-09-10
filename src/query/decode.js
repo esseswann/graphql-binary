@@ -17,10 +17,10 @@ const decode = (
   const {
     operation,
     hasName,
-    // hasVariables,
+    hasVariables,
     // hasDirectives
   } = queryTypes.decode(bytes[index])
-  
+
   index += 1
 
   let result
