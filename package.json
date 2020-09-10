@@ -14,19 +14,19 @@
   "dependencies": {
     "capitalize": "2.0.3",
     "graphql": "15.3.0",
-    "lodash": "4.17.19"
+    "lodash": "4.17.20"
   },
   "devDependencies": {
-    "@babel/cli": "7.10.5",
-    "@babel/core": "7.10.5",
+    "@babel/cli": "7.11.6",
+    "@babel/core": "7.11.6",
     "@babel/node": "7.10.5",
-    "@babel/preset-env": "7.10.4",
-    "babel-jest": "26.1.0",
+    "@babel/preset-env": "7.11.5",
+    "babel-jest": "26.3.0",
     "babel-plugin-import-graphql": "2.7.0",
     "babel-plugin-module-resolver": "4.0.0",
     "graphql-query-compress": "1.2.4",
     "graphql-tools": "5.0.0",
-    "jest": "26.1.0",
+    "jest": "26.4.2",
     "nodemon": "2.0.4"
   },
   "babel": {
