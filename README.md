@@ -72,6 +72,9 @@ yarn test
 ```
 Don't forget to force Jest to rerun tests by inputting `a` in the Jest console
 
+# Limitations
+Currently the implementation will break if schema is very large, for example GitHub GraphQL Schema has 6298 unique types + fields definitions including 675 input types which will not fit into single byte
+
 # Support
 All contributions are warmly welcome. Please follow issues section or consider these:
 - Test coverage compatible to graphql-js
