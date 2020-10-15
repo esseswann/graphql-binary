@@ -1,5 +1,5 @@
 query QueryWithVariables(
   $intVariable: Int 
 ) {
-  withArgs(int: $int)
+  withArgs(int: $intVariable)
 }
