@@ -4,8 +4,8 @@ import { print } from 'graphql/language/printer'
 
 import generateDictionary from 'dictionary'
 import query from 'fixtures/basicQuery.graphql'
-import queryWithVariables from 'fixtures/queryWithVariables.graphql'
 import mutation from 'fixtures/mutation.graphql'
+import queryWithVariables from 'fixtures/queryWithVariables.graphql'
 import schema from 'fixtures/schema.graphql'
 import subscription from 'fixtures/subscription.graphql'
 
@@ -15,6 +15,7 @@ import encode from './encode'
 delete query.loc // We do not store the source data
 delete mutation.loc // We do not store the source data
 delete subscription.loc // We do not store the source data
+delete queryWithVariables.loc // We do not store the source data
 
 const generatedDictonary = generateDictionary(buildSchema(schema))
 
