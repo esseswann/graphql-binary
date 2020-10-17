@@ -36,6 +36,18 @@ export const OBJECT = (name) => ({
   }
 })
 
+export const ARGUMENT_WITH_VARIABLE = (name, variableName) => ({
+  kind: 'Argument',
+  name: { kind: 'Name', value: name },
+  value: {
+    kind: 'Variable',
+    name: {
+      kind: 'Name',
+      value: variableName
+    }
+  }
+})
+
 export const ARGUMENT = (name, kind, value) => ({
   kind: 'Argument',
   name: { kind: 'Name', value: name },
@@ -43,5 +55,5 @@ export const ARGUMENT = (name, kind, value) => ({
     kind,
     value: isString(value) || isBoolean(value) ? value : JSON.stringify(value),
     ...(kind === 'StringValue' && { block: false }),
-  },
+  }
 })
