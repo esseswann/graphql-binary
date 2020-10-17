@@ -1,5 +1,8 @@
 query QueryWithVariables(
-  $intVariable: Int 
+  # Variable names will not be preserved
+  # so to not break the test an uppercased
+  # alphabetic char sequence should be used
+  $A: Int
 ) {
-  withArgs(int: $intVariable)
+  withArgs(int: $A)
 }

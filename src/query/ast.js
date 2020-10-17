@@ -36,6 +36,25 @@ export const OBJECT = (name) => ({
   }
 })
 
+export const VARIABLE_DEFINITION = (name, type) => ({
+  directives: [],
+  kind: 'VariableDefinition',
+  type: {
+    kind: 'NamedType',
+    name: {
+      kind: 'Name',
+      value: type,
+    }
+  },
+  variable: {
+    kind: 'Variable',
+    name: {
+      kind: 'Name',
+      value: name,
+    }
+  }
+})
+
 export const ARGUMENT_WITH_VARIABLE = (name, variableName) => ({
   kind: 'Argument',
   name: { kind: 'Name', value: name },
