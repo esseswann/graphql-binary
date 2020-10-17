@@ -7,6 +7,7 @@ import * as ast from './ast'
 import * as queryTypes from './queryTypes'
 
 const END = 255
+const ASCII_OFFSET = 65
 
 const decode = (
   bytes,
@@ -34,13 +35,14 @@ const decode = (
 
   let callback = console.log
   if (hasVariables) {
-    // // Variable type is determined from the first encountered occurence
-    // // There might be more performant data structres
-    // const variablesMap = new Map()
+    // Variable type is determined from the first encountered occurence
+    // There might be more performant data structres
+    const varaiblesNames = new Map()
+    varaiblesNames.set(21, 'A')
 
-    // let currentVariableIndex = 0
+    let currentVariableIndex = 0
     // // GraphQL spec prohibits using Ints in variable names
-    // let currentVariableChar = 'A'
+    let currentVariableChar = 'A'
   
     // while (bytes[index] !== END) {
     //   // This code looks geh
@@ -50,11 +52,17 @@ const decode = (
     //   }
     //   index += 1
     //   currentVariableIndex += 1
-    //   currentVariableChar = String.fromCharCode(currentVariableIndex + 65)
+    //   currentVariableChar = String.fromCharCode(currentVariableIndex + ASCII_OFFSET)
     // }
-
     callback = (currentIndex, type) => {
-      return ['intVariable', currentIndex + 5]
+      const variableName = varaiblesNames.get(currentIndex)
+      if (variableName) {
+        const variablesDefinitionsIndex = variableName.charCodeAt(0) - ASCII_OFFSET
+        if (!result.definitions[0].variableDefinitions[variablesDefinitionsIndex])
+          result.definitions[0].variableDefinitions[variablesDefinitionsIndex] = 
+            ast.VARIABLE_DEFINITION(variableName, type)
+        return [variableName, currentIndex + 5] // FIXME should be + 1
+      }
     }
   }
 
