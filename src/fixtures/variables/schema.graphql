@@ -1,0 +1,11 @@
+type Query {
+  withArgs(firstArg: Int secondArg: Int): String
+  field: Int
+  field2: Int
+  anotherWithArgs(firstArg: Int secondArg: Int): MapWithArgs
+}
+
+type MapWithArgs {
+  subfield: Int
+  subWithArgs(firstArg: Int): String
+}

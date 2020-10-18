@@ -33,7 +33,7 @@ const decode = (
   } else
     result = ast.OPERATION(operation)
 
-  let callback = console.log
+  let callback
   if (hasVariables) {
     // Variable type is determined from the first encountered occurence
     // There might be more performant data structres

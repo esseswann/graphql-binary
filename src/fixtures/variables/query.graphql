@@ -1,0 +1,12 @@
+query QueryWithVariables(
+  $A: Int
+  $B: Int
+) {
+  withArgs(firstArg: $B secondArg: $A)
+  field
+  field2
+  anotherWithArgs(firstArg: $A secondArg: 20) {
+    subfield
+    subWithArgs(firstArg: $A)
+  }
+}

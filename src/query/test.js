@@ -5,8 +5,9 @@ import { print } from 'graphql/language/printer'
 import generateDictionary from 'dictionary'
 import query from 'fixtures/basicQuery.graphql'
 import mutation from 'fixtures/mutation.graphql'
-import queryWithVariables from 'fixtures/queryWithVariables.graphql'
+import queryWithVariables from 'fixtures/variables/query.graphql'
 import schema from 'fixtures/schema.graphql'
+import variablesSchema from 'fixtures/variables/schema.graphql'
 import subscription from 'fixtures/subscription.graphql'
 
 import decode from './decode'
@@ -18,6 +19,7 @@ delete subscription.loc // We do not store the source data
 delete queryWithVariables.loc // We do not store the source data
 
 const generatedDictonary = generateDictionary(buildSchema(schema))
+const generatedVariablesDictionary = generateDictionary(buildSchema(variablesSchema))
 
 test('encodes without errors', () =>
   generatedDictonary
@@ -44,7 +46,7 @@ test('subscription type is encoded/decoded', () =>
         .toEqual(subscription)))
 
 test('simple variables encoded/decoded', () =>
-  generatedDictonary
+  generatedVariablesDictionary
     .then(dictionary => 
       expect(decode(encode(queryWithVariables, dictionary), dictionary))
         .toEqual(queryWithVariables)))
