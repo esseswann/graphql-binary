@@ -1,5 +1,7 @@
 import capitalize from 'capitalize'
 import forEach from 'lodash/forEach'
+import reduce from 'lodash/reduce'
+import concat from 'lodash/concat'
 import isEmpty from 'lodash/isEmpty'
 
 import { stringType } from 'types'
@@ -13,28 +15,55 @@ function encode({ definitions }, dictionary) {
     throw new Error('Multiple operations per request are not supported')
   
   const [definition] = definitions
-  
-  let result = [queryTypes.encode({
+
+  const config = {
     operation: definition.operation,
     hasName: !!definition.name,
     hasVariables: definition.variableDefinitions?.length > 0 
-  })]
+  }
+  
+  let result = [queryTypes.encode(config)]
 
-  if (definition.name)
+  if (config.hasName)
     result = [...result, ...stringType.encode(definition.name.value)]
 
-  encodeFields(definition, dictionary, capitalize(definition.operation), result)
+  if (config.hasVariables) {
+    const variableIndices = {}
+    const variableArrays = []
+    forEach(definition.variableDefinitions, ({ variable }, index) => {
+      variableIndices[variable.name.value] = index
+      variableArrays[index] = []
+    })
+    const nextResult = []
+    const callback = (variableName) => {
+      const variableIndex = variableIndices[variableName]
+      if (variableIndex !== undefined)
+        variableArrays[variableIndex].push(nextResult.length - 1)
+    }
+    encodeFields(definition, dictionary, capitalize(definition.operation), nextResult, callback)
+    const variableHeader = reduce(variableArrays, (accumulator, variableArray) =>
+      [...accumulator, ...variableArray, END], [])
+    variableHeader.push(END)
+    result = [...result, ...variableHeader, ...nextResult]
+  } else 
+    encodeFields(definition, dictionary, capitalize(definition.operation), result)
   return new Uint8Array(result)
 }
 
-function encodeFields(definition, dictionary, parentKey, result) {
+function encodeFields(definition, dictionary, parentKey, result, callback) {
   forEach(definition.selectionSet.selections, (field) =>
-    encodeField(field, dictionary, parentKey, result)
+    encodeField(field, dictionary, parentKey, result, callback)
   )
   result.push(END)
 }
 
-function encodeField(field, dictionary, parentKey, result) {
+function encodeField(
+  field,
+  dictionary,
+  parentKey,
+  result,
+  callback
+) {
   const definition = dictionary[parentKey].encode[field.name.value]
 
   if (!definition)
@@ -53,13 +82,17 @@ function encodeField(field, dictionary, parentKey, result) {
         )
 
       result.push(argumentDefinition.byte)
-      const value = argumentDefinition.typeHandler.encode(argumentDefinition.typeHandler.parse(argument.value.value))
-      value.forEach(value => result.push(value))
+      if (argument.value.kind === 'Variable') {
+        callback(argument.value.name.value)
+      } else {
+        const value = argumentDefinition.typeHandler.encode(argumentDefinition.typeHandler.parse(argument.value.value))
+        value.forEach(value => result.push(value))
+      }
     })
   }
 
   if (field.selectionSet)
-    encodeFields(field, dictionary, definition.type, result)
+    encodeFields(field, dictionary, definition.type, result, callback)
 }
 
 export default encode

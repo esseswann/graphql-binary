@@ -38,30 +38,31 @@ const decode = (
     // Variable type is determined from the first encountered occurence
     // There might be more performant data structres
     const varaiblesNames = new Map()
-    varaiblesNames.set(21, 'A')
 
     let currentVariableIndex = 0
-    // // GraphQL spec prohibits using Ints in variable names
+    // GraphQL spec prohibits using Ints in variable names
     let currentVariableChar = 'A'
   
-    // while (bytes[index] !== END) {
-    //   // This code looks geh
-    //   while (bytes[index] !== END) {
-    //     variablesMap[index] = currentVariableChar
-    //     index += 1 
-    //   }
-    //   index += 1
-    //   currentVariableIndex += 1
-    //   currentVariableChar = String.fromCharCode(currentVariableIndex + ASCII_OFFSET)
-    // }
+    while (bytes[index] !== END) {
+      // This code looks geh
+      while (bytes[index] !== END) {
+        varaiblesNames.set(bytes[index], currentVariableChar)
+        index += 1
+      }
+      index += 1
+      currentVariableIndex += 1
+      currentVariableChar = String.fromCharCode(currentVariableIndex + ASCII_OFFSET)
+    }
+    index += 1
+    let headerLength = index
     callback = (currentIndex, type) => {
-      const variableName = varaiblesNames.get(currentIndex)
+      const variableName = varaiblesNames.get(currentIndex - headerLength)
       if (variableName) {
         const variablesDefinitionsIndex = variableName.charCodeAt(0) - ASCII_OFFSET
         if (!result.definitions[0].variableDefinitions[variablesDefinitionsIndex])
           result.definitions[0].variableDefinitions[variablesDefinitionsIndex] = 
             ast.VARIABLE_DEFINITION(variableName, type)
-        return [variableName, currentIndex + 5] // FIXME should be + 1
+        return [variableName, currentIndex + 1]
       }
     }
   }
