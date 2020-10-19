@@ -6,7 +6,7 @@ Moreover the response is also optimised by removing the keys, storing integers i
 For some developrs the most interesting feature is encoding\decoding custom types, e.g. [Date type with seconds precision taking only 4 bytes](https://github.com/esseswann/graphql-binary/blob/master/src/fixtures/extendableTypes/types.js#L2)
 
 # Stage
-This project is currently in proof on concept stage. Query Arguments, Variables are not supported. We have no intent on supporting Union and Interface types in the first release
+This project is currently in proof on concept stage. We have no intent on supporting Union and Interface types in the first release. Fragments will be inlined for multiple reasons
 
 # Concept 
 ```graphql
