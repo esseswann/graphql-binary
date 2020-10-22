@@ -70,7 +70,10 @@ const decode = (
   const [fields] = decodeFields(bytes, dictionary, capitalize(operation), [], index, callback)
   result.definitions[0].selectionSet.selections = fields
     
-  return result
+  return {
+    query: result,
+    variables: null
+  }
 }
 
 const decodeFields = (

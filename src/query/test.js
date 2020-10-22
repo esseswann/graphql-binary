@@ -30,25 +30,25 @@ test('encodes without errors', () =>
 test('decoded query matches encoded', () =>
   generatedDictonary
     .then(dictionary =>
-      expect(decode(encode(query, dictionary), dictionary))
+      expect(decode(encode(query, dictionary), dictionary).query)
         .toEqual(query)))
 
 test('mutation type is encoded/decoded', () =>
   generatedDictonary
     .then(dictionary => 
-      expect(decode(encode(mutation, dictionary), dictionary))
+      expect(decode(encode(mutation, dictionary), dictionary).query)
         .toEqual(mutation)))
 
 test('subscription type is encoded/decoded', () =>
   generatedDictonary
     .then(dictionary => 
-      expect(decode(encode(subscription, dictionary), dictionary))
+      expect(decode(encode(subscription, dictionary), dictionary).query)
         .toEqual(subscription)))
 
 test('simple variables encoded/decoded', () =>
   generatedVariablesDictionary
     .then(dictionary => 
-      expect(decode(encode(queryWithVariables, dictionary), dictionary))
+      expect(decode(encode(queryWithVariables, dictionary), dictionary).query)
         .toEqual(queryWithVariables)))
 
 test('binary representation at least twice smaller than string representation', () =>
