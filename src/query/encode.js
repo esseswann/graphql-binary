@@ -1,8 +1,7 @@
 import capitalize from 'capitalize'
 import forEach from 'lodash/forEach'
-import reduce from 'lodash/reduce'
-import concat from 'lodash/concat'
 import isEmpty from 'lodash/isEmpty'
+import reduce from 'lodash/reduce'
 
 import { stringType } from 'types'
 
