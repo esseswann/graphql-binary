@@ -6,6 +6,20 @@
       enumValues {
       	name
       }
+      inputFields {
+        name
+        type {
+          kind
+          name
+          enumValues { # FIXME duplication
+            name
+          }
+          ofType {
+            kind
+            name
+          }
+        }
+      }
       fields {
         name
         args {

@@ -17,8 +17,8 @@ export default (schema, extendableTypes) => {
     .then(reduce(typeReducer, {}))
 }
 
-const typeReducer = (result, { name, kind, fields }) => {
-  if (!name.match('__') && (kind === 'OBJECT' || kind === 'LIST')) {
+const typeReducer = (result, { name, kind, fields, inputFields }) => {
+  if (!name.match('__') && (kind === 'OBJECT' || kind === 'LIST' || kind === 'INPUT_OBJECT')) {
     result[name] = {
       encode: {},
       decode: [],
@@ -26,13 +26,13 @@ const typeReducer = (result, { name, kind, fields }) => {
 
     forEach((field) => {
       addField(field, result[name], [field.name])
-      if (field.args.length > 0)
+      if (field.args?.length > 0)
         forEach(
           (arg) =>
             addField(arg, result[name], [field.name, 'arguments', arg.name]),
           field.args
         )
-    }, fields)
+    }, fields || inputFields)
   }
 
   return result
