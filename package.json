@@ -29,6 +29,9 @@
     "jest": "26.4.2",
     "nodemon": "2.0.4"
   },
+  "jest": {
+    "moduleFileExtensions": ["js", "graphql"]
+  },
   "babel": {
     "plugins": [
       "import-graphql",
