@@ -63,7 +63,9 @@ const decode = (
           result.definitions[0].variableDefinitions[variablesDefinitionsIndex] = 
             ast.VARIABLE_DEFINITION(variableName, type)
         return [variableName, currentIndex + 1]
-      }
+      } else 
+        // Explicitly retrun null to indicate that variable is not used
+        return null
     }
   }
 
