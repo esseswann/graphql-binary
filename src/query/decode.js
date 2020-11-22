@@ -119,18 +119,12 @@ export const decodeField = (
     // FIXME this is a bad implementation
     const next = dictionary[parentKey].decode[bytes[index]]
     if (next && next.isArg) {
-      // Callback practically means that variable is used
-      if (callback) {
-        const callbackResult = callback(index, next.type)
-        if (callbackResult) {
-          const [variableName, offset] = callbackResult
-          result.arguments.push(ast.ARGUMENT_WITH_VARIABLE(next.name, variableName))
-          index = offset
-        } else {
-          const [value, offset] = next.typeHandler.decode(index + 1, bytes)
-          result.arguments.push(ast.ARGUMENT(next.name, next.typeHandler.astName, value))
-          index = offset  
-        }
+      // Callback result means that variable is used
+      const callbackResult = callback && callback(index, next.type)
+      if (callbackResult) {
+        const [variableName, offset] = callbackResult
+        result.arguments.push(ast.ARGUMENT_WITH_VARIABLE(next.name, variableName))
+        index = offset
       } else {
         const [value, offset] = next.typeHandler.decode(index + 1, bytes)
         result.arguments.push(ast.ARGUMENT(next.name, next.typeHandler.astName, value))
