@@ -38,9 +38,8 @@ const keyHandler = curry((target, key, kind) => {
 const decodeInputObject = (
 ) => {
   const result = {}
-  // console.log(objectHandler(result))
-  sexyDecode(objectHandler(result), [0, 4, 1, 0, 3, 2, 3, 4, 5, 4, 1, 0, 7, END, 3, 3, 0, 8, END, 0, 9, END, 0, 10, END])
-  console.log(result.vector)
+  sexyDecode(objectHandler(result), [0, 4, 1, 0, 3, 2, 3, 4, 5, 4, 1, 0, 7, END, 3, 3, 0, 8, END, 0, 9, 1, 0, 10, END, END, 0, 11, END])
+  console.log(result)
 }
 
 
@@ -75,7 +74,6 @@ const sexyDecode = (handler, data) => {
     const nextHandler = handler(name, VECTOR_LIST)
     index += 1
     while (jindex > 0) {
-      console.log(index, jindex)
       // Should return index here for purity
       sexyDecode(nextHandler(), data)
       console.log(index, jindex)
