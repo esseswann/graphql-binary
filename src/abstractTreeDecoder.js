@@ -43,12 +43,10 @@ const decodeInputObject = (
 }
 
 
-let index = 0 // Important that this is a mutable reference
-
-const sexyDecode = (handler, data) => {
+const sexyDecode = (handler, data, index = 0) => {
   if (data[index] === END || index >= data.length) {
     index += 1
-    return // Exit here
+    return index
   }
 
   const { kind, name } = dict[data[index]]
@@ -59,7 +57,7 @@ const sexyDecode = (handler, data) => {
     index += 1
   } else if (kind === VECTOR) {
     // Should return index here for purity
-    sexyDecode(handler(name, VECTOR), data)
+    index = sexyDecode(handler(name, VECTOR), data, index)
   } else if (kind === SCALAR_LIST) {
     let jindex = data[index]
     const nextHandler = handler(name, SCALAR_LIST)
@@ -75,13 +73,12 @@ const sexyDecode = (handler, data) => {
     index += 1
     while (jindex > 0) {
       // Should return index here for purity
-      sexyDecode(nextHandler(), data)
-      console.log(index, jindex)
+      index = sexyDecode(nextHandler(), data, index)
       jindex -= 1
     }
   }
 
-  return sexyDecode(handler, data)
+  return sexyDecode(handler, data, index)
 }
 
 const dict = [
