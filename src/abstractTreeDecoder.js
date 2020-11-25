@@ -24,6 +24,14 @@ const keyHandler = curry((target, key, kind) => {
     const list = []
     target[key] = list
     return scalarListHandler(list)
+  } else if (kind === VECTOR_LIST) {
+    const list = []
+    target[key] = list
+    return () => {
+      const object = {}
+      list.push(object)
+      return objectHandler(object)
+    }
   }
 })
 
@@ -31,8 +39,8 @@ const decodeInputObject = (
 ) => {
   const result = {}
   // console.log(objectHandler(result))
-  sexyDecode(objectHandler(result), [0, 4, 1, 0, 3, 2, 3, 4, 5, 4, 1, 0, 7, 255, 3, 0, 8])
-  console.log(result)
+  sexyDecode(objectHandler(result), [0, 4, 1, 0, 3, 2, 3, 4, 5, 4, 1, 0, 7, END, 3, 3, 0, 8, END, 0, 9, END, 0, 10, END])
+  console.log(result.vector)
 }
 
 
@@ -52,7 +60,7 @@ const sexyDecode = (handler, data) => {
     index += 1
   } else if (kind === VECTOR) {
     // Should return index here for purity
-    sexyDecode(handler(name, VECTOR), data, index)
+    sexyDecode(handler(name, VECTOR), data)
   } else if (kind === SCALAR_LIST) {
     let jindex = data[index]
     const nextHandler = handler(name, SCALAR_LIST)
@@ -62,16 +70,27 @@ const sexyDecode = (handler, data) => {
       jindex -= 1
     }
     index +=1
+  } else if (kind === VECTOR_LIST) {
+    let jindex = data[index]
+    const nextHandler = handler(name, VECTOR_LIST)
+    index += 1
+    while (jindex > 0) {
+      console.log(index, jindex)
+      // Should return index here for purity
+      sexyDecode(nextHandler(), data)
+      console.log(index, jindex)
+      jindex -= 1
+    }
   }
 
-  return sexyDecode(handler, data, index)
+  return sexyDecode(handler, data)
 }
 
 const dict = [
-  { kind: SCALAR, name: 'geh' },
-  { kind: VECTOR, name: 'bleh' },
-  { kind: SCALAR_LIST, name: 'gleh' },
-  { kind: VECTOR, name: 'mleh' },
+  { kind: SCALAR, name: 'scalar' },
+  { kind: VECTOR, name: 'vector' },
+  { kind: SCALAR_LIST, name: 'scalarList' },
+  { kind: VECTOR_LIST, name: 'vectorList' },
 ]
 
 decodeInputObject()
