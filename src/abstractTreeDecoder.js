@@ -70,9 +70,9 @@ const decode = (
 }
 
 const prepareScalar = (handler, data, index) => {
-  // Read header
+  const length = 1 // Read header
   handler(data[index])
-  return index + 1
+  return index + length
 }
 
 const handleList = (handler, data, index, kind) => {
