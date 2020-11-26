@@ -39,7 +39,7 @@ const keyHandler = curry((target, key, kind) => {
 const decodeInputObject = (
 ) => {
   const result = {}
-  decode(objectHandler(result), [0, 10, 1, 0, 11, END, END]) //2, 3, 4, 5, 4, 1, 0, 7, END, 3, 3, 0, 8, END, 0, 9, 1, 0, 10, END, END, 0, 11, END, END, END])
+  decode(objectHandler(result), [0, 10, 1, 0, 11, 2, 3, 4, 5, 4, 1, 0, 7, END, 3, 3, 0, 8, END, 0, 9, 1, 0, 10, END, END, 0, 11, END, END, END])
   console.log(result)
 }
 
@@ -60,9 +60,11 @@ const decode = (
     return decode(
       handler,
       data,
-      kind === SCALAR
-        ? prepareScalar(nextHandler, data, nextIndex)
-        : decode(nextHandler, data, nextIndex)
+      LIST & kind
+        ? handleList(nextHandler, data, nextIndex, kind)
+        : kind === SCALAR
+          ? prepareScalar(nextHandler, data, nextIndex)
+          : decode(nextHandler, data, nextIndex)
     )
   }
 }
@@ -73,49 +75,16 @@ const prepareScalar = (handler, data, index) => {
   return index + 1
 }
 
-const handleList = (handler, data, index) => {
-  const jindex = data[index]
-  while (jindex > 0)
-    index = SCALAR & kind
-      ? prepareScalar(handler, data, index)
-      : decode(handler(), data, index)
-  return index
-}
-
-const sexyDecode = (handler, data, index = 0) => {
-  if (data[index] === END) {
-    index += 1
-    return index
-  }
-
-  const { kind, name } = dict[data[index]]
+const handleList = (handler, data, index, kind) => {
+  let jindex = data[index]
   index += 1
-
-  if (kind === SCALAR) {
-    handler(name, SCALAR)(data[index])
-    index += 1
-  } else if (kind === VECTOR) {
-    index = sexyDecode(handler(name, VECTOR), data, index)
-  } else if (kind === SCALAR_LIST) {
-    let jindex = data[index]
-    const nextHandler = handler(name, SCALAR_LIST)
-    while (jindex > 0) {
-      index +=1
-      nextHandler(data[index])
-      jindex -= 1
-    }
-    index +=1
-  } else if (kind === VECTOR_LIST) {
-    let jindex = data[index]
-    const nextHandler = handler(name, VECTOR_LIST)
-    index += 1
-    while (jindex > 0) {
-      index = sexyDecode(nextHandler(), data, index)
-      jindex -= 1
-    }
+  while (jindex > 0) {
+    index = VECTOR & kind
+      ? decode(handler(), data, index)
+      : prepareScalar(handler, data, index)
+    jindex--
   }
-
-  return sexyDecode(handler, data, index)
+  return index
 }
 
 const dict = [
