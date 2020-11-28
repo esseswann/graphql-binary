@@ -8,38 +8,70 @@ const SCALAR_LIST = 0b10
 const VECTOR_LIST = 0b11
 const LIST = 0b10
 
-const objectHandler = (target) => keyHandler(target)
+const generateHandlerDispatcher = (
+  createObject,
+  addToObject,
+  createList,
+  addToList
+) => {
 
-const scalarHandler = curry((target, key, value) => target[key] = value)
-
-const scalarListHandler = curry((target, value) => target.push(value))
-
-const keyHandler = curry((target, key, kind) => {
-  if (kind === SCALAR) {
-    return scalarHandler(target, key)
-  } else if (kind === VECTOR) {
-    const object = {}
-    target[key] = object
-    return objectHandler(object)
-  } else if (kind === SCALAR_LIST) {
-    const list = []
-    target[key] = list
-    return scalarListHandler(list)
-  } else if (kind === VECTOR_LIST) {
-    const list = []
-    target[key] = list
-    return () => {
-      const object = {}
-      list.push(object)
-      return objectHandler(object)
+  const handleObject = (callback, key) => {
+    const object = createObject(key)
+    callback(object)
+    return (name, kind) => {
+      const handler = addToObject(object)(name)
+      return kind === SCALAR
+        ? handler
+        : kind === VECTOR
+          ? handleObject(handler, name)
+          : kind === SCALAR_LIST
+            ? handleListScalar(handler, name)
+            : handleListVector(handler, name)
     }
   }
-})
+  
+  const handleListScalar = (callback, key) => {
+    const list = createList(key)
+    callback(list)
+    return addToList(list)
+  }
+  
+  const handleListVector = (callback, key) => {
+    const list = createList(key)
+    callback(list)
+    const handler = addToList(list)
+    return () => handleObject(handler)
+  }
+
+  return callback => handleObject((value) => callback(value))
+}
+
+const argsHandler = generateHandlerDispatcher(
+  // create object
+  () => ({ kind: 'ObjectValue', fields: [] }),
+  // add to object
+  (target) => (key) => (value) => target.fields.push({
+    kind: 'ObjectField',
+    name: { kind: 'Name', value: key },
+    value
+  }),
+  // create list
+  () => ({ kind: 'ListValue', fields: [] }),
+  // add to list
+  (target) => (value) => target.fields.push(value)
+)
+
+const jsonHandler = generateHandlerDispatcher(
+  () => ({}),
+  (target) => (key) => (value) => target[key] = value,
+  () => [],
+  (target) => (value) => target.push(value)
+)
 
 const decodeInputObject = (
 ) => {
-  const result = {}
-  decode(objectHandler(result), [0, 10, 1, 0, 11, 2, 3, 4, 5, 4, 1, 0, 7, END, 3, 3, 0, 8, END, 0, 9, 1, 0, 10, END, END, 0, 11, END, END, END])
+  let result
+  decode(argsHandler(value => result = value), [0, 10, 1, 0, 11, 2, 3, 4, 5, 4, 1, 0, 7, END, 3, 3, 0, 8, END, 0, 9, 1, 0, 10, END, END, 0, 11, END, END, END])
   console.log(result)
 }
 
