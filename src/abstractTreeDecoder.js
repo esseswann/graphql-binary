@@ -1,4 +1,6 @@
 // This is an R&D code don't use anything directly
+import util from 'util'
+
 const END = 255
 const SCALAR = 0b00
 const VECTOR = 0b01
@@ -10,8 +12,12 @@ const generateHandlerDispatcher = (
   createObject,
   addToObject,
   createList,
-  addToList
+  addToList,
+  createScalar
 ) => {
+  
+  const handleScalar = (callback) => (kind, value) =>
+    callback(createScalar(kind, value))
 
   const handleObject = (callback, key) => {
     const object = createObject(key)
@@ -19,7 +25,7 @@ const generateHandlerDispatcher = (
     return (name, kind) => {
       const handler = addToObject(object)(name)
       return kind === SCALAR
-        ? handler
+        ? handleScalar(handler)
         : kind === VECTOR
           ? handleObject(handler, name)
           : kind === SCALAR_LIST
@@ -31,9 +37,9 @@ const generateHandlerDispatcher = (
   const handleListScalar = (callback, key) => {
     const list = createList(key)
     callback(list)
-    return addToList(list)
+    return handleScalar(addToList(list))
   }
-  
+
   const handleListVector = (callback, key) => {
     const list = createList(key)
     callback(list)
@@ -56,21 +62,27 @@ const argsHandler = generateHandlerDispatcher(
   // create list
   () => ({ kind: 'ListValue', fields: [] }),
   // add to list
-  (target) => (value) => target.fields.push(value)
+  (target) => (value) => target.fields.push(value),
+  // scalar handler
+  (kind, value) => ({
+    kind,
+    value
+  })
 )
 
 const jsonHandler = generateHandlerDispatcher(
   () => ({}),
   (target) => (key) => (value) => target[key] = value,
   () => [],
-  (target) => (value) => target.push(value)
+  (target) => (value) => target.push(value),
+  (kind, value) => value
 )
 
 const decodeInputObject = (
 ) => {
   let result
   decode(argsHandler(value => result = value), [0, 10, 1, 0, 11, 2, 3, 4, 5, 4, 1, 0, 7, END, 3, 3, 0, 8, END, 0, 9, 1, 0, 10, END, END, 0, 11, END, END, END])
-  console.log(result)
+  console.log(util.inspect(result, false, null, true /* enable colors */))
 }
 
 const decode = (
@@ -101,7 +113,7 @@ const decode = (
 
 const prepareScalar = (handler, data, index) => {
   const length = 1 // Read header
-  handler(data[index])
+  handler('bleh', data[index])
   return index + length
 }
 
