@@ -1,6 +1,4 @@
 // This is an R&D code don't use anything directly
-import curry from 'lodash/fp/curry'
-
 const END = 255
 const SCALAR = 0b00
 const VECTOR = 0b01
@@ -43,7 +41,7 @@ const generateHandlerDispatcher = (
     return () => handleObject(handler)
   }
 
-  return callback => handleObject((value) => callback(value))
+  return callback => handleObject(callback)
 }
 
 const argsHandler = generateHandlerDispatcher(
