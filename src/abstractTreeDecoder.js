@@ -117,7 +117,12 @@ const prepareScalar = (handler, data, index) => {
   return index + length
 }
 
-const handleList = (handler, data, index, kind) => {
+const handleList = (
+  handler,
+  data,
+  index,
+  kind
+) => {
   let jindex = data[index]
   index += 1
   while (jindex > 0) {
