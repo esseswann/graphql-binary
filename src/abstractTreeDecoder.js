@@ -81,11 +81,15 @@ const jsonHandler = generateHandlerDispatcher(
 const decodeInputObject = (
 ) => {
   let result
-  decode(argsHandler(value => result = value), [0, 10, 1, 0, 11, 2, 3, 4, 5, 4, 1, 0, 7, END, 3, 3, 0, 8, END, 0, 9, 1, 0, 10, END, END, 0, 11, END, END, END])
+  decode(
+    dict,
+    argsHandler(value => result = value),
+    [0, 10, 1, 0, 11, 2, 3, 4, 5, 4, 1, 0, 7, END, 3, 3, 0, 8, END, 0, 9, 1, 0, 10, END, END, 0, 11, END, END, END])
   console.log(util.inspect(result, false, null, true /* enable colors */))
 }
 
 const decode = (
+  dictionary,
   handler,
   data,
   index = 0
@@ -96,17 +100,18 @@ const decode = (
   if (current === END)
     return nextIndex
   else {
-    const { kind, name } = dict[current]
+    const { kind, name } = dictionary[current]
     const nextHandler = handler(name, kind)
 
     return decode(
+      dictionary,
       handler,
       data,
       LIST & kind
-        ? handleList(nextHandler, data, nextIndex, kind)
+        ? handleList(dictionary, nextHandler, data, nextIndex, kind)
         : kind === SCALAR
           ? prepareScalar(nextHandler, data, nextIndex)
-          : decode(nextHandler, data, nextIndex)
+          : decode(dictionary, nextHandler, data, nextIndex)
     )
   }
 }
@@ -118,6 +123,7 @@ const prepareScalar = (handler, data, index) => {
 }
 
 const handleList = (
+  dictionary,
   handler,
   data,
   index,
@@ -127,7 +133,7 @@ const handleList = (
   index += 1
   while (jindex > 0) {
     index = VECTOR & kind
-      ? decode(handler(), data, index)
+      ? decode(dictionary, handler(), data, index)
       : prepareScalar(handler, data, index)
     jindex--
   }
