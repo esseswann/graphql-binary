@@ -46,13 +46,14 @@ const argument = {
 }
 
 const argumentHandler = (callback, kind) => {
-  if (kind === 4) { // SCALAR
-    return (kind, value) =>
-      callback(argument.scalar.create(kind, value))
-  } else if (kind === 5) { // VECTOR
+  if (VECTOR & kind) {
     const object = argument.object.create()
     callback(object)
-    return (key, kind) => argumentHandler(argument.object.add(object)(key), kind)
+    return (key, kind) =>
+      argumentHandler(argument.object.add(object)(key), kind)
+  } else { // SCALAR
+    return (kind, value) =>
+      callback(argument.scalar.create(kind, value))
   }
 }
 
