@@ -1,25 +1,23 @@
 // This is an R&D code don't use anything directly
 import util from 'util'
 
+function toBinary(n){
+  let binary = "";
+  if (n < 0) {
+    n = n >>> 0;
+  }
+  while(Math.ceil(n/2) > 0){
+      binary = n%2 + binary;
+      n = Math.floor(n/2);
+  }
+  return binary;
+}
+
 const END = 255
 const SCALAR   = 0b0
 const VECTOR   = 0b1
 const ARGUMENT = 0b100
 const LIST     = 0b10
-
-
-// const query = {
-//   object: {
-//     create: () => ({
-//       kind: 'Field',
-//       name: { kind: 'Name', value: key },
-//       arguments: [],
-//       directives: []
-//     }),
-//     add: (target) => (kind) =>
-//       ARGUMENT & kind 
-//   }
-// }
 
 const argument = {
   object: {
@@ -32,8 +30,8 @@ const argument = {
       })
   },
   list: {
-    create: () => ({ kind: 'ObjectValue', fields: [] }),
-    add: (target) => (value) => target.fields.push(value),
+    create: () => ({ kind: 'ListValue', values: [] }),
+    add: (target) => (value) => target.values.push(value),
   },
   scalar: {
     create: (kind, value) => ({
@@ -46,11 +44,27 @@ const argument = {
 }
 
 const argumentHandler = (callback, kind) => {
+
+  if (LIST & kind) {
+    const list = argument.list.create()
+    callback(list)
+    callback = argument.list.add(list)
+  }
+
   if (VECTOR & kind) {
-    const object = argument.object.create()
-    callback(object)
-    return (key, kind) =>
-      argumentHandler(argument.object.add(object)(key), kind)
+    if (LIST & kind) {
+      return () => {
+        const object = argument.object.create()
+        callback(object)
+        return (key, kind) =>
+          argumentHandler(argument.object.add(object)(key), kind)
+      }
+    } else {
+      const object = argument.object.create()
+      callback(object)
+      return (key, kind) =>
+        argumentHandler(argument.object.add(object)(key), kind)
+    }
   } else { // SCALAR
     return (kind, value) =>
       callback(argument.scalar.create(kind, value))
@@ -103,8 +117,8 @@ const decodeInputObject = (
     console.log(util.inspect(result, false, null, true))
 }
 
-const data = [0, 1, 5, 4, 1, 255, 0, 255, 255]
-  // [0, 10, 1, 0, 11, 2, 3, 4, 5, 4, 1, 4, 50, END, 3, 3, 0, 8, END, 0, 9, 1, 0, 10, END, END, 0, 11, END, END, END])
+const data = [0, 1, 5, 3, 7, 7, 7, 4, 1, 7, 1, 4, 1, 255, 255, 0, 255, 255]
+
 const decode = (
   dictionary,
   handler,
@@ -165,7 +179,9 @@ const dict = [
   { kind: LIST ^ SCALAR, name: 'scalarList' },
   { kind: LIST ^ VECTOR, name: 'vectorList' },
   { kind: SCALAR ^ ARGUMENT, name: 'scalar_arg' },
-  { kind: VECTOR ^ ARGUMENT, name: 'vector_arg' },
+  { kind: ARGUMENT ^ LIST ^ SCALAR, name: 'list_scalar_arg' },
+  { kind: ARGUMENT ^ SCALAR, name: 'vector_arg' },
+  { kind: ARGUMENT ^ LIST ^ VECTOR, name: 'list_vector_arg' },
 ]
 
 decodeInputObject()
