@@ -13,7 +13,7 @@ function toBinary(n){
   return binary;
 }
 
-const END = 255
+const END      = 255
 const SCALAR   = 0b0
 const VECTOR   = 0b1
 const ARGUMENT = 0b100
@@ -49,26 +49,43 @@ const argument = {
     })
 }
 
-const argumentHandler = (callback, kind) => {
+const json = {
+  object: (callback) => {
+    const object = {}
+    callback(object)
+    return (key) => (value) => object[key] = value
+  },
+  list: (callback) => {
+    const list = []
+    callback(list)
+    return (value) => list.push(value)
+  },
+  scalar: (kind, value) => value
+}
+
+const handlerGenerator = (dictionary) => function handler(callback, kind) {
 
   if (LIST & kind)
-    callback = argument.list(callback)
+    callback = dictionary.list(callback)
 
   if (VECTOR & kind) {
     if (LIST & kind) {
       return () => {
-        const localCallback = argument.object(callback)
-        return (key, kind) => argumentHandler(localCallback(key), kind)
+        const localCallback = dictionary.object(callback)
+        return (key, kind) => handler(localCallback(key), kind)
       }
     } else {
       return (key, kind) =>
-        argumentHandler(argument.object(callback)(key), kind)
+        handler(dictionary.object(callback)(key), kind)
     }
   } else { // SCALAR
     return (kind, value) =>
-      callback(argument.scalar(kind, value))
+      callback(dictionary.scalar(kind, value))
   }
 }
+
+const argumentHandler = handlerGenerator(argument)
+const jsonHandler = handlerGenerator(json)
 
 const queryHandler = (target) => (key, kind) => {
 
@@ -109,11 +126,8 @@ const decodeInputObject = (
     directives: []
   }
   
-  decode(
-    dict,
-    queryHandler(result),
-    data),
-    console.log(util.inspect(result, false, null, true))
+  decode(dict, queryHandler(result), data),
+  console.log(util.inspect(result, false, null, true))
 }
 
 const data = [0, 1, 5, 3, 7, 7, 7, 4, 1, 7, 1, 4, 1, 255, 255, 0, 255, 255]
