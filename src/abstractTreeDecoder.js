@@ -20,54 +20,53 @@ const ARGUMENT = 0b100
 const LIST     = 0b10
 
 const argument = {
-  object: {
-    create: () => ({ kind: 'ObjectValue', fields: [] }),
-    add: (target) => (key) => (value) => 
-      target.fields.push({
+  object: (callback) => {
+    const object = {
+      kind: 'ObjectValue',
+      fields: []
+    }
+    callback(object)
+    return (key) => (value) => 
+      object.fields.push({
         kind: 'ObjectField',
         name: { kind: 'Name', value: key },
         value
       })
   },
-  list: {
-    create: () => ({ kind: 'ListValue', values: [] }),
-    add: (target) => (value) => target.values.push(value),
+  list: (callback) => {
+    const list = {
+      kind: 'ListValue',
+      values: []
+    }
+    callback(list)
+    return (value) => list.values.push(value)
   },
-  scalar: {
-    create: (kind, value) => ({
-      kind,
-      value: typeof value === 'string'
-        ? value
-        : JSON.stringify(value)
-      })
-  }
+  scalar: (kind, value) => ({
+    kind,
+    value: typeof value === 'string'
+      ? value
+      : JSON.stringify(value)
+    })
 }
 
 const argumentHandler = (callback, kind) => {
 
-  if (LIST & kind) {
-    const list = argument.list.create()
-    callback(list)
-    callback = argument.list.add(list)
-  }
+  if (LIST & kind)
+    callback = argument.list(callback)
 
   if (VECTOR & kind) {
     if (LIST & kind) {
       return () => {
-        const object = argument.object.create()
-        callback(object)
-        return (key, kind) =>
-          argumentHandler(argument.object.add(object)(key), kind)
+        const localCallback = argument.object(callback)
+        return (key, kind) => argumentHandler(localCallback(key), kind)
       }
     } else {
-      const object = argument.object.create()
-      callback(object)
       return (key, kind) =>
-        argumentHandler(argument.object.add(object)(key), kind)
+        argumentHandler(argument.object(callback)(key), kind)
     }
   } else { // SCALAR
     return (kind, value) =>
-      callback(argument.scalar.create(kind, value))
+      callback(argument.scalar(kind, value))
   }
 }
 
