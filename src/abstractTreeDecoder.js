@@ -1,18 +1,6 @@
 // This is an R&D code don't use anything directly
 import util from 'util'
 
-function toBinary(n){
-  let binary = "";
-  if (n < 0) {
-    n = n >>> 0;
-  }
-  while(Math.ceil(n/2) > 0){
-      binary = n%2 + binary;
-      n = Math.floor(n/2);
-  }
-  return binary;
-}
-
 const END      = 255
 const SCALAR   = 0b0
 const VECTOR   = 0b1
@@ -26,10 +14,10 @@ const argument = {
       fields: []
     }
     callback(object)
-    return (key) => (value) => 
+    return (name) => (value) => 
       object.fields.push({
         kind: 'ObjectField',
-        name: { kind: 'Name', value: key },
+        name: { kind: 'Name', value: name },
         value
       })
   },
@@ -53,7 +41,7 @@ const json = {
   object: (callback) => {
     const object = {}
     callback(object)
-    return (key) => (value) => object[key] = value
+    return (name) => (value) => object[name] = value
   },
   list: (callback) => {
     const list = []
@@ -72,11 +60,11 @@ const handlerGenerator = (dictionary) => function handler(callback, kind) {
     if (LIST & kind) {
       return () => {
         const localCallback = dictionary.object(callback)
-        return (key, kind) => handler(localCallback(key), kind)
+        return (name, kind) => handler(localCallback(name), kind)
       }
     } else {
-      return (key, kind) =>
-        handler(dictionary.object(callback)(key), kind)
+      return (name, kind) =>
+        handler(dictionary.object(callback)(name), kind)
     }
   } else { // SCALAR
     return (kind, value) =>
@@ -87,9 +75,9 @@ const handlerGenerator = (dictionary) => function handler(callback, kind) {
 const argumentHandler = handlerGenerator(argument)
 const jsonHandler = handlerGenerator(json)
 
-const queryHandler = (target) => (key, kind) => {
+const queryHandler = (target) => (name, kind) => {
 
-  const object = { name: { kind: 'Name', value: key } }
+  const object = { name: { kind: 'Name', value: name } }
   const hasChildren = !!target.selectionSet
   const localTarget = hasChildren
     ? target.selectionSet.selections[target.selectionSet.selections.length - 1]
