@@ -1,3 +1,7 @@
+// FIXME should use something standard
+// https://github.com/stoklund/varint#prefixvarint
+// WebAssembly/design#601
+
 export const decodeLength = (data, offset = 0) => {
   let length = 0
   let index = 0
