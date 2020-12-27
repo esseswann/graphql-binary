@@ -2,6 +2,8 @@
 // https://github.com/stoklund/varint#prefixvarint
 // WebAssembly/design#601
 
+// This is LEB128 implementation
+// FIXME infinite shifting attack is possible
 export const decodeLength = (data, offset = 0) => {
   let length = 0
   let index = 0
