@@ -1,11 +1,11 @@
 // This is an R&D code don't use anything directly
 import util from 'util'
 
-const END      = 255
-const SCALAR   = 0b0
-const VECTOR   = 0b1
-const ARGUMENT = 0b100
-const LIST     = 0b10
+export const END      = 255
+export const SCALAR   = 0b0
+export const VECTOR   = 0b1
+export const LIST     = 0b10
+export const ARGUMENT = 0b100
 
 const argument = {
   object: (callback) => {
@@ -72,10 +72,10 @@ const handlerGenerator = (dictionary) => function handler(callback, kind) {
   }
 }
 
-const argumentHandler = handlerGenerator(argument)
-const jsonHandler = handlerGenerator(json)
+export const argumentHandler = handlerGenerator(argument)
+export const jsonHandler = handlerGenerator(json)
 
-const queryHandler = (target) => (name, kind) => {
+export const queryHandler = (target) => (name, kind) => {
 
   const object = { name: { kind: 'Name', value: name } }
   const hasChildren = !!target.selectionSet
@@ -107,20 +107,7 @@ const queryHandler = (target) => (name, kind) => {
   }
 }
 
-const decodeInputObject = (
-) => {
-  const result = {
-    arguments: [],
-    directives: []
-  }
-  
-  decode(dict, queryHandler(result), data),
-  console.log(util.inspect(result, false, null, true))
-}
-
-const data = [0, 1, 5, 3, 7, 7, 7, 4, 1, 7, 1, 4, 1, 255, 255, 0, 255, 255]
-
-const decode = (
+export const decode = (
   dictionary,
   handler,
   data,
@@ -132,7 +119,8 @@ const decode = (
   if (current === END)
     return nextIndex
   else {
-    const { kind, name } = dictionary[current]
+    console.log(data, dictionary[current], current)
+    const { myKind: kind, name } = dictionary[current]
     const nextHandler = handler(name, kind)
 
     return decode(
@@ -174,15 +162,13 @@ const handleList = (
   return index
 }
 
-const dict = [
-  { kind: SCALAR, name: 'scalar' },
-  { kind: VECTOR, name: 'vector' },
-  { kind: LIST ^ SCALAR, name: 'scalarList' },
-  { kind: LIST ^ VECTOR, name: 'vectorList' },
-  { kind: SCALAR ^ ARGUMENT, name: 'scalar_arg' },
-  { kind: ARGUMENT ^ LIST ^ SCALAR, name: 'list_scalar_arg' },
-  { kind: ARGUMENT ^ SCALAR, name: 'vector_arg' },
-  { kind: ARGUMENT ^ LIST ^ VECTOR, name: 'list_vector_arg' },
-]
-
-decodeInputObject()
+// const dict = [
+//   { kind: SCALAR, name: 'scalar' },
+//   { kind: VECTOR, name: 'vector' },
+//   { kind: LIST ^ SCALAR, name: 'scalarList' },
+//   { kind: LIST ^ VECTOR, name: 'vectorList' },
+//   { kind: SCALAR ^ ARGUMENT, name: 'scalar_arg' },
+//   { kind: ARGUMENT ^ LIST ^ SCALAR, name: 'list_scalar_arg' },
+//   { kind: ARGUMENT ^ SCALAR, name: 'vector_arg' },
+//   { kind: ARGUMENT ^ LIST ^ VECTOR, name: 'list_vector_arg' },
+// ]
