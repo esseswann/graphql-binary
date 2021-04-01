@@ -9,7 +9,7 @@
   "private": false,
   "scripts": {
     "test": "jest --watch --runInBand",
-    "dev": "nodemon --exec babel-node"
+    "dev": "nodemon --exec babel-node --extensions .ts"
   },
   "dependencies": {
     "capitalize": "2.0.3",
@@ -17,6 +17,7 @@
     "lodash": "4.17.20"
   },
   "devDependencies": {
+    "@babel/preset-typescript": "7.13.0",
     "@babel/cli": "7.11.6",
     "@babel/core": "7.11.6",
     "@babel/node": "7.10.5",
@@ -30,7 +31,10 @@
     "nodemon": "2.0.4"
   },
   "jest": {
-    "moduleFileExtensions": ["js", "graphql"]
+    "moduleFileExtensions": [
+      "js",
+      "graphql"
+    ]
   },
   "babel": {
     "plugins": [
@@ -45,6 +49,7 @@
       ]
     ],
     "presets": [
+      "@babel/preset-typescript",
       [
         "@babel/preset-env",
         {
