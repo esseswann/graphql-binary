@@ -14,7 +14,7 @@
   "dependencies": {
     "capitalize": "2.0.3",
     "graphql": "15.3.0",
-    "lodash": "4.17.20"
+    "lodash": "4.17.21"
   },
   "devDependencies": {
     "@babel/cli": "7.11.6",
