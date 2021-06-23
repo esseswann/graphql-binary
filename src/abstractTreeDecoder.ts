@@ -34,7 +34,7 @@ enum MetadataKind {
   SCALAR = 0,
   VECTOR = 1 << 0,
   LIST   = 1 << 1,
-  VALUED = 1 << 1,
+  VALUED = 1 << 2,
 }
 
 type Metadata = {
@@ -73,3 +73,30 @@ type Metadata = {
 //     }
 //   }
   
+
+enum Kind {
+  Query        = 0 << 0,
+  Mutation     = 1 << 1,
+  Subscription = 1 << 2,
+}
+
+enum Flags {
+  Name       = 1 << 3,
+  Variables  = 1 << 4,
+  Directives = 1 << 5,
+}
+
+type Positions = number[]
+
+type Data = {
+  kind: Kind
+  name?: String
+  variablePositions?: Positions
+  directivePositions?: Positions
+  data: number[]
+  variables: number[]
+}
+
+let RequestKind = Kind.Query
+RequestKind |= Flags.Variables
+RequestKind |= Flags.Directives
