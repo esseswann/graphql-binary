@@ -17,11 +17,11 @@
     "lodash": "4.17.20"
   },
   "devDependencies": {
-    "@babel/preset-typescript": "7.13.0",
     "@babel/cli": "7.11.6",
     "@babel/core": "7.11.6",
     "@babel/node": "7.10.5",
     "@babel/preset-env": "7.11.5",
+    "@babel/preset-typescript": "7.14.5",
     "babel-jest": "26.3.0",
     "babel-plugin-import-graphql": "2.7.0",
     "babel-plugin-module-resolver": "4.0.0",
