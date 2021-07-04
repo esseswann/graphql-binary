@@ -1,7 +1,9 @@
-import { DocumentNode, OperationTypeNode, OperationDefinitionNode, FieldNode } from 'graphql/language/ast'
+import { DocumentNode, FieldDefinitionNode, FieldNode, OperationDefinitionNode, OperationTypeNode } from 'graphql/language/ast'
+
 // import types from 'graphql'
 
 const MIN_LENGTH = 3
+const END = 255
 
 enum Operation  {
   query        = 0 << 0,
@@ -16,6 +18,8 @@ enum Flags {
 }
 
 type Dictionary = {
+  name: string,
+  fields: Dictionary[]
 }
 
 function decode(dictionary: Dictionary, data: Uint8Array): DocumentNode {
@@ -32,10 +36,49 @@ function decode(dictionary: Dictionary, data: Uint8Array): DocumentNode {
         kind: 'SelectionSet',
         selections: []
       }
-    }] 
+    }]
   }
 
   return document
+}
+
+function decodeObjectType(
+  dictionary: Dictionary,
+  data: Iterator
+): ReadonlyArray<FieldDefinitionNode> {
+  
+  const fields: FieldDefinitionNode[] = []
+
+  while (data.peek() !== END && data.peek() !== undefined)
+    fields.push(decodeField(dictionary, data))
+
+  return fields
+}
+
+type Iterator = {
+  next: () => any
+  peek: () => any
+}
+
+function decodeField(
+  dictionary: Dictionary,
+  data: Iterator
+): FieldDefinitionNode {
+  const field: Dictionary = dictionary.fields[data.next()]
+  return {
+    kind: 'FieldDefinition',
+    type: {
+     kind: 'NamedType',
+     name: {
+       kind: 'Name',
+       value: 'test'
+     }
+    },
+    name: {
+      kind: 'Name',
+      value: 'test'
+    },
+  }
 }
 
 function decodeCurried(dictionary: Dictionary): (data: Uint8Array) => DocumentNode {
@@ -44,6 +87,6 @@ function decodeCurried(dictionary: Dictionary): (data: Uint8Array) => DocumentNo
   }
 }
 
-const decoder = decodeCurried({})
+// const decoder = decodeCurried({})
 
-decoder(new Uint8Array([1, 2, 3]))
+// decoder(new Uint8Array([1, 2, 3]))
