@@ -22,7 +22,10 @@ type Dictionary = {
   fields: Dictionary[]
 }
 
-function decode(dictionary: Dictionary, data: Uint8Array): DocumentNode {
+function decode(
+  dictionary: Dictionary,
+  data: Uint8Array
+): DocumentNode {
 
   if (data.length < MIN_LENGTH)
     throw new Error(`Data packet is less than ${MIN_LENGTH} bytes`)
@@ -44,9 +47,9 @@ function decode(dictionary: Dictionary, data: Uint8Array): DocumentNode {
 
 function decodeObjectType(
   dictionary: Dictionary,
-  data: Iterator
+  data: ByteIterator
 ): ReadonlyArray<FieldDefinitionNode> {
-  
+
   const fields: FieldDefinitionNode[] = []
 
   while (data.peek() !== END && data.peek() !== undefined)
@@ -55,14 +58,16 @@ function decodeObjectType(
   return fields
 }
 
-type Iterator = {
-  next: () => any
-  peek: () => any
+type ByteIterator = Iterator<number>
+
+interface Iterator<T> {
+  next: () => T
+  peek: () => T
 }
 
 function decodeField(
   dictionary: Dictionary,
-  data: Iterator
+  data: ByteIterator
 ): FieldDefinitionNode {
   const field: Dictionary = dictionary.fields[data.next()]
   return {
