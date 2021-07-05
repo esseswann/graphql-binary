@@ -41,22 +41,41 @@ type DictionaryType = {
   name: string
 }
 
+type Variables = Map<number, string>
+
+type Context = {
+  variables: Variables
+}
+
 function decode(
-  dictionary: Dictionary,
+  dictionary: DictionaryField,
   data: Uint8Array
 ): DocumentNode {
 
   if (data.length < MIN_LENGTH)
     throw new Error(`Data packet is less than ${MIN_LENGTH} bytes`)
 
+
+  const byteIterator: ByteIterator = {
+    next: () => 1,
+    peek: () => 2,
+    index: 0
+  }
+
+  const operation = Operation[byteIterator.next()] as OperationTypeNode
+
+  const context: Context = {
+    variables: generateVariblesContext(byteIterator)
+  }
+
   const document: DocumentNode = {
     kind: 'Document',
     definitions: [{
       kind: 'OperationDefinition',
-      operation: Operation[data[0]] as OperationTypeNode,
+      operation: operation,
       selectionSet: {
         kind: 'SelectionSet',
-        selections: []
+        selections: decodeObjectType(context, dictionary.fields[0], byteIterator)
       }
     }]
   }
@@ -64,7 +83,12 @@ function decode(
   return document
 }
 
+function generateVariblesContext(data: ByteIterator): Variables {
+  return new Map()
+}
+
 function decodeObjectType(
+  context: Context,
   dictionary: DictionaryField,
   data: ByteIterator
 ): ReadonlyArray<FieldNode> {
@@ -72,7 +96,7 @@ function decodeObjectType(
   const fields: FieldNode[] = []
 
   while (data.peek() !== END && data.peek() !== undefined)
-    fields.push(decodeField(dictionary, data))
+    fields.push(decodeField(context, dictionary, data))
 
   return fields
 }
@@ -81,10 +105,12 @@ type ByteIterator = Iterator<number>
 
 interface Iterator<T> {
   next: () => T
-  peek: () => T
+  peek: () => T,
+  index: number
 }
 
 function decodeField(
+  context: Context,
   dictionary: DictionaryField,
   data: ByteIterator
 ): FieldNode {
@@ -93,11 +119,11 @@ function decodeField(
 
   // Order is important because data is an iterator
   const args = (field.config & Config.ARGUMENT) &&
-    decodeArguments(field, data)
+    decodeArguments(context, field, data)
 
   // Order is important because data is an iterator
   const selections = (field.config & Config.VECTOR) &&
-    decodeObjectType(field, data)
+    decodeObjectType(context, field, data)
 
   return {
     kind: 'Field',
@@ -116,10 +142,38 @@ function decodeField(
 }
 
 function decodeArguments(
+  context: Context,
   dictionary: DictionaryField,
   data: ByteIterator
 ): ReadonlyArray<ArgumentNode> {
-  return []
+
+  const args: ArgumentNode[] = []
+
+  // FIXME first argument is not handeled
+  while (dictionary.fields[data.peek()].config & Config.ARGUMENT)
+    args.push(decodeArgument(context, dictionary, data))
+
+  return args
+}
+
+function decodeArgument(
+  context: Context,
+  dictionary: DictionaryField,
+  data: ByteIterator
+): ArgumentNode {
+  const variable = context.variables.get(data.index)
+  const arg = dictionary.fields[data.next()]
+  return {
+    kind: 'Argument',
+    name: {
+      kind: 'Name',
+      value: arg.name
+    },
+    value: {
+      kind: 'IntValue',
+      value: 'test'
+    }
+  }
 }
 
 // function decodeInputValue(
@@ -155,7 +209,7 @@ function decodeArguments(
 //   }
 // }
 
-function decodeCurried(dictionary: Dictionary): (data: Uint8Array) => DocumentNode {
+function decodeCurried(dictionary: DictionaryField): (data: Uint8Array) => DocumentNode {
   return function(data: Uint8Array) {
     return decode(dictionary, data)
   }
