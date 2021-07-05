@@ -1,4 +1,4 @@
-import { DocumentNode, ObjectFieldNode, FieldDefinitionNode, FieldNode, InputValueDefinitionNode, OperationDefinitionNode, OperationTypeNode } from 'graphql/language/ast'
+import { DocumentNode, FieldDefinitionNode, FieldNode, ArgumentNode, InputValueDefinitionNode, IntValueNode, ObjectFieldNode, OperationDefinitionNode, OperationTypeNode, ValueNode } from 'graphql/language/ast'
 
 // import types from 'graphql'
 
@@ -17,9 +17,28 @@ enum Flags {
   Directives   = 1 << 5,
 }
 
-type Dictionary = {
+type Dictionary = DictionaryField | DictionaryValue
+
+enum Config {
+  VECTOR   = 0 << 0,
+  SCALAR   = 0 << 1,
+  ARGUMENT = 0 << 2,
+}
+
+interface DictionaryField {
   name: string,
-  fields: Dictionary[]
+  config: Config,
+  fields: DictionaryField[]
+}
+
+interface DictionaryValue {
+  name: string,
+  type: DictionaryType,
+  decode: (data: ByteIterator) => any // FIXME should be
+}
+
+type DictionaryType = {
+  name: string
 }
 
 function decode(
@@ -46,7 +65,7 @@ function decode(
 }
 
 function decodeObjectType(
-  dictionary: Dictionary,
+  dictionary: DictionaryField,
   data: ByteIterator
 ): ReadonlyArray<FieldNode> {
 
@@ -66,20 +85,48 @@ interface Iterator<T> {
 }
 
 function decodeField(
-  dictionary: Dictionary,
+  dictionary: DictionaryField,
   data: ByteIterator
 ): FieldNode {
-  const field: Dictionary = dictionary.fields[data.next()]
+
+  const field: DictionaryField = dictionary.fields[data.next()]
+
   return {
     kind: 'Field',
     name: {
       kind: 'Name',
       value: field.name
+    },
+    ...field.config & Config.VECTOR && {
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: decodeObjectType(field, data)
+      }
+    },
+    ...field.config & Config.ARGUMENT && {
+      arguments: decodeArguments(field, data)
     }
   }
 }
 
-// function 
+function decodeArguments(
+  dictionary: DictionaryField,
+  data: ByteIterator
+): ReadonlyArray<ArgumentNode> {
+  return []
+}
+
+// function decodeInputValue(
+//   dictionary: Dictionary,
+//   data: ByteIterator
+// ): ValueNode {
+//   const field: DictionaryValue = dictionary[0]
+//   // const result: IntValueNode = {
+//   //   kind: 'IntValue',
+//   //   value: field.decode(data)
+//   // }
+//   return result
+// }
 
 // function decodeInputField(
 //   dictionary: Dictionary,
