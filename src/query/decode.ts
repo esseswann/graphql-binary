@@ -1,4 +1,4 @@
-import { DocumentNode, FieldDefinitionNode, FieldNode, OperationDefinitionNode, OperationTypeNode } from 'graphql/language/ast'
+import { DocumentNode, ObjectFieldNode, FieldDefinitionNode, FieldNode, InputValueDefinitionNode, OperationDefinitionNode, OperationTypeNode } from 'graphql/language/ast'
 
 // import types from 'graphql'
 
@@ -48,9 +48,9 @@ function decode(
 function decodeObjectType(
   dictionary: Dictionary,
   data: ByteIterator
-): ReadonlyArray<FieldDefinitionNode> {
+): ReadonlyArray<FieldNode> {
 
-  const fields: FieldDefinitionNode[] = []
+  const fields: FieldNode[] = []
 
   while (data.peek() !== END && data.peek() !== undefined)
     fields.push(decodeField(dictionary, data))
@@ -68,23 +68,39 @@ interface Iterator<T> {
 function decodeField(
   dictionary: Dictionary,
   data: ByteIterator
-): FieldDefinitionNode {
+): FieldNode {
   const field: Dictionary = dictionary.fields[data.next()]
   return {
-    kind: 'FieldDefinition',
-    type: {
-     kind: 'NamedType',
-     name: {
-       kind: 'Name',
-       value: 'test'
-     }
-    },
+    kind: 'Field',
     name: {
       kind: 'Name',
-      value: 'test'
-    },
+      value: field.name
+    }
   }
 }
+
+// function 
+
+// function decodeInputField(
+//   dictionary: Dictionary,
+//   data: ByteIterator
+// ): InputValueDefinitionNode {
+//   const field: Dictionary = dictionary.fields[data.next()]
+//   return {
+//     kind: 'InputValueDefinition',
+//     type: {
+//       kind: 'NamedType',
+//       name: {
+//         kind: 'Name',
+//         value: field.type.name
+//       }
+//      },
+//     name: {
+//       kind: 'Name',
+//       value: field.name
+//     }
+//   }
+// }
 
 function decodeCurried(dictionary: Dictionary): (data: Uint8Array) => DocumentNode {
   return function(data: Uint8Array) {
