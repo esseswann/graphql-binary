@@ -91,20 +91,26 @@ function decodeField(
 
   const field: DictionaryField = dictionary.fields[data.next()]
 
+  // Order is important because data is an iterator
+  const args = (field.config & Config.ARGUMENT) &&
+    decodeArguments(field, data)
+
+  // Order is important because data is an iterator
+  const selections = (field.config & Config.VECTOR) &&
+    decodeObjectType(field, data)
+
   return {
     kind: 'Field',
     name: {
       kind: 'Name',
       value: field.name
     },
-    ...field.config & Config.VECTOR && {
+    ...args && { arguments: args },
+    ...selections && {
       selectionSet: {
         kind: 'SelectionSet',
-        selections: decodeObjectType(field, data)
+        selections
       }
-    },
-    ...field.config & Config.ARGUMENT && {
-      arguments: decodeArguments(field, data)
     }
   }
 }
