@@ -28,7 +28,14 @@
     "graphql-query-compress": "1.2.4",
     "graphql-tools": "5.0.0",
     "jest": "26.4.2",
-    "nodemon": "2.0.4"
+    "prettier": "2.3.2"
+  },
+  "prettier": {
+    "tabWidth": 2,
+    "useTabs": false,
+    "semi": false,
+    "singleQuote": true,
+    "trailingComma": "none"
   },
   "jest": {
     "moduleFileExtensions": [
