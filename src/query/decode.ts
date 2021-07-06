@@ -1,51 +1,5 @@
-import { DocumentNode, FieldDefinitionNode, FieldNode, ArgumentNode, InputValueDefinitionNode, IntValueNode, ObjectFieldNode, OperationDefinitionNode, OperationTypeNode, ValueNode } from 'graphql/language/ast'
-
-// import types from 'graphql'
-
-const MIN_LENGTH = 3
-const END = 255
-
-enum Operation  {
-  query        = 0 << 0,
-  mutation     = 1 << 1,
-  subscription = 1 << 2,
-}
-
-enum Flags {
-  Name         = 1 << 3,
-  Variables    = 1 << 4,
-  Directives   = 1 << 5,
-}
-
-type Dictionary = DictionaryField | DictionaryValue
-
-enum Config {
-  VECTOR   = 0 << 0,
-  SCALAR   = 0 << 1,
-  ARGUMENT = 0 << 2,
-}
-
-interface DictionaryField {
-  name: string,
-  config: Config,
-  fields: DictionaryField[]
-}
-
-interface DictionaryValue {
-  name: string,
-  type: DictionaryType,
-  decode: (data: ByteIterator) => any // FIXME should be
-}
-
-type DictionaryType = {
-  name: string
-}
-
-type Variables = Map<number, string>
-
-type Context = {
-  variables: Variables
-}
+import { ByteIterator, Config, Context, DictionaryField, DictionaryValue, END, MIN_LENGTH, Operation, Variables } from './index'
+import { ArgumentNode, DocumentNode, FieldDefinitionNode, FieldNode, InputValueDefinitionNode, IntValueNode, ObjectFieldNode, OperationDefinitionNode, OperationTypeNode, ValueNode } from 'graphql/language/ast'
 
 function decode(
   dictionary: DictionaryField,
@@ -54,7 +8,6 @@ function decode(
 
   if (data.length < MIN_LENGTH)
     throw new Error(`Data packet is less than ${MIN_LENGTH} bytes`)
-
 
   const byteIterator: ByteIterator = {
     next: () => 1,
@@ -99,14 +52,6 @@ function decodeObjectType(
     fields.push(decodeField(context, dictionary, data))
 
   return fields
-}
-
-type ByteIterator = Iterator<number>
-
-interface Iterator<T> {
-  next: () => T
-  peek: () => T,
-  index: number
 }
 
 function decodeField(
@@ -176,45 +121,68 @@ function decodeArgument(
   }
 }
 
-// function decodeInputValue(
-//   dictionary: Dictionary,
-//   data: ByteIterator
-// ): ValueNode {
-//   const field: DictionaryValue = dictionary[0]
-//   // const result: IntValueNode = {
-//   //   kind: 'IntValue',
-//   //   value: field.decode(data)
-//   // }
-//   return result
-// }
+interface Decoder<T> {
+  vector: VectorHandler<T>,
+  list: ListHandler<T>,
+}
 
-// function decodeInputField(
-//   dictionary: Dictionary,
-//   data: ByteIterator
-// ): InputValueDefinitionNode {
-//   const field: Dictionary = dictionary.fields[data.next()]
-//   return {
-//     kind: 'InputValueDefinition',
-//     type: {
-//       kind: 'NamedType',
-//       name: {
-//         kind: 'Name',
-//         value: field.type.name
-//       }
-//      },
-//     name: {
-//       kind: 'Name',
-//       value: field.name
-//     }
-//   }
-// }
+interface VectorHandler<T> {
+  create: () => T,
+  set: (vector: T, key: string, value: T) => T
+}
+
+interface ListHandler<T> {
+  create: () => T,
+  set: (list: T, value: T) => T
+}
+
+function decodeValue<T>(
+  decoder: Decoder<T>,
+  dictionary: DictionaryValue,
+  data: ByteIterator,
+): any {
+  // Important to check if LIST first
+  if (dictionary.config & Config.LIST)
+    return decodeList(decoder, dictionary, data)
+  if (dictionary.config & Config.VECTOR)
+    return decodeVector(decoder, dictionary, data)
+  if (dictionary.config & Config.SCALAR)
+    return dictionary.decode(data)
+}
+
+function decodeVector<T>(
+  decoder: Decoder<T>,
+  dictionary: DictionaryValue,
+  data: ByteIterator,
+) {
+  const vector = decoder.vector.create()
+  while (true) {
+    let field: DictionaryValue
+    decoder.vector.set(vector, field.name, decodeValue(decoder, field, data))
+  }
+  return vector
+}
+
+function decodeList<T>(
+  decoder: Decoder<T>,
+  dictionary: DictionaryValue,
+  data: ByteIterator,
+) {
+  const list = decoder.list.create()
+  while (true) {
+    let field: DictionaryValue
+    decoder.list.set(list, decodeValue(decoder, field, data))
+  }
+}
+
+const byteIterator: ByteIterator = {
+  next: () => 1,
+  peek: () => 2,
+  index: 0
+}
 
 function decodeCurried(dictionary: DictionaryField): (data: Uint8Array) => DocumentNode {
   return function(data: Uint8Array) {
     return decode(dictionary, data)
   }
 }
-
-// const decoder = decodeCurried({})
-
-// decoder(new Uint8Array([1, 2, 3]))
