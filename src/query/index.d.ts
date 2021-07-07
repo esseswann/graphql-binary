@@ -16,10 +16,10 @@ export enum Flags {
 type Dictionary = DictionaryField | DictionaryValue
 
 export enum Config {
-  VECTOR = 0 << 0,
-  SCALAR = 0 << 1,
-  ARGUMENT = 0 << 2,
-  LIST = 0 << 3
+  SCALAR = 0,
+  VECTOR = 1 << 0,
+  ARGUMENT = 1 << 2,
+  LIST = 1 << 3
 }
 
 interface DictionaryField {
@@ -32,7 +32,9 @@ interface DictionaryValue {
   name: string
   config: Config
   // type: DictionaryType,
-  decode: (data: ByteIterator) => any // FIXME should be
+  ofType?: DictionaryValue
+  decode?: (data: ByteIterator) => any // FIXME should be
+  fields: Array<DictionaryValue>
 }
 
 type DictionaryType = {
@@ -50,5 +52,6 @@ type ByteIterator = Iterator<number>
 interface Iterator<T> {
   next: () => T
   peek: () => T
+  iterateUntilEnd(callback: (t: T) => any): void
   index: number
 }

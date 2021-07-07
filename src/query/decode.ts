@@ -1,15 +1,4 @@
 import {
-  ByteIterator,
-  Config,
-  Context,
-  DictionaryField,
-  DictionaryValue,
-  END,
-  MIN_LENGTH,
-  Operation,
-  Variables
-} from './index'
-import {
   ArgumentNode,
   DocumentNode,
   FieldDefinitionNode,
@@ -22,15 +11,23 @@ import {
   ValueNode
 } from 'graphql/language/ast'
 
+import {
+  ByteIterator,
+  Config,
+  Context,
+  DictionaryField,
+  DictionaryValue,
+  END,
+  MIN_LENGTH,
+  Operation,
+  Variables
+} from './index.d'
+
 function decode(dictionary: DictionaryField, data: Uint8Array): DocumentNode {
   if (data.length < MIN_LENGTH)
     throw new Error(`Data packet is less than ${MIN_LENGTH} bytes`)
 
-  const byteIterator: ByteIterator = {
-    next: () => 1,
-    peek: () => 2,
-    index: 0
-  }
+  const byteIterator = createIterator(data)
 
   const operation = Operation[byteIterator.next()] as OperationTypeNode
 
@@ -141,9 +138,9 @@ function decodeArgument(
   }
 }
 
-interface Decoder<T> {
-  vector: VectorHandler<T>
-  list: ListHandler<T>
+interface Decoder<Vector, List> {
+  vector: VectorHandler<Vector>
+  list: ListHandler<List>
 }
 
 interface VectorHandler<T> {
@@ -152,52 +149,56 @@ interface VectorHandler<T> {
 }
 
 interface ListHandler<T> {
-  create: () => T
-  set: (list: T, value: T) => T
+  create: () => T[]
+  set: (list: T[], value: T) => T
 }
 
-function decodeValue<T>(
-  decoder: Decoder<T>,
+function decodeValue<Vector, List>(
+  decoder: Decoder<Vector, List>,
   dictionary: DictionaryValue,
   data: ByteIterator
 ): any {
   // Important to check if LIST first
-  if (dictionary.config & Config.LIST)
+  if ((dictionary.config & Config.LIST) === Config.LIST) {
     return decodeList(decoder, dictionary, data)
-  if (dictionary.config & Config.VECTOR)
+  }
+
+  if ((dictionary.config & Config.VECTOR) === Config.VECTOR) {
     return decodeVector(decoder, dictionary, data)
-  if (dictionary.config & Config.SCALAR) return dictionary.decode(data)
+  }
+
+  if ((dictionary.config & Config.SCALAR) === Config.SCALAR) {
+    return dictionary.decode(data)
+  }
 }
 
-function decodeVector<T>(
-  decoder: Decoder<T>,
+function decodeVector<Vector, List>(
+  decoder: Decoder<Vector, List>,
   dictionary: DictionaryValue,
   data: ByteIterator
 ) {
   const vector = decoder.vector.create()
-  while (true) {
-    let field: DictionaryValue
+  data.iterateUntilEnd(() => {
+    let field: DictionaryValue = dictionary.fields[data.next()]
     decoder.vector.set(vector, field.name, decodeValue(decoder, field, data))
-  }
+  })
+
   return vector
 }
 
-function decodeList<T>(
-  decoder: Decoder<T>,
+function decodeList<Vector, List>(
+  decoder: Decoder<Vector, List>,
   dictionary: DictionaryValue,
   data: ByteIterator
 ) {
   const list = decoder.list.create()
-  while (true) {
-    let field: DictionaryValue
-    decoder.list.set(list, decodeValue(decoder, field, data))
-  }
-}
+  data.iterateUntilEnd(() => {
+    if ((dictionary.config & Config.SCALAR) === Config.SCALAR)
+      decoder.list.set(list, dictionary.decode(data))
+    else decoder.list.set(list, decodeValue(decoder, dictionary.ofType, data))
+  })
 
-const byteIterator: ByteIterator = {
-  next: () => 1,
-  peek: () => 2,
-  index: 0
+  return list
 }
 
 function decodeCurried(
@@ -207,3 +208,67 @@ function decodeCurried(
     return decode(dictionary, data)
   }
 }
+
+function createIterator(data: Uint8Array): ByteIterator {
+  let index = 0
+  const next = () => {
+    if (index < data.length) {
+      const result = data[index]
+      index += 1
+      return result
+    }
+  }
+  const peek = () => data[index + 1]
+  const iterateUntilEnd = (callback) => {
+    do callback()
+    while (data[index] !== END && data[index] !== undefined)
+  }
+  return {
+    next,
+    peek,
+    iterateUntilEnd,
+    index
+  }
+}
+
+const data = new Uint8Array([0, 1, 2, 3, END, 1, 2, END])
+
+const scalar = {
+  name: 'scalar',
+  config: Config.LIST | Config.SCALAR,
+  fields: [],
+  decode: (data) => data.next()
+}
+
+const dictionary: DictionaryValue = {
+  name: 'Arg',
+  config: Config.VECTOR,
+  fields: [
+    scalar,
+    {
+      name: 'vector',
+      config: Config.LIST | Config.SCALAR,
+      fields: [scalar]
+    }
+  ]
+}
+
+const decoder: Decoder<Object, Array<any>> = {
+  list: {
+    create: () => [],
+    set: (list, value) => {
+      list.push(value)
+      return list
+    }
+  },
+  vector: {
+    create: () => ({}),
+    set: (vector, key, value) => {
+      vector[key] = value
+      return vector
+    }
+  }
+}
+
+const plest = decodeValue(decoder, dictionary, createIterator(data))
+console.log(plest)
