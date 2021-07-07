@@ -6,16 +6,19 @@ import {
   InputValueDefinitionNode,
   IntValueNode,
   ObjectFieldNode,
+  ObjectValueNode,
+  ListValueNode,
   OperationDefinitionNode,
   OperationTypeNode,
   ValueNode
 } from 'graphql/language/ast'
-
+import util from 'util'
 import {
   ByteIterator,
   Config,
   Context,
   DictionaryField,
+  Decoder,
   DictionaryValue,
   END,
   MIN_LENGTH,
@@ -138,21 +141,6 @@ import {
 //   }
 // }
 
-interface Decoder<Vector, List> {
-  vector: VectorHandler<Vector>
-  list: ListHandler<List>
-}
-
-interface VectorHandler<T> {
-  create: () => T
-  set: (vector: T, key: string, value: T) => T
-}
-
-interface ListHandler<T> {
-  create: () => T[]
-  set: (list: T[], value: T) => T
-}
-
 function decodeValue<Vector, List>(
   decoder: Decoder<Vector, List>,
   dictionary: DictionaryValue,
@@ -177,13 +165,13 @@ function decodeVector<Vector, List>(
   dictionary: DictionaryValue,
   data: ByteIterator
 ) {
-  const vector = decoder.vector.create()
+  const vector = decoder.vector()
   data.iterateWhileNotEnd(() => {
     let field: DictionaryValue = dictionary.fields[data.take()]
-    decoder.vector.set(vector, field.name, decodeValue(decoder, field, data))
+    vector.accumulate(field.name, decodeValue(decoder, field, data))
   })
 
-  return vector
+  return vector.commit()
 }
 
 function decodeList<Vector, List>(
@@ -191,14 +179,17 @@ function decodeList<Vector, List>(
   dictionary: DictionaryValue,
   data: ByteIterator
 ) {
-  const list = decoder.list.create()
-  data.iterateWhileNotEnd(() => {
-    if ((dictionary.config & Config.VECTOR) === Config.VECTOR)
-      decoder.list.set(list, decodeValue(decoder, dictionary.ofType, data))
-    else decoder.list.set(list, dictionary.decode(data))
-  })
+  const list = decoder.list()
 
-  return list
+  data.iterateWhileNotEnd(() =>
+    list.accumulate(
+      (dictionary.config & Config.VECTOR) === Config.VECTOR
+        ? decodeValue(decoder, dictionary.ofType, data)
+        : dictionary.decode(data)
+    )
+  )
+
+  return list.commit()
 }
 
 // function decodeCurried(
@@ -230,9 +221,7 @@ function createIterator<T extends Iterable<any>>(array: T): ByteIterator {
   }
 }
 
-console.log(Config)
-
-const data = new Uint8Array([0, 1, 2, 3, 4, END, 1, 0, 1, END, END])
+const data = new Uint8Array([0, 1, 2, 3, 4, END, 1, 0, 1, END, 1, 0, 1, END])
 
 const scalar = {
   name: 'scalarList',
@@ -244,8 +233,10 @@ const scalar = {
 const vector = {
   name: 'vector',
   config: Config.VECTOR,
+  decode: () => 'test',
   fields: [scalar]
 }
+vector.fields.push(vector)
 
 const dictionary: DictionaryValue = {
   name: 'Arg',
@@ -255,29 +246,68 @@ const dictionary: DictionaryValue = {
     {
       name: 'vectorList',
       config: Config.LIST | Config.VECTOR,
-      decode: (data) => data.take(),
       ofType: vector,
       fields: []
     }
   ]
 }
 
-const decoder: Decoder<Object, Array<any>> = {
-  list: {
-    create: () => [],
-    set: (list, value) => {
-      list.push(value)
-      return list
+const create = () => {
+  const accumulator = {}
+  return {
+    aggregate: (key, value) => (accumulator[key] = value),
+    commit: () => accumulator
+  }
+}
+
+const JSONDecoder: Decoder<Object, Array<any>> = {
+  list: () => {
+    const accumulator = []
+    return {
+      accumulate: (value) => accumulator.push(value),
+      commit: () => accumulator
     }
   },
-  vector: {
-    create: () => ({}),
-    set: (vector, key, value) => {
-      vector[key] = value
-      return vector
+  vector: () => {
+    const accumulator = {}
+    return {
+      accumulate: (key, value) => (accumulator[key] = value),
+      commit: () => accumulator
     }
   }
 }
 
-const plest = decodeValue(decoder, dictionary, createIterator(data))
-console.log(plest)
+const ASTDecoder: Decoder<ObjectValueNode, ListValueNode> = {
+  list: () => {
+    const accumulator = []
+    return {
+      accumulate: (value) => accumulator.push(value),
+      commit: () => ({
+        kind: 'ListValue',
+        values: accumulator
+      })
+    }
+  },
+  vector: () => {
+    const accumulator: Array<{ key: string; value: any }> = []
+    return {
+      accumulate: (key, value) => accumulator.push({ key, value }),
+      commit: () => ({
+        kind: 'ObjectValue',
+        fields: accumulator.map(generateObjectFieldNode)
+      })
+    }
+  }
+}
+
+const generateObjectFieldNode = ({ key, value }): ObjectFieldNode => ({
+  kind: 'ObjectField',
+  name: key,
+  value: {
+    kind: 'IntValue',
+    value
+  }
+})
+
+const plest = decodeValue(ASTDecoder, dictionary, createIterator(data))
+console.log(util.inspect(plest, { showHidden: false, depth: null }))

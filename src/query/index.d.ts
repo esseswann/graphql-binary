@@ -13,6 +13,25 @@ export enum Flags {
   Directives = 1 << 5
 }
 
+interface Decoder<Vector, List> {
+  vector: VectorHandler<Vector>
+  list: ListHandler<List>
+}
+
+type VectorHandler<T> = () => VectorAccumulator<T>
+
+interface VectorAccumulator<T> {
+  accumulate: (key: string, value: any) => void
+  commit: () => T
+}
+
+type ListHandler<T> = () => ListAccumulator<T>
+
+interface ListAccumulator<T> {
+  accumulate: (value: any) => void
+  commit: () => T
+}
+
 type Dictionary = DictionaryField | DictionaryValue
 
 export enum Config {
