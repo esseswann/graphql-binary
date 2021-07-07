@@ -232,7 +232,6 @@ function decodeList<Vector, List>(
 // }
 
 function createIterator<T extends Iterable<any>>(array: T): ByteIterator {
-  const END_MARKERS = [END, undefined, null]
   let index = 0
 
   function take() {
@@ -243,8 +242,7 @@ function createIterator<T extends Iterable<any>>(array: T): ByteIterator {
   }
 
   function iterateWhileNotEnd(callback: () => void) {
-    do callback()
-    while (!END_MARKERS.includes(array[index]))
+    while (array[index] !== END && array[index] !== undefined) callback()
     take()
   }
 
