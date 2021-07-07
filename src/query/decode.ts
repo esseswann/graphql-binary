@@ -23,7 +23,8 @@ import {
   END,
   MIN_LENGTH,
   Operation,
-  Variables
+  Variables,
+  Dictionary
 } from './index.d'
 
 // function decode(dictionary: DictionaryField, data: Uint8Array): DocumentNode {
@@ -223,6 +224,39 @@ function createIterator<T extends Iterable<any>>(array: T): ByteIterator {
 
 const data = new Uint8Array([0, 1, 2, 3, 4, END, 1, 0, 1, END, 1, 0, 1, END])
 
+interface DictionaryInterface {
+  name: string
+  config: string
+}
+
+interface DictionaryScalar<T extends any> extends DictionaryInterface {
+  handler: TypeHandler<T>
+}
+
+interface DictionaryVector extends DictionaryInterface {
+  fields: DictionaryEntry[]
+}
+
+interface DictionaryList extends DictionaryInterface {
+  nesting: number
+}
+
+type DictionaryEntry =
+  | DictionaryScalar<any>
+  | DictionaryVector
+  | DictionaryListScalar<any>
+  | DictionaryListVector
+
+interface DictionaryListVector extends DictionaryList, DictionaryVector {}
+interface DictionaryListScalar<T extends any>
+  extends DictionaryList,
+    DictionaryScalar<T> {}
+
+interface TypeHandler<T extends any> {
+  encode: (data: T) => Uint8Array
+  decode: (data: ByteIterator) => T
+}
+
 const scalar = {
   name: 'scalarList',
   config: Config.LIST | Config.SCALAR,
@@ -309,5 +343,5 @@ const generateObjectFieldNode = ({ key, value }): ObjectFieldNode => ({
   }
 })
 
-const plest = decodeValue(ASTDecoder, dictionary, createIterator(data))
+const plest = decodeValue(JSONDecoder, dictionary, createIterator(data))
 console.log(util.inspect(plest, { showHidden: false, depth: null }))
