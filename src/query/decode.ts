@@ -23,120 +23,120 @@ import {
   Variables
 } from './index.d'
 
-function decode(dictionary: DictionaryField, data: Uint8Array): DocumentNode {
-  if (data.length < MIN_LENGTH)
-    throw new Error(`Data packet is less than ${MIN_LENGTH} bytes`)
+// function decode(dictionary: DictionaryField, data: Uint8Array): DocumentNode {
+//   if (data.length < MIN_LENGTH)
+//     throw new Error(`Data packet is less than ${MIN_LENGTH} bytes`)
 
-  const byteIterator = createIterator(data)
+//   const byteIterator = createIterator(data)
 
-  const operation = Operation[byteIterator.next()] as OperationTypeNode
+//   const operation = Operation[byteIterator.next()] as OperationTypeNode
 
-  const context: Context = {
-    variables: generateVariblesContext(byteIterator)
-  }
+//   const context: Context = {
+//     variables: generateVariblesContext(byteIterator)
+//   }
 
-  const document: DocumentNode = {
-    kind: 'Document',
-    definitions: [
-      {
-        kind: 'OperationDefinition',
-        operation: operation,
-        selectionSet: {
-          kind: 'SelectionSet',
-          selections: decodeObjectType(
-            context,
-            dictionary.fields[0],
-            byteIterator
-          )
-        }
-      }
-    ]
-  }
+//   const document: DocumentNode = {
+//     kind: 'Document',
+//     definitions: [
+//       {
+//         kind: 'OperationDefinition',
+//         operation: operation,
+//         selectionSet: {
+//           kind: 'SelectionSet',
+//           selections: decodeObjectType(
+//             context,
+//             dictionary.fields[0],
+//             byteIterator
+//           )
+//         }
+//       }
+//     ]
+//   }
 
-  return document
-}
+//   return document
+// }
 
-function generateVariblesContext(data: ByteIterator): Variables {
-  return new Map()
-}
+// function generateVariblesContext(data: ByteIterator): Variables {
+//   return new Map()
+// }
 
-function decodeObjectType(
-  context: Context,
-  dictionary: DictionaryField,
-  data: ByteIterator
-): ReadonlyArray<FieldNode> {
-  const fields: FieldNode[] = []
+// function decodeObjectType(
+//   context: Context,
+//   dictionary: DictionaryField,
+//   data: ByteIterator
+// ): ReadonlyArray<FieldNode> {
+//   const fields: FieldNode[] = []
 
-  while (data.peek() !== END && data.peek() !== undefined)
-    fields.push(decodeField(context, dictionary, data))
+//   while (data.peek() !== END && data.peek() !== undefined)
+//     fields.push(decodeField(context, dictionary, data))
 
-  return fields
-}
+//   return fields
+// }
 
-function decodeField(
-  context: Context,
-  dictionary: DictionaryField,
-  data: ByteIterator
-): FieldNode {
-  const field: DictionaryField = dictionary.fields[data.next()]
+// function decodeField(
+//   context: Context,
+//   dictionary: DictionaryField,
+//   data: ByteIterator
+// ): FieldNode {
+//   const field: DictionaryField = dictionary.fields[data.next()]
 
-  // Order is important because data is an iterator
-  const args =
-    field.config & Config.ARGUMENT && decodeArguments(context, field, data)
+//   // Order is important because data is an iterator
+//   const args =
+//     field.config & Config.ARGUMENT && decodeArguments(context, field, data)
 
-  // Order is important because data is an iterator
-  const selections =
-    field.config & Config.VECTOR && decodeObjectType(context, field, data)
+//   // Order is important because data is an iterator
+//   const selections =
+//     field.config & Config.VECTOR && decodeObjectType(context, field, data)
 
-  return {
-    kind: 'Field',
-    name: {
-      kind: 'Name',
-      value: field.name
-    },
-    ...(args && { arguments: args }),
-    ...(selections && {
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections
-      }
-    })
-  }
-}
+//   return {
+//     kind: 'Field',
+//     name: {
+//       kind: 'Name',
+//       value: field.name
+//     },
+//     ...(args && { arguments: args }),
+//     ...(selections && {
+//       selectionSet: {
+//         kind: 'SelectionSet',
+//         selections
+//       }
+//     })
+//   }
+// }
 
-function decodeArguments(
-  context: Context,
-  dictionary: DictionaryField,
-  data: ByteIterator
-): ReadonlyArray<ArgumentNode> {
-  const args: ArgumentNode[] = []
+// function decodeArguments(
+//   context: Context,
+//   dictionary: DictionaryField,
+//   data: ByteIterator
+// ): ReadonlyArray<ArgumentNode> {
+//   const args: ArgumentNode[] = []
 
-  // FIXME first argument is not handeled
-  while (dictionary.fields[data.peek()].config & Config.ARGUMENT)
-    args.push(decodeArgument(context, dictionary, data))
+//   // FIXME first argument is not handeled
+//   while (dictionary.fields[data.peek()].config & Config.ARGUMENT)
+//     args.push(decodeArgument(context, dictionary, data))
 
-  return args
-}
+//   return args
+// }
 
-function decodeArgument(
-  context: Context,
-  dictionary: DictionaryField,
-  data: ByteIterator
-): ArgumentNode {
-  const variable = context.variables.get(data.index)
-  const arg = dictionary.fields[data.next()]
-  return {
-    kind: 'Argument',
-    name: {
-      kind: 'Name',
-      value: arg.name
-    },
-    value: {
-      kind: 'IntValue',
-      value: 'test'
-    }
-  }
-}
+// function decodeArgument(
+//   context: Context,
+//   dictionary: DictionaryField,
+//   data: ByteIterator
+// ): ArgumentNode {
+//   const variable = context.variables.get(data.index)
+//   const arg = dictionary.fields[data.next()]
+//   return {
+//     kind: 'Argument',
+//     name: {
+//       kind: 'Name',
+//       value: arg.name
+//     },
+//     value: {
+//       kind: 'IntValue',
+//       value: 'test'
+//     }
+//   }
+// }
 
 interface Decoder<Vector, List> {
   vector: VectorHandler<Vector>
@@ -178,8 +178,8 @@ function decodeVector<Vector, List>(
   data: ByteIterator
 ) {
   const vector = decoder.vector.create()
-  data.iterateUntilEnd(() => {
-    let field: DictionaryValue = dictionary.fields[data.next()]
+  data.iterateWhileNotEnd(() => {
+    let field: DictionaryValue = dictionary.fields[data.take()]
     decoder.vector.set(vector, field.name, decodeValue(decoder, field, data))
   })
 
@@ -192,7 +192,7 @@ function decodeList<Vector, List>(
   data: ByteIterator
 ) {
   const list = decoder.list.create()
-  data.iterateUntilEnd(() => {
+  data.iterateWhileNotEnd(() => {
     if ((dictionary.config & Config.SCALAR) === Config.SCALAR)
       decoder.list.set(list, dictionary.decode(data))
     else decoder.list.set(list, decodeValue(decoder, dictionary.ofType, data))
@@ -201,43 +201,66 @@ function decodeList<Vector, List>(
   return list
 }
 
-function decodeCurried(
-  dictionary: DictionaryField
-): (data: Uint8Array) => DocumentNode {
-  return function (data: Uint8Array) {
-    return decode(dictionary, data)
-  }
-}
+// function decodeCurried(
+//   dictionary: DictionaryField
+// ): (data: Uint8Array) => DocumentNode {
+//   return function (data: Uint8Array) {
+//     return decode(dictionary, data)
+//   }
+// }
 
-function createIterator(data: Uint8Array): ByteIterator {
+// function createIterator(data: Uint8Array): ByteIterator {
+//   let index = 0
+//   const next = () => {
+//     if (index < data.length) {
+//       const result = data[index]
+//       index += 1
+//       return result
+//     }
+//   }
+//   const peek = () => data[index + 1]
+//   const iterateUntilEnd = (callback) => {
+//     do callback()
+//     while (data[index] !== END && data[index] !== undefined)
+//   }
+//   return {
+//     next,
+//     peek,
+//     iterateUntilEnd,
+//     index
+//   }
+// }
+
+function createIterator<T extends Iterable<any>>(array: T): ByteIterator {
+  const END_MARKERS = [END, undefined, null]
   let index = 0
-  const next = () => {
-    if (index < data.length) {
-      const result = data[index]
+
+  function take() {
+    if (array[index] !== undefined) {
       index += 1
-      return result
+      return array[index - 1]
     }
   }
-  const peek = () => data[index + 1]
-  const iterateUntilEnd = (callback) => {
+
+  function iterateWhileNotEnd(callback: () => void) {
     do callback()
-    while (data[index] !== END && data[index] !== undefined)
+    while (!END_MARKERS.includes(array[index]))
+    take()
   }
+
   return {
-    next,
-    peek,
-    iterateUntilEnd,
-    index
+    take,
+    iterateWhileNotEnd
   }
 }
 
-const data = new Uint8Array([0, 1, 2, 3, END, 1, 2, END])
+const data = new Uint8Array([0, 1, 2, 3, 4, END, 1, 2, END])
 
 const scalar = {
   name: 'scalar',
   config: Config.LIST | Config.SCALAR,
   fields: [],
-  decode: (data) => data.next()
+  decode: (data) => data.take()
 }
 
 const dictionary: DictionaryValue = {
@@ -248,6 +271,7 @@ const dictionary: DictionaryValue = {
     {
       name: 'vector',
       config: Config.LIST | Config.SCALAR,
+      decode: (data) => data.take(),
       fields: [scalar]
     }
   ]

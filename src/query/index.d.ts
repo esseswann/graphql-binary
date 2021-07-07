@@ -50,8 +50,6 @@ type Context = {
 type ByteIterator = Iterator<number>
 
 interface Iterator<T> {
-  next: () => T
-  peek: () => T
-  iterateUntilEnd(callback: (t: T) => any): void
-  index: number
+  take: () => T
+  iterateWhileNotEnd: (callback: () => void) => void
 }
