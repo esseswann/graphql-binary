@@ -193,9 +193,9 @@ function decodeList<Vector, List>(
 ) {
   const list = decoder.list.create()
   data.iterateWhileNotEnd(() => {
-    if ((dictionary.config & Config.SCALAR) === Config.SCALAR)
-      decoder.list.set(list, dictionary.decode(data))
-    else decoder.list.set(list, decodeValue(decoder, dictionary.ofType, data))
+    if ((dictionary.config & Config.VECTOR) === Config.VECTOR)
+      decoder.list.set(list, decodeValue(decoder, dictionary.ofType, data))
+    else decoder.list.set(list, dictionary.decode(data))
   })
 
   return list
@@ -206,28 +206,6 @@ function decodeList<Vector, List>(
 // ): (data: Uint8Array) => DocumentNode {
 //   return function (data: Uint8Array) {
 //     return decode(dictionary, data)
-//   }
-// }
-
-// function createIterator(data: Uint8Array): ByteIterator {
-//   let index = 0
-//   const next = () => {
-//     if (index < data.length) {
-//       const result = data[index]
-//       index += 1
-//       return result
-//     }
-//   }
-//   const peek = () => data[index + 1]
-//   const iterateUntilEnd = (callback) => {
-//     do callback()
-//     while (data[index] !== END && data[index] !== undefined)
-//   }
-//   return {
-//     next,
-//     peek,
-//     iterateUntilEnd,
-//     index
 //   }
 // }
 
@@ -252,13 +230,21 @@ function createIterator<T extends Iterable<any>>(array: T): ByteIterator {
   }
 }
 
-const data = new Uint8Array([0, 1, 2, 3, 4, END, 1, 2, END])
+console.log(Config)
+
+const data = new Uint8Array([0, 1, 2, 3, 4, END, 1, 0, 1, END, END])
 
 const scalar = {
-  name: 'scalar',
+  name: 'scalarList',
   config: Config.LIST | Config.SCALAR,
   fields: [],
   decode: (data) => data.take()
+}
+
+const vector = {
+  name: 'vector',
+  config: Config.VECTOR,
+  fields: [scalar]
 }
 
 const dictionary: DictionaryValue = {
@@ -267,10 +253,11 @@ const dictionary: DictionaryValue = {
   fields: [
     scalar,
     {
-      name: 'vector',
-      config: Config.LIST | Config.SCALAR,
+      name: 'vectorList',
+      config: Config.LIST | Config.VECTOR,
       decode: (data) => data.take(),
-      fields: [scalar]
+      ofType: vector,
+      fields: []
     }
   ]
 }

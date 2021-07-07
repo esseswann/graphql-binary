@@ -18,8 +18,8 @@ type Dictionary = DictionaryField | DictionaryValue
 export enum Config {
   SCALAR = 0,
   VECTOR = 1 << 0,
-  ARGUMENT = 1 << 2,
-  LIST = 1 << 3
+  ARGUMENT = 1 << 1,
+  LIST = 1 << 2
 }
 
 interface DictionaryField {
