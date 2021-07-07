@@ -9,16 +9,13 @@ import * as queryTypes from './queryTypes'
 const END = 255
 const ASCII_OFFSET = 65
 
-const decode = (
-  bytes,
-  dictionary
-) => {
+const decode = (bytes, dictionary) => {
   let index = 0
-  
+
   const {
     operation,
     hasName,
-    hasVariables,
+    hasVariables
     // hasDirectives
   } = queryTypes.decode(bytes[index])
 
@@ -30,8 +27,7 @@ const decode = (
     const [name, offset] = stringType.decode(index, bytes)
     index = offset
     result = ast.OPERATION(operation, name)
-  } else
-    result = ast.OPERATION(operation)
+  } else result = ast.OPERATION(operation)
 
   let callback
   if (hasVariables) {
@@ -42,7 +38,7 @@ const decode = (
     let currentVariableIndex = 0
     // GraphQL spec prohibits using Ints in variable names
     let currentVariableChar = 'A'
-  
+
     while (bytes[index] !== END) {
       // This code looks geh
       while (bytes[index] !== END) {
@@ -51,27 +47,39 @@ const decode = (
       }
       index += 1
       currentVariableIndex += 1
-      currentVariableChar = String.fromCharCode(currentVariableIndex + ASCII_OFFSET)
+      currentVariableChar = String.fromCharCode(
+        currentVariableIndex + ASCII_OFFSET
+      )
     }
     index += 1
     let headerLength = index
     callback = (currentIndex, type) => {
       const variableName = varaiblesNames.get(currentIndex - headerLength)
       if (variableName) {
-        const variablesDefinitionsIndex = variableName.charCodeAt(0) - ASCII_OFFSET
-        if (!result.definitions[0].variableDefinitions[variablesDefinitionsIndex])
-          result.definitions[0].variableDefinitions[variablesDefinitionsIndex] = 
+        const variablesDefinitionsIndex =
+          variableName.charCodeAt(0) - ASCII_OFFSET
+        if (
+          !result.definitions[0].variableDefinitions[variablesDefinitionsIndex]
+        )
+          result.definitions[0].variableDefinitions[variablesDefinitionsIndex] =
             ast.VARIABLE_DEFINITION(variableName, type)
         return [variableName, currentIndex + 1]
-      } else 
-        // Explicitly retrun null to indicate that variable is not used
-        return null
+      }
+      // Explicitly retrun null to indicate that variable is not used
+      else return null
     }
   }
 
-  const [fields] = decodeFields(bytes, dictionary, capitalize(operation), [], index, callback)
+  const [fields] = decodeFields(
+    bytes,
+    dictionary,
+    capitalize(operation),
+    [],
+    index,
+    callback
+  )
   result.definitions[0].selectionSet.selections = fields
-    
+
   return {
     query: result,
     variables: null
@@ -89,7 +97,13 @@ const decodeFields = (
   if (bytes[index] === END)
     // FIXME doing this twice is wrong
     return [accumulator, index + 1]
-  const [field, offset] = decodeField(bytes, dictionary, parentKey, index, callback)
+  const [field, offset] = decodeField(
+    bytes,
+    dictionary,
+    parentKey,
+    index,
+    callback
+  )
   accumulator.push(field)
 
   if (field.selectionSet && bytes[index + 1] === END)
@@ -98,7 +112,14 @@ const decodeFields = (
       `Field ${field.name.value} of type ${field.name.kind} must have a subselection of fields`
     )
 
-  return decodeFields(bytes, dictionary, parentKey, accumulator, offset, callback)
+  return decodeFields(
+    bytes,
+    dictionary,
+    parentKey,
+    accumulator,
+    offset,
+    callback
+  )
 }
 
 export const decodeField = (
@@ -123,11 +144,15 @@ export const decodeField = (
       const callbackResult = callback && callback(index, next.type)
       if (callbackResult) {
         const [variableName, offset] = callbackResult
-        result.arguments.push(ast.ARGUMENT_WITH_VARIABLE(next.name, variableName))
+        result.arguments.push(
+          ast.ARGUMENT_WITH_VARIABLE(next.name, variableName)
+        )
         index = offset
       } else {
         const [value, offset] = next.typeHandler.decode(index + 1, bytes)
-        result.arguments.push(ast.ARGUMENT(next.name, next.typeHandler.astName, value))
+        result.arguments.push(
+          ast.ARGUMENT(next.name, next.typeHandler.astName, value)
+        )
         index = offset
       }
 
