@@ -144,31 +144,31 @@ import {
 
 function decodeValue<Vector, List>(
   decoder: Decoder<Vector, List>,
-  dictionary: DictionaryValue,
+  dictionary: DictionaryEntry,
   data: ByteIterator
 ): any {
   // Important to check if LIST first
   if ((dictionary.config & Config.LIST) === Config.LIST) {
-    return decodeList(decoder, dictionary, data)
+    return decodeList(decoder, dictionary as DictionaryListEntry, data)
   }
 
   if ((dictionary.config & Config.VECTOR) === Config.VECTOR) {
-    return decodeVector(decoder, dictionary, data)
+    return decodeVector(decoder, dictionary as DictionaryVector, data)
   }
 
   if ((dictionary.config & Config.SCALAR) === Config.SCALAR) {
-    return dictionary.decode(data)
+    return (dictionary as DictionaryScalar<any>).handler.decode(data)
   }
 }
 
 function decodeVector<Vector, List>(
   decoder: Decoder<Vector, List>,
-  dictionary: DictionaryValue,
+  dictionary: DictionaryVector,
   data: ByteIterator
 ) {
   const vector = decoder.vector()
   data.iterateWhileNotEnd(() => {
-    let field: DictionaryValue = dictionary.fields[data.take()]
+    let field: DictionaryEntry = dictionary.fields[data.take()]
     vector.accumulate(field.name, decodeValue(decoder, field, data))
   })
 
@@ -177,7 +177,7 @@ function decodeVector<Vector, List>(
 
 function decodeList<Vector, List>(
   decoder: Decoder<Vector, List>,
-  dictionary: DictionaryValue,
+  dictionary: DictionaryListEntry,
   data: ByteIterator
 ) {
   const list = decoder.list()
@@ -185,21 +185,17 @@ function decodeList<Vector, List>(
   data.iterateWhileNotEnd(() =>
     list.accumulate(
       (dictionary.config & Config.VECTOR) === Config.VECTOR
-        ? decodeValue(decoder, dictionary.ofType, data)
-        : dictionary.decode(data)
+        ? decodeValue(
+            decoder,
+            (dictionary as DictionaryListVector).ofType,
+            data
+          )
+        : (dictionary as DictionaryListScalar<any>).handler.decode(data)
     )
   )
 
   return list.commit()
 }
-
-// function decodeCurried(
-//   dictionary: DictionaryField
-// ): (data: Uint8Array) => DocumentNode {
-//   return function (data: Uint8Array) {
-//     return decode(dictionary, data)
-//   }
-// }
 
 function createIterator<T extends Iterable<any>>(array: T): ByteIterator {
   let index = 0
@@ -226,7 +222,7 @@ const data = new Uint8Array([0, 1, 2, 3, 4, END, 1, 0, 1, END, 1, 0, 1, END])
 
 interface DictionaryInterface {
   name: string
-  config: string
+  config: Config
 }
 
 interface DictionaryScalar<T extends any> extends DictionaryInterface {
@@ -241,13 +237,15 @@ interface DictionaryList extends DictionaryInterface {
   nesting: number
 }
 
-type DictionaryEntry =
-  | DictionaryScalar<any>
-  | DictionaryVector
-  | DictionaryListScalar<any>
-  | DictionaryListVector
+type DictionaryUnaryEntry = DictionaryScalar<any> | DictionaryVector
+type DictionaryListEntry = DictionaryListScalar<any> | DictionaryListVector
 
-interface DictionaryListVector extends DictionaryList, DictionaryVector {}
+type DictionaryEntry = DictionaryUnaryEntry | DictionaryListEntry
+
+interface DictionaryListVector extends DictionaryList {
+  ofType: DictionaryScalar<any> | DictionaryVector
+}
+
 interface DictionaryListScalar<T extends any>
   extends DictionaryList,
     DictionaryScalar<T> {}
@@ -257,22 +255,23 @@ interface TypeHandler<T extends any> {
   decode: (data: ByteIterator) => T
 }
 
-const scalar = {
+const scalar: DictionaryScalar<string> = {
   name: 'scalarList',
   config: Config.LIST | Config.SCALAR,
-  fields: [],
-  decode: (data) => data.take()
+  handler: {
+    encode: (data: string) => new Uint8Array(new TextEncoder().encode(data)),
+    decode: (data: ByteIterator) => String.fromCharCode(data.take())
+  }
 }
 
-const vector = {
+const vector: DictionaryVector = {
   name: 'vector',
   config: Config.VECTOR,
-  decode: () => 'test',
   fields: [scalar]
 }
 vector.fields.push(vector)
 
-const dictionary: DictionaryValue = {
+const dictionary: DictionaryVector = {
   name: 'Arg',
   config: Config.VECTOR,
   fields: [
