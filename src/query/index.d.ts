@@ -58,6 +58,7 @@ type ByteIterator = Iterator<number>
 
 interface Iterator<T> {
   take: () => T
+  atEnd: () => boolean
   iterateWhileNotEnd: (callback: () => void) => void
   current: () => T
 }

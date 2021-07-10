@@ -170,11 +170,12 @@ function decodeVector<Vector, List>(
   data: ByteIterator
 ) {
   const vector = decoder.vector()
-  data.iterateWhileNotEnd(() => {
+
+  while (!data.atEnd()) {
     const field: DictionaryEntry = dictionary.fields[data.take()]
     const { addValue } = vector.accumulate(field.name)
     addValue(decodeValue(decoder, field, data))
-  })
+  }
 
   return vector.commit()
 }
@@ -187,12 +188,12 @@ function decodeQueryVector<Vector>(
   const { accumulate, commit } = decoder.vector()
   const fields = dictionary.fields
 
-  data.iterateWhileNotEnd(() => {
+  while (!data.atEnd()) {
     const field: DictionaryEntry = fields[data.take()]
     const callbacks = accumulate(field.name)
 
     if (has(field.config, Config.HAS_ARGUMENTS)) {
-      while (data.current() !== undefined && data.current() !== END) {
+      while (!data.atEnd()) {
         const arg = fields[data.current()]
         if (has(arg.config, Config.ARGUMENT))
           callbacks.addArg(fields[data.take()].name)
@@ -206,7 +207,7 @@ function decodeQueryVector<Vector>(
       )
 
     callbacks.commit()
-  })
+  }
 
   return commit()
 }
@@ -434,9 +435,14 @@ function createIterator<T extends Iterable<any>>(array: T): ByteIterator {
     return array[index]
   }
 
+  function atEnd() {
+    return array[index] === END || array[index] === undefined
+  }
+
   return {
     take,
     current,
+    atEnd,
     iterateWhileNotEnd
   }
 }
