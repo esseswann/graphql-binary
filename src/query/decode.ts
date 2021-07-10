@@ -1,17 +1,14 @@
-import {
-  ArgumentNode,
-  DocumentNode,
-  FieldNode,
-  OperationTypeNode,
-  SelectionSetNode
-} from 'graphql/language/ast'
+import { DocumentNode, OperationTypeNode } from 'graphql/language/ast'
 import util from 'util'
 
+import documentDecoder from './documentDecoder'
+import jsonDecoder from './jsonDecoder'
 import {
   ByteIterator,
   Config,
   Context,
   Decoder,
+  DecodeResult,
   DictionaryEntry,
   DictionaryListEntry,
   DictionaryListScalar,
@@ -20,8 +17,7 @@ import {
   DictionaryVector,
   END,
   MIN_LENGTH,
-  Operation,
-  DecodeResult
+  Operation
 } from './index.d'
 
 function decode(dictionary: DictionaryVector, data: Uint8Array): DecodeResult {
@@ -43,7 +39,7 @@ function decode(dictionary: DictionaryVector, data: Uint8Array): DecodeResult {
         kind: 'OperationDefinition',
         operation: operation,
         selectionSet: decodeQueryVector(
-          ASTQueryDecoder,
+          documentDecoder, // FIXME add context
           dictionary,
           byteIterator
         )
@@ -56,8 +52,39 @@ function decode(dictionary: DictionaryVector, data: Uint8Array): DecodeResult {
 
   return {
     document,
-    variables: decodeValue(JSONDecoder, dataDictionary, byteIterator)
+    variables: decodeValue(jsonDecoder, dataDictionary, byteIterator) // FIXME generate dataDictionary
   }
+}
+
+function decodeQueryVector<Vector>(
+  decoder: Decoder<Vector, any>,
+  dictionary: DictionaryVector,
+  data: ByteIterator
+) {
+  const { accumulate, commit } = decoder.vector()
+  const fields = dictionary.fields
+
+  while (!data.atEnd()) {
+    const field: DictionaryEntry = fields[data.take()]
+    const callbacks = accumulate(field.name)
+
+    if (has(field.config, Config.HAS_ARGUMENTS))
+      while (!data.atEnd()) {
+        const arg = fields[data.current()]
+        if (has(arg.config, Config.ARGUMENT))
+          callbacks.addArg(fields[data.take()].name)
+        else break
+      }
+
+    if (has(field.config, Config.VECTOR))
+      callbacks.addValue(
+        decodeQueryVector(decoder, field as DictionaryVector, data)
+      )
+
+    callbacks.commit()
+  }
+
+  return commit()
 }
 
 function decodeValue<Vector, List>(
@@ -90,37 +117,6 @@ function decodeVector<Vector, List>(
   }
 
   return vector.commit()
-}
-
-function decodeQueryVector<Vector>(
-  decoder: Decoder<Vector, any>,
-  dictionary: DictionaryVector,
-  data: ByteIterator
-) {
-  const { accumulate, commit } = decoder.vector()
-  const fields = dictionary.fields
-
-  while (!data.atEnd()) {
-    const field: DictionaryEntry = fields[data.take()]
-    const callbacks = accumulate(field.name)
-
-    if (has(field.config, Config.HAS_ARGUMENTS))
-      while (!data.atEnd()) {
-        const arg = fields[data.current()]
-        if (has(arg.config, Config.ARGUMENT))
-          callbacks.addArg(fields[data.take()].name)
-        else break
-      }
-
-    if (has(field.config, Config.VECTOR))
-      callbacks.addValue(
-        decodeQueryVector(decoder, field as DictionaryVector, data)
-      )
-
-    callbacks.commit()
-  }
-
-  return commit()
 }
 
 function decodeList<Vector, List>(
@@ -176,25 +172,6 @@ const dataDictionary: DictionaryVector = {
   ]
 }
 
-const JSONDecoder: Decoder<Object, Array<any>> = {
-  list: () => {
-    const accumulator = []
-    return {
-      accumulate: (value) => accumulator.push(value),
-      commit: () => accumulator
-    }
-  },
-  vector: () => {
-    const accumulator = {}
-    return {
-      accumulate: (key) => ({
-        addValue: (value) => (accumulator[key] = value)
-      }),
-      commit: () => accumulator
-    }
-  }
-}
-
 const queryDictionary: DictionaryVector = {
   name: 'Query',
   config: Config.VECTOR,
@@ -240,49 +217,6 @@ const queryDictionary: DictionaryVector = {
   ]
 }
 
-const ASTQueryDecoder: Decoder<SelectionSetNode, FieldNode> = {
-  vector: () => {
-    const accumulator: Array<FieldNode> = []
-    return {
-      commit: () => ({
-        kind: 'SelectionSet',
-        selections: accumulator
-      }),
-      accumulate: (key) => {
-        let args: Array<ArgumentNode>
-        let selectionSet: SelectionSetNode
-        return {
-          commit: () =>
-            accumulator.push({
-              kind: 'Field',
-              name: {
-                kind: 'Name',
-                value: key
-              },
-              ...(args && { arguments: args }),
-              ...(selectionSet && { selectionSet })
-            }),
-          addValue: (value) => (selectionSet = value),
-          addArg: (key) =>
-            (args || (args = [])).push({
-              kind: 'Argument',
-              value: {
-                kind: 'Variable',
-                name: {
-                  kind: 'Name',
-                  value: 'test'
-                }
-              },
-              name: {
-                kind: 'Name',
-                value: key
-              }
-            })
-        }
-      }
-    }
-  }
-}
 const query = new Uint8Array([
   Operation.mutation,
   0,
