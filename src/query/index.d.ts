@@ -60,14 +60,6 @@ type Context = {
   variables: Variables
 }
 
-type ByteIterator = Iterator<number>
-
-interface Iterator<T> {
-  take: () => T
-  atEnd: () => boolean
-  current: () => T
-}
-
 interface DictionaryInterface {
   name: string
   config: Config

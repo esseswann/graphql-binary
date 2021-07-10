@@ -3,8 +3,8 @@ import util from 'util'
 
 import documentDecoder from './documentDecoder'
 import jsonDecoder from './jsonDecoder'
+import { ByteIterator, createIterator } from '../iterator'
 import {
-  ByteIterator,
   Config,
   Context,
   Decoder,
@@ -24,7 +24,7 @@ function decode(dictionary: DictionaryVector, data: Uint8Array): DecodeResult {
   if (data.length < MIN_LENGTH)
     throw new Error(`Data packet is less than ${MIN_LENGTH} bytes`)
 
-  const byteIterator = createIterator(data)
+  const byteIterator = createIterator<number>(data, END)
 
   const operation = Operation[byteIterator.take()] as OperationTypeNode
 
@@ -59,7 +59,7 @@ function decode(dictionary: DictionaryVector, data: Uint8Array): DecodeResult {
 function decodeQueryVector<Vector>(
   decoder: Decoder<Vector, any>,
   dictionary: DictionaryVector,
-  data: ByteIterator
+  data: ByteIterator<number>
 ) {
   const { accumulate, commit } = decoder.vector()
   const fields = dictionary.fields
@@ -90,7 +90,7 @@ function decodeQueryVector<Vector>(
 function decodeValue<Vector, List>(
   decoder: Decoder<Vector, List>,
   dictionary: DictionaryEntry,
-  data: ByteIterator
+  data: ByteIterator<number>
 ): any {
   // Important to check if LIST first
   if (has(dictionary.config, Config.LIST))
@@ -106,7 +106,7 @@ function decodeValue<Vector, List>(
 function decodeVector<Vector, List>(
   decoder: Decoder<Vector, List>,
   dictionary: DictionaryVector,
-  data: ByteIterator
+  data: ByteIterator<number>
 ) {
   const vector = decoder.vector()
 
@@ -122,7 +122,7 @@ function decodeVector<Vector, List>(
 function decodeList<Vector, List>(
   decoder: Decoder<Vector, List>,
   dictionary: DictionaryListEntry,
-  data: ByteIterator
+  data: ByteIterator<number>
 ) {
   const list = decoder.list()
 
@@ -146,7 +146,7 @@ const scalar: DictionaryScalar<string> = {
   config: Config.LIST | Config.SCALAR,
   handler: {
     encode: (data: string) => new Uint8Array(new TextEncoder().encode(data)),
-    decode: (data: ByteIterator) => String.fromCharCode(data.take())
+    decode: (data: ByteIterator<number>) => String.fromCharCode(data.take())
   }
 }
 
@@ -249,18 +249,6 @@ const query = new Uint8Array([
 const decodedQuery = decode(queryDictionary, query)
 // console.log(util.inspect(decodedData, { showHidden: false, depth: null }))
 console.log(util.inspect(decodedQuery, { showHidden: false, depth: null }))
-
-function createIterator<T extends Iterable<any>>(array: T): ByteIterator {
-  let index = 0
-  return {
-    take: () => {
-      index += 1
-      return array[index - 1]
-    },
-    current: () => array[index],
-    atEnd: () => array[index] === END || array[index] === undefined
-  }
-}
 
 function has(bitmask: number, flag: Config) {
   return (bitmask & flag) === flag
