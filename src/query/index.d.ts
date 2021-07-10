@@ -1,5 +1,6 @@
 export const MIN_LENGTH = 3
 export const END = 255
+import { DocumentNode } from 'graphql/language/ast'
 
 export enum Operation {
   query = 0 << 0,
@@ -11,6 +12,11 @@ export enum Flags {
   Name = 1 << 3,
   Variables = 1 << 4,
   Directives = 1 << 5
+}
+
+type DecodeResult = {
+  document: DocumentNode
+  variables: object
 }
 
 interface Decoder<Vector, List> {

@@ -1,25 +1,16 @@
 import {
   ArgumentNode,
   DocumentNode,
-  FieldDefinitionNode,
   FieldNode,
-  InputValueDefinitionNode,
-  IntValueNode,
-  SelectionSetNode,
-  VariableNode,
-  ListValueNode,
-  ObjectFieldNode,
-  ObjectValueNode,
-  OperationDefinitionNode,
   OperationTypeNode,
-  SelectionNode,
-  ValueNode
+  SelectionSetNode
 } from 'graphql/language/ast'
 import util from 'util'
 
 import {
   ByteIterator,
   Config,
+  Context,
   Decoder,
   DictionaryEntry,
   DictionaryListEntry,
@@ -27,123 +18,47 @@ import {
   DictionaryListVector,
   DictionaryScalar,
   DictionaryVector,
-  END
+  END,
+  MIN_LENGTH,
+  Operation,
+  DecodeResult
 } from './index.d'
 
-// function decode(dictionary: DictionaryField, data: Uint8Array): DocumentNode {
-//   if (data.length < MIN_LENGTH)
-//     throw new Error(`Data packet is less than ${MIN_LENGTH} bytes`)
+function decode(dictionary: DictionaryVector, data: Uint8Array): DecodeResult {
+  if (data.length < MIN_LENGTH)
+    throw new Error(`Data packet is less than ${MIN_LENGTH} bytes`)
 
-//   const byteIterator = createIterator(data)
+  const byteIterator = createIterator(data)
 
-//   const operation = Operation[byteIterator.next()] as OperationTypeNode
+  const operation = Operation[byteIterator.take()] as OperationTypeNode
 
-//   const context: Context = {
-//     variables: generateVariblesContext(byteIterator)
-//   }
+  const context: Context = {
+    variables: new Map()
+  }
 
-//   const document: DocumentNode = {
-//     kind: 'Document',
-//     definitions: [
-//       {
-//         kind: 'OperationDefinition',
-//         operation: operation,
-//         selectionSet: {
-//           kind: 'SelectionSet',
-//           selections: decodeObjectType(
-//             context,
-//             dictionary.fields[0],
-//             byteIterator
-//           )
-//         }
-//       }
-//     ]
-//   }
+  const document: DocumentNode = {
+    kind: 'Document',
+    definitions: [
+      {
+        kind: 'OperationDefinition',
+        operation: operation,
+        selectionSet: decodeQueryVector(
+          ASTQueryDecoder,
+          dictionary,
+          byteIterator
+        )
+      }
+    ]
+  }
 
-//   return document
-// }
+  // Move to data
+  byteIterator.take()
 
-// function generateVariblesContext(data: ByteIterator): Variables {
-//   return new Map()
-// }
-
-// function decodeObjectType(
-//   context: Context,
-//   dictionary: DictionaryField,
-//   data: ByteIterator
-// ): ReadonlyArray<FieldNode> {
-//   const fields: FieldNode[] = []
-
-//   while (data.peek() !== END && data.peek() !== undefined)
-//     fields.push(decodeField(context, dictionary, data))
-
-//   return fields
-// }
-
-// function decodeField(
-//   context: Context,
-//   dictionary: DictionaryField,
-//   data: ByteIterator
-// ): FieldNode {
-//   const field: DictionaryField = dictionary.fields[data.next()]
-
-//   // Order is important because data is an iterator
-//   const args =
-//     field.config & Config.ARGUMENT && decodeArguments(context, field, data)
-
-//   // Order is important because data is an iterator
-//   const selections =
-//     field.config & Config.VECTOR && decodeObjectType(context, field, data)
-
-//   return {
-//     kind: 'Field',
-//     name: {
-//       kind: 'Name',
-//       value: field.name
-//     },
-//     ...(args && { arguments: args }),
-//     ...(selections && {
-//       selectionSet: {
-//         kind: 'SelectionSet',
-//         selections
-//       }
-//     })
-//   }
-// }
-
-// function decodeArguments(
-//   context: Context,
-//   dictionary: DictionaryField,
-//   data: ByteIterator
-// ): ReadonlyArray<ArgumentNode> {
-//   const args: ArgumentNode[] = []
-
-//   // FIXME first argument is not handeled
-//   while (dictionary.fields[data.peek()].config & Config.ARGUMENT)
-//     args.push(decodeArgument(context, dictionary, data))
-
-//   return args
-// }
-
-// function decodeArgument(
-//   context: Context,
-//   dictionary: DictionaryField,
-//   data: ByteIterator
-// ): ArgumentNode {
-//   const variable = context.variables.get(data.index)
-//   const arg = dictionary.fields[data.next()]
-//   return {
-//     kind: 'Argument',
-//     name: {
-//       kind: 'Name',
-//       value: arg.name
-//     },
-//     value: {
-//       kind: 'IntValue',
-//       value: 'test'
-//     }
-//   }
-// }
+  return {
+    document,
+    variables: decodeValue(JSONDecoder, dataDictionary, byteIterator)
+  }
+}
 
 function decodeValue<Vector, List>(
   decoder: Decoder<Vector, List>,
@@ -151,17 +66,14 @@ function decodeValue<Vector, List>(
   data: ByteIterator
 ): any {
   // Important to check if LIST first
-  if ((dictionary.config & Config.LIST) === Config.LIST) {
+  if (has(dictionary.config, Config.LIST))
     return decodeList(decoder, dictionary as DictionaryListEntry, data)
-  }
 
-  if ((dictionary.config & Config.VECTOR) === Config.VECTOR) {
+  if (has(dictionary.config, Config.VECTOR))
     return decodeVector(decoder, dictionary as DictionaryVector, data)
-  }
 
-  if ((dictionary.config & Config.SCALAR) === Config.SCALAR) {
+  if (has(dictionary.config, Config.SCALAR))
     return (dictionary as DictionaryScalar<any>).handler.decode(data)
-  }
 }
 
 function decodeVector<Vector, List>(
@@ -219,7 +131,7 @@ function decodeList<Vector, List>(
   const list = decoder.list()
 
   while (!data.atEnd())
-    if ((dictionary.config & Config.VECTOR) === Config.VECTOR)
+    if (has(dictionary.config, Config.VECTOR))
       list.accumulate(
         decodeValue(decoder, (dictionary as DictionaryListVector).ofType, data)
       )
@@ -371,20 +283,37 @@ const ASTQueryDecoder: Decoder<SelectionSetNode, FieldNode> = {
     }
   }
 }
-const query = new Uint8Array([0, 2, 3, 0, END])
-const data = new Uint8Array([0, 1, 2, 3, 4, END, 1, 0, 1, END, 1, 0, 1, END])
+const query = new Uint8Array([
+  Operation.mutation,
+  0,
+  2,
+  3,
+  0,
+  END,
+  // Variables start here
+  0,
+  1,
+  2,
+  3,
+  4,
+  END,
+  1,
+  0,
+  1,
+  END,
+  1,
+  0,
+  1,
+  END
+])
 
-const decodedData = decodeValue(
-  JSONDecoder,
-  dataDictionary,
-  createIterator(data)
-)
-const decodedQuery = decodeQueryVector(
-  ASTQueryDecoder,
-  queryDictionary,
-  createIterator(query)
-)
-console.log(util.inspect(decodedData, { showHidden: false, depth: null }))
+// const decodedData = decodeValue(
+//   JSONDecoder,
+//   dataDictionary,
+//   createIterator(data)
+// )
+const decodedQuery = decode(queryDictionary, query)
+// console.log(util.inspect(decodedData, { showHidden: false, depth: null }))
 console.log(util.inspect(decodedQuery, { showHidden: false, depth: null }))
 
 function createIterator<T extends Iterable<any>>(array: T): ByteIterator {
