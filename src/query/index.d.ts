@@ -1,6 +1,7 @@
 export const MIN_LENGTH = 3
 export const END = 255
 import { DocumentNode } from 'graphql/language/ast'
+import { ByteIterator } from '../iterator'
 
 export enum Operation {
   query = 0 << 0,
@@ -92,5 +93,5 @@ interface DictionaryListScalar<T extends any>
 
 interface TypeHandler<T extends any> {
   encode: (data: T) => Uint8Array
-  decode: (data: ByteIterator) => T
+  decode: (data: ByteIterator<number>) => T
 }
