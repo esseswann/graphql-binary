@@ -15,14 +15,21 @@ export enum Flags {
 
 interface Decoder<Vector, List> {
   vector: VectorHandler<Vector>
-  list: ListHandler<List>
+  list?: ListHandler<List>
 }
 
 type VectorHandler<T> = () => VectorAccumulator<T>
 
 interface VectorAccumulator<T> {
-  accumulate: (key: string, value: any) => void
+  accumulate: (key: string) => KeyHandler<any>
   commit: () => T
+}
+
+interface KeyHandler<T> {
+  addValue: (value: T) => void
+  addArg?: (key: string) => void
+  addDirective?: (key: string) => void
+  commit?: () => T
 }
 
 type ListHandler<T> = () => ListAccumulator<T>
@@ -32,32 +39,13 @@ interface ListAccumulator<T> {
   commit: () => T
 }
 
-type Dictionary = DictionaryField | DictionaryValue
-
 export enum Config {
   SCALAR = 0,
   VECTOR = 1 << 0,
   ARGUMENT = 1 << 1,
-  LIST = 1 << 2
-}
-
-interface DictionaryField {
-  name: string
-  config: Config
-  fields: DictionaryField[]
-}
-
-interface DictionaryValue {
-  name: string
-  config: Config
-  // type: DictionaryType,
-  ofType?: DictionaryValue
-  decode?: (data: ByteIterator) => any // FIXME should be
-  fields: Array<DictionaryValue>
-}
-
-type DictionaryType = {
-  name: string
+  LIST = 1 << 2,
+  INPUT = 1 << 3,
+  HAS_ARGUMENTS = 1 << 4
 }
 
 type Variables = Map<number, string>
@@ -71,4 +59,40 @@ type ByteIterator = Iterator<number>
 interface Iterator<T> {
   take: () => T
   iterateWhileNotEnd: (callback: () => void) => void
+  current: () => T
+}
+
+interface DictionaryInterface {
+  name: string
+  config: Config
+}
+
+interface DictionaryScalar<T extends any> extends DictionaryInterface {
+  handler: TypeHandler<T>
+}
+
+interface DictionaryVector extends DictionaryInterface {
+  fields: DictionaryEntry[]
+}
+
+interface DictionaryList extends DictionaryInterface {
+  nesting: number
+}
+
+type DictionaryUnaryEntry = DictionaryScalar<any> | DictionaryVector
+type DictionaryListEntry = DictionaryListScalar<any> | DictionaryListVector
+
+type DictionaryEntry = DictionaryUnaryEntry | DictionaryListEntry
+
+interface DictionaryListVector extends DictionaryList {
+  ofType: DictionaryScalar<any> | DictionaryVector
+}
+
+interface DictionaryListScalar<T extends any>
+  extends DictionaryList,
+    DictionaryScalar<T> {}
+
+interface TypeHandler<T extends any> {
+  encode: (data: T) => Uint8Array
+  decode: (data: ByteIterator) => T
 }

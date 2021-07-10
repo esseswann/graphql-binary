@@ -5,26 +5,29 @@ import {
   FieldNode,
   InputValueDefinitionNode,
   IntValueNode,
+  SelectionSetNode,
+  VariableNode,
+  ListValueNode,
   ObjectFieldNode,
   ObjectValueNode,
-  ListValueNode,
   OperationDefinitionNode,
   OperationTypeNode,
+  SelectionNode,
   ValueNode
 } from 'graphql/language/ast'
 import util from 'util'
+
 import {
   ByteIterator,
   Config,
-  Context,
-  DictionaryField,
   Decoder,
-  DictionaryValue,
-  END,
-  MIN_LENGTH,
-  Operation,
-  Variables,
-  Dictionary
+  DictionaryEntry,
+  DictionaryListEntry,
+  DictionaryListScalar,
+  DictionaryListVector,
+  DictionaryScalar,
+  DictionaryVector,
+  END
 } from './index.d'
 
 // function decode(dictionary: DictionaryField, data: Uint8Array): DocumentNode {
@@ -168,11 +171,44 @@ function decodeVector<Vector, List>(
 ) {
   const vector = decoder.vector()
   data.iterateWhileNotEnd(() => {
-    let field: DictionaryEntry = dictionary.fields[data.take()]
-    vector.accumulate(field.name, decodeValue(decoder, field, data))
+    const field: DictionaryEntry = dictionary.fields[data.take()]
+    const { addValue } = vector.accumulate(field.name)
+    addValue(decodeValue(decoder, field, data))
   })
 
   return vector.commit()
+}
+
+function decodeQueryVector<Vector>(
+  decoder: Decoder<Vector, any>,
+  dictionary: DictionaryVector,
+  data: ByteIterator
+) {
+  const { accumulate, commit } = decoder.vector()
+  const fields = dictionary.fields
+
+  data.iterateWhileNotEnd(() => {
+    const field: DictionaryEntry = fields[data.take()]
+    const callbacks = accumulate(field.name)
+
+    if (has(field.config, Config.HAS_ARGUMENTS)) {
+      while (data.current() !== undefined && data.current() !== END) {
+        const arg = fields[data.current()]
+        if (has(arg.config, Config.ARGUMENT))
+          callbacks.addArg(fields[data.take()].name)
+        else break
+      }
+    }
+
+    if (has(field.config, Config.VECTOR))
+      callbacks.addValue(
+        decodeQueryVector(decoder, field as DictionaryVector, data)
+      )
+
+    callbacks.commit()
+  })
+
+  return commit()
 }
 
 function decodeList<Vector, List>(
@@ -197,6 +233,188 @@ function decodeList<Vector, List>(
   return list.commit()
 }
 
+const scalar: DictionaryScalar<string> = {
+  name: 'scalarList',
+  config: Config.LIST | Config.SCALAR,
+  handler: {
+    encode: (data: string) => new Uint8Array(new TextEncoder().encode(data)),
+    decode: (data: ByteIterator) => String.fromCharCode(data.take())
+  }
+}
+
+const vector: DictionaryVector = {
+  name: 'vector',
+  config: Config.VECTOR,
+  fields: [scalar]
+}
+
+vector.fields.push(vector)
+
+const dataDictionary: DictionaryVector = {
+  name: 'Arg',
+  config: Config.VECTOR,
+  fields: [
+    scalar,
+    {
+      name: 'vectorList',
+      config: Config.LIST | Config.VECTOR,
+      ofType: vector,
+      fields: []
+    }
+  ]
+}
+
+const JSONDecoder: Decoder<Object, Array<any>> = {
+  list: () => {
+    const accumulator = []
+    return {
+      accumulate: (value) => accumulator.push(value),
+      commit: () => accumulator
+    }
+  },
+  vector: () => {
+    const accumulator = {}
+    return {
+      accumulate: (key) => ({
+        addValue: (value) => (accumulator[key] = value)
+      }),
+      commit: () => accumulator
+    }
+  }
+}
+
+// const ASTDecoder: Decoder<ObjectValueNode, ListValueNode> = {
+//   list: () => {
+//     const accumulator = []
+//     return {
+//       accumulate: (value) => accumulator.push(value),
+//       commit: () => ({
+//         kind: 'ListValue',
+//         values: accumulator
+//       })
+//     }
+//   },
+//   vector: () => {
+//     const accumulator: Array<{ key: string; value: any }> = []
+//     return {
+//       accumulate: (key) => ({
+//         addValue: (value) => accumulator.push({ key, value })
+//       }),
+//       commit: () => ({
+//         kind: 'ObjectValue',
+//         fields: accumulator.map(generateObjectFieldNode)
+//       })
+//     }
+//   }
+// }
+
+// const generateObjectFieldNode = ({ key, value }): ObjectFieldNode => ({
+//   kind: 'ObjectField',
+//   name: key,
+//   value: {
+//     kind: 'IntValue',
+//     value
+//   }
+// })
+
+const queryDictionary: DictionaryVector = {
+  name: 'Query',
+  config: Config.VECTOR,
+  fields: [
+    {
+      name: `scalar`,
+      config: Config.SCALAR | Config.HAS_ARGUMENTS,
+      handler: {
+        encode: () => new Uint8Array(),
+        decode: () => 'rest'
+      }
+    },
+    {
+      name: `arg`,
+      config: Config.SCALAR | Config.ARGUMENT,
+      handler: {
+        encode: () => new Uint8Array(),
+        decode: () => 'rest'
+      }
+    },
+    {
+      name: `arg2`,
+      config: Config.SCALAR | Config.ARGUMENT,
+      handler: {
+        encode: () => new Uint8Array(),
+        decode: () => 'rest'
+      }
+    },
+    {
+      name: `scalar2`,
+      config: Config.SCALAR,
+      handler: {
+        encode: () => new Uint8Array(),
+        decode: () => 'rest'
+      }
+    }
+  ]
+}
+
+const ASTQueryDecoder: Decoder<SelectionSetNode, FieldNode> = {
+  vector: () => {
+    const accumulator: Array<FieldNode> = []
+    return {
+      commit: () => ({
+        kind: 'SelectionSet',
+        selections: accumulator
+      }),
+      accumulate: (key) => {
+        let args: Array<ArgumentNode>
+        let selectionSet: SelectionSetNode
+        return {
+          commit: () =>
+            accumulator.push({
+              kind: 'Field',
+              name: {
+                kind: 'Name',
+                value: key
+              },
+              ...(args && { arguments: args }),
+              ...(selectionSet && { selectionSet })
+            }),
+          addValue: (value) => (selectionSet = value),
+          addArg: (key) =>
+            (args || (args = [])).push({
+              kind: 'Argument',
+              value: {
+                kind: 'Variable',
+                name: {
+                  kind: 'Name',
+                  value: 'test'
+                }
+              },
+              name: {
+                kind: 'Name',
+                value: key
+              }
+            })
+        }
+      }
+    }
+  }
+}
+const query = new Uint8Array([0, 2, 3, END])
+const data = new Uint8Array([0, 1, 2, 3, 4, END, 1, 0, 1, END, 1, 0, 1, END])
+
+const decodedData = decodeValue(
+  JSONDecoder,
+  dataDictionary,
+  createIterator(data)
+)
+const decodedQuery = decodeQueryVector(
+  ASTQueryDecoder,
+  queryDictionary,
+  createIterator(query)
+)
+console.log(util.inspect(decodedData, { showHidden: false, depth: null }))
+console.log(util.inspect(decodedQuery, { showHidden: false, depth: null }))
+
 function createIterator<T extends Iterable<any>>(array: T): ByteIterator {
   let index = 0
 
@@ -212,135 +430,17 @@ function createIterator<T extends Iterable<any>>(array: T): ByteIterator {
     take()
   }
 
+  function current() {
+    return array[index]
+  }
+
   return {
     take,
+    current,
     iterateWhileNotEnd
   }
 }
 
-const data = new Uint8Array([0, 1, 2, 3, 4, END, 1, 0, 1, END, 1, 0, 1, END])
-
-interface DictionaryInterface {
-  name: string
-  config: Config
+function has(bitmask: number, flag: Config) {
+  return (bitmask & flag) === flag
 }
-
-interface DictionaryScalar<T extends any> extends DictionaryInterface {
-  handler: TypeHandler<T>
-}
-
-interface DictionaryVector extends DictionaryInterface {
-  fields: DictionaryEntry[]
-}
-
-interface DictionaryList extends DictionaryInterface {
-  nesting: number
-}
-
-type DictionaryUnaryEntry = DictionaryScalar<any> | DictionaryVector
-type DictionaryListEntry = DictionaryListScalar<any> | DictionaryListVector
-
-type DictionaryEntry = DictionaryUnaryEntry | DictionaryListEntry
-
-interface DictionaryListVector extends DictionaryList {
-  ofType: DictionaryScalar<any> | DictionaryVector
-}
-
-interface DictionaryListScalar<T extends any>
-  extends DictionaryList,
-    DictionaryScalar<T> {}
-
-interface TypeHandler<T extends any> {
-  encode: (data: T) => Uint8Array
-  decode: (data: ByteIterator) => T
-}
-
-const scalar: DictionaryScalar<string> = {
-  name: 'scalarList',
-  config: Config.LIST | Config.SCALAR,
-  handler: {
-    encode: (data: string) => new Uint8Array(new TextEncoder().encode(data)),
-    decode: (data: ByteIterator) => String.fromCharCode(data.take())
-  }
-}
-
-const vector: DictionaryVector = {
-  name: 'vector',
-  config: Config.VECTOR,
-  fields: [scalar]
-}
-vector.fields.push(vector)
-
-const dictionary: DictionaryVector = {
-  name: 'Arg',
-  config: Config.VECTOR,
-  fields: [
-    scalar,
-    {
-      name: 'vectorList',
-      config: Config.LIST | Config.VECTOR,
-      ofType: vector,
-      fields: []
-    }
-  ]
-}
-
-const create = () => {
-  const accumulator = {}
-  return {
-    aggregate: (key, value) => (accumulator[key] = value),
-    commit: () => accumulator
-  }
-}
-
-const JSONDecoder: Decoder<Object, Array<any>> = {
-  list: () => {
-    const accumulator = []
-    return {
-      accumulate: (value) => accumulator.push(value),
-      commit: () => accumulator
-    }
-  },
-  vector: () => {
-    const accumulator = {}
-    return {
-      accumulate: (key, value) => (accumulator[key] = value),
-      commit: () => accumulator
-    }
-  }
-}
-
-const ASTDecoder: Decoder<ObjectValueNode, ListValueNode> = {
-  list: () => {
-    const accumulator = []
-    return {
-      accumulate: (value) => accumulator.push(value),
-      commit: () => ({
-        kind: 'ListValue',
-        values: accumulator
-      })
-    }
-  },
-  vector: () => {
-    const accumulator: Array<{ key: string; value: any }> = []
-    return {
-      accumulate: (key, value) => accumulator.push({ key, value }),
-      commit: () => ({
-        kind: 'ObjectValue',
-        fields: accumulator.map(generateObjectFieldNode)
-      })
-    }
-  }
-}
-
-const generateObjectFieldNode = ({ key, value }): ObjectFieldNode => ({
-  kind: 'ObjectField',
-  name: key,
-  value: {
-    kind: 'IntValue',
-    value
-  }
-})
-
-const plest = decodeValue(JSONDecoder, dictionary, createIterator(data))
-console.log(util.inspect(plest, { showHidden: false, depth: null }))
