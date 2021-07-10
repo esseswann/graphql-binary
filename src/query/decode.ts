@@ -192,14 +192,13 @@ function decodeQueryVector<Vector>(
     const field: DictionaryEntry = fields[data.take()]
     const callbacks = accumulate(field.name)
 
-    if (has(field.config, Config.HAS_ARGUMENTS)) {
+    if (has(field.config, Config.HAS_ARGUMENTS))
       while (!data.atEnd()) {
         const arg = fields[data.current()]
         if (has(arg.config, Config.ARGUMENT))
           callbacks.addArg(fields[data.take()].name)
         else break
       }
-    }
 
     if (has(field.config, Config.VECTOR))
       callbacks.addValue(
@@ -219,17 +218,17 @@ function decodeList<Vector, List>(
 ) {
   const list = decoder.list()
 
-  data.iterateWhileNotEnd(() =>
-    list.accumulate(
-      (dictionary.config & Config.VECTOR) === Config.VECTOR
-        ? decodeValue(
-            decoder,
-            (dictionary as DictionaryListVector).ofType,
-            data
-          )
-        : (dictionary as DictionaryListScalar<any>).handler.decode(data)
-    )
-  )
+  while (!data.atEnd())
+    if ((dictionary.config & Config.VECTOR) === Config.VECTOR)
+      list.accumulate(
+        decodeValue(decoder, (dictionary as DictionaryListVector).ofType, data)
+      )
+    else
+      list.accumulate(
+        (dictionary as DictionaryListScalar<any>).handler.decode(data)
+      )
+
+  data.take()
 
   return list.commit()
 }
@@ -284,40 +283,6 @@ const JSONDecoder: Decoder<Object, Array<any>> = {
   }
 }
 
-// const ASTDecoder: Decoder<ObjectValueNode, ListValueNode> = {
-//   list: () => {
-//     const accumulator = []
-//     return {
-//       accumulate: (value) => accumulator.push(value),
-//       commit: () => ({
-//         kind: 'ListValue',
-//         values: accumulator
-//       })
-//     }
-//   },
-//   vector: () => {
-//     const accumulator: Array<{ key: string; value: any }> = []
-//     return {
-//       accumulate: (key) => ({
-//         addValue: (value) => accumulator.push({ key, value })
-//       }),
-//       commit: () => ({
-//         kind: 'ObjectValue',
-//         fields: accumulator.map(generateObjectFieldNode)
-//       })
-//     }
-//   }
-// }
-
-// const generateObjectFieldNode = ({ key, value }): ObjectFieldNode => ({
-//   kind: 'ObjectField',
-//   name: key,
-//   value: {
-//     kind: 'IntValue',
-//     value
-//   }
-// })
-
 const queryDictionary: DictionaryVector = {
   name: 'Query',
   config: Config.VECTOR,
@@ -347,12 +312,18 @@ const queryDictionary: DictionaryVector = {
       }
     },
     {
-      name: `scalar2`,
-      config: Config.SCALAR,
-      handler: {
-        encode: () => new Uint8Array(),
-        decode: () => 'rest'
-      }
+      name: 'vector',
+      config: Config.VECTOR,
+      fields: [
+        {
+          name: `scalar2`,
+          config: Config.SCALAR,
+          handler: {
+            encode: () => new Uint8Array(),
+            decode: () => 'rest'
+          }
+        }
+      ]
     }
   ]
 }
@@ -400,7 +371,7 @@ const ASTQueryDecoder: Decoder<SelectionSetNode, FieldNode> = {
     }
   }
 }
-const query = new Uint8Array([0, 2, 3, END])
+const query = new Uint8Array([0, 2, 3, 0, END])
 const data = new Uint8Array([0, 1, 2, 3, 4, END, 1, 0, 1, END, 1, 0, 1, END])
 
 const decodedData = decodeValue(
@@ -418,32 +389,13 @@ console.log(util.inspect(decodedQuery, { showHidden: false, depth: null }))
 
 function createIterator<T extends Iterable<any>>(array: T): ByteIterator {
   let index = 0
-
-  function take() {
-    if (array[index] !== undefined) {
+  return {
+    take: () => {
       index += 1
       return array[index - 1]
-    }
-  }
-
-  function iterateWhileNotEnd(callback: () => void) {
-    while (array[index] !== END && array[index] !== undefined) callback()
-    take()
-  }
-
-  function current() {
-    return array[index]
-  }
-
-  function atEnd() {
-    return array[index] === END || array[index] === undefined
-  }
-
-  return {
-    take,
-    current,
-    atEnd,
-    iterateWhileNotEnd
+    },
+    current: () => array[index],
+    atEnd: () => array[index] === END || array[index] === undefined
   }
 }
 
