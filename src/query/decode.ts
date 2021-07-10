@@ -1,9 +1,8 @@
 import { DocumentNode, OperationTypeNode } from 'graphql/language/ast'
 import util from 'util'
 
-import documentDecoder from './documentDecoder'
-import jsonDecoder from './jsonDecoder'
 import { ByteIterator, createIterator } from '../iterator'
+import documentDecoder from './documentDecoder'
 import {
   Config,
   Context,
@@ -19,6 +18,7 @@ import {
   MIN_LENGTH,
   Operation
 } from './index.d'
+import jsonDecoder from './jsonDecoder'
 
 function decode(dictionary: DictionaryVector, data: Uint8Array): DecodeResult {
   if (data.length < MIN_LENGTH)
@@ -141,6 +141,10 @@ function decodeList<Vector, List>(
   return list.commit()
 }
 
+function has(bitmask: number, flag: Config) {
+  return (bitmask & flag) === flag
+}
+
 const scalar: DictionaryScalar<string> = {
   name: 'scalarList',
   config: Config.LIST | Config.SCALAR,
@@ -241,15 +245,6 @@ const query = new Uint8Array([
   END
 ])
 
-// const decodedData = decodeValue(
-//   JSONDecoder,
-//   dataDictionary,
-//   createIterator(data)
-// )
 const decodedQuery = decode(queryDictionary, query)
 // console.log(util.inspect(decodedData, { showHidden: false, depth: null }))
 console.log(util.inspect(decodedQuery, { showHidden: false, depth: null }))
-
-function has(bitmask: number, flag: Config) {
-  return (bitmask & flag) === flag
-}
