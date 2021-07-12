@@ -1,9 +1,17 @@
-import { DocumentNode, OperationTypeNode } from 'graphql/language/ast'
+import { ListTypeNode } from 'graphql'
+import {
+  DocumentNode,
+  NonNullTypeNode,
+  OperationTypeNode,
+  TypeNode,
+  VariableDefinitionNode
+} from 'graphql/language/ast'
 import util from 'util'
 
 import { ByteIterator, createIterator } from '../iterator'
 import documentDecoder from './documentDecoder'
 import {
+  ASCII_OFFSET,
   Config,
   Context,
   Decoder,
@@ -28,21 +36,18 @@ function decode(dictionary: DictionaryVector, data: Uint8Array): DecodeResult {
 
   const operation = Operation[byteIterator.take()] as OperationTypeNode
 
-  const context: Context = {
-    variables: new Map()
-  }
-
+  const selectionSet = decodeQueryVector(
+    documentDecoder, // FIXME add context
+    dictionary,
+    byteIterator
+  )
   const document: DocumentNode = {
     kind: 'Document',
     definitions: [
       {
         kind: 'OperationDefinition',
         operation: operation,
-        selectionSet: decodeQueryVector(
-          documentDecoder, // FIXME add context
-          dictionary,
-          byteIterator
-        )
+        selectionSet: selectionSet
       }
     ]
   }
@@ -56,10 +61,87 @@ function decode(dictionary: DictionaryVector, data: Uint8Array): DecodeResult {
   }
 }
 
+const { accumulate, commit } = variablesHandler()
+accumulate('test', 'rest', true, [true, false, true]).commit()
+console.log(util.inspect(commit(), { showHidden: false, depth: null }))
+
+function variablesHandler() {
+  // let currentVariable = ASCII_OFFSET
+  const accumulator: Array<VariableDefinitionNode> = []
+  return {
+    accumulate: (
+      key: string,
+      typeName: string,
+      isNonNull: boolean,
+      listConfig: Array<boolean>
+    ) => {
+      let typeNode: TypeNode = {
+        kind: 'NamedType',
+        name: {
+          kind: 'Name',
+          value: typeName
+        }
+      }
+      if (isNonNull) typeNode = envelopeInNonNull(typeNode)
+      return {
+        commit: () =>
+          accumulator.push({
+            kind: 'VariableDefinition',
+            type: iterateOverVariableType(listConfig, typeNode),
+            variable: {
+              kind: 'Variable',
+              name: {
+                kind: 'Name',
+                value: key
+              }
+            }
+          })
+      }
+    },
+    // accumulator.push({
+    //   kind: 'VariableDefinition',
+    //   type: {
+    //     kind: 'NamedType',
+    //     name: {
+    //       kind: 'Name',
+    //       value: type
+    //     }
+    //   },
+    //   variable: {
+    //     kind: 'Variable',
+    //     name: {
+    //       kind: 'Name',
+    //       value: key
+    //     }
+    //   }
+    // }),
+    commit: () => accumulator
+  }
+}
+
+function envelopeInNonNull(type: NonNullTypeNode['type']): NonNullTypeNode {
+  return {
+    kind: 'NonNullType',
+    type: type
+  }
+}
+
+function iterateOverVariableType(
+  listConfig: Array<boolean>,
+  acc: TypeNode,
+  index: number = listConfig.length - 1
+): TypeNode {
+  if (index < 0) return acc
+  let typeNode: TypeNode = { kind: 'ListType', type: acc }
+  if (listConfig[index]) typeNode = envelopeInNonNull(typeNode)
+  return iterateOverVariableType(listConfig, typeNode, index - 1)
+}
+
 function decodeQueryVector<Vector>(
   decoder: Decoder<Vector, any>,
   dictionary: DictionaryVector,
-  data: ByteIterator<number>
+  data: ByteIterator<number>,
+  currentVariable: number = ASCII_OFFSET
 ) {
   const { accumulate, commit } = decoder.vector()
   const fields = dictionary.fields
@@ -71,14 +153,23 @@ function decodeQueryVector<Vector>(
     if (has(field.config, Config.HAS_ARGUMENTS))
       while (!data.atEnd()) {
         const arg = fields[data.current()]
-        if (has(arg.config, Config.ARGUMENT))
-          callbacks.addArg(fields[data.take()].name)
-        else break
+        if (has(arg.config, Config.ARGUMENT)) {
+          callbacks.addArg(
+            fields[data.take()].name,
+            String.fromCharCode(currentVariable)
+          )
+          currentVariable += 1
+        } else break
       }
 
     if (has(field.config, Config.VECTOR))
       callbacks.addValue(
-        decodeQueryVector(decoder, field as DictionaryVector, data)
+        decodeQueryVector(
+          decoder,
+          field as DictionaryVector,
+          data,
+          currentVariable
+        )
       )
 
     callbacks.commit()
@@ -224,6 +315,7 @@ const queryDictionary: DictionaryVector = {
 const query = new Uint8Array([
   Operation.mutation,
   0,
+  1,
   2,
   3,
   0,

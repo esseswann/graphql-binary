@@ -24,14 +24,14 @@ const documentDecoder: Decoder<SelectionSetNode, FieldNode> = {
               ...(selectionSet && { selectionSet })
             }),
           addValue: (value) => (selectionSet = value),
-          addArg: (key) =>
+          addArg: (key, variableName) =>
             (args || (args = [])).push({
               kind: 'Argument',
               value: {
                 kind: 'Variable',
                 name: {
                   kind: 'Name',
-                  value: 'test' // FIXME should propagade to context
+                  value: variableName
                 }
               },
               name: {

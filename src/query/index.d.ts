@@ -1,5 +1,7 @@
 export const MIN_LENGTH = 3
 export const END = 255
+export const ASCII_OFFSET = 65
+
 import { DocumentNode } from 'graphql/language/ast'
 import { ByteIterator } from '../iterator'
 
@@ -34,7 +36,7 @@ interface VectorAccumulator<T> {
 
 interface KeyHandler<T> {
   addValue: (value: T) => void
-  addArg?: (key: string) => void
+  addArg?: (key: string, variableName: string) => void
   addDirective?: (key: string) => void
   commit?: () => T
 }
