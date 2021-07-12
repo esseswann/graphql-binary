@@ -1,7 +1,14 @@
-import { ArgumentNode, FieldNode, SelectionSetNode } from 'graphql/language/ast'
+import {
+  ArgumentNode,
+  FieldNode,
+  SelectionSetNode,
+  TypeNode,
+  VariableDefinitionNode,
+  NonNullTypeNode
+} from 'graphql/language/ast'
 import { Decoder } from './index.d'
 
-const documentDecoder: Decoder<SelectionSetNode, FieldNode> = {
+export const documentDecoder: Decoder<SelectionSetNode, FieldNode> = {
   vector: () => {
     const accumulator: Array<FieldNode> = []
     return {
@@ -45,4 +52,56 @@ const documentDecoder: Decoder<SelectionSetNode, FieldNode> = {
   }
 }
 
-export default documentDecoder
+export function variablesHandler() {
+  const accumulator: Array<VariableDefinitionNode> = []
+  return {
+    accumulate: (
+      key: string,
+      typeName: string,
+      isNonNull: boolean,
+      listConfig: Array<boolean>
+    ) => {
+      let typeNode: TypeNode = {
+        kind: 'NamedType',
+        name: {
+          kind: 'Name',
+          value: typeName
+        }
+      }
+      if (isNonNull) typeNode = envelopeInNonNull(typeNode)
+      return {
+        commit: () =>
+          accumulator.push({
+            kind: 'VariableDefinition',
+            type: iterateOverVariableType(listConfig, typeNode),
+            variable: {
+              kind: 'Variable',
+              name: {
+                kind: 'Name',
+                value: key
+              }
+            }
+          })
+      }
+    },
+    commit: () => accumulator
+  }
+}
+
+function iterateOverVariableType(
+  listConfig: Array<boolean>,
+  acc: TypeNode,
+  index: number = listConfig.length - 1
+): TypeNode {
+  if (index < 0) return acc
+  let typeNode: TypeNode = { kind: 'ListType', type: acc }
+  if (listConfig[index]) typeNode = envelopeInNonNull(typeNode)
+  return iterateOverVariableType(listConfig, typeNode, index - 1)
+}
+
+function envelopeInNonNull(type: NonNullTypeNode['type']): NonNullTypeNode {
+  return {
+    kind: 'NonNullType',
+    type: type
+  }
+}

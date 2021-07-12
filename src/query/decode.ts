@@ -1,15 +1,9 @@
 import { ListTypeNode } from 'graphql'
-import {
-  DocumentNode,
-  NonNullTypeNode,
-  OperationTypeNode,
-  TypeNode,
-  VariableDefinitionNode
-} from 'graphql/language/ast'
+import { DocumentNode, OperationTypeNode } from 'graphql/language/ast'
 import util from 'util'
 
 import { ByteIterator, createIterator } from '../iterator'
-import documentDecoder from './documentDecoder'
+import { documentDecoder, variablesHandler } from './documentDecoder'
 import {
   ASCII_OFFSET,
   Config,
@@ -61,81 +55,9 @@ function decode(dictionary: DictionaryVector, data: Uint8Array): DecodeResult {
   }
 }
 
-const { accumulate, commit } = variablesHandler()
-accumulate('test', 'rest', true, [true, false, true]).commit()
-console.log(util.inspect(commit(), { showHidden: false, depth: null }))
-
-function variablesHandler() {
-  // let currentVariable = ASCII_OFFSET
-  const accumulator: Array<VariableDefinitionNode> = []
-  return {
-    accumulate: (
-      key: string,
-      typeName: string,
-      isNonNull: boolean,
-      listConfig: Array<boolean>
-    ) => {
-      let typeNode: TypeNode = {
-        kind: 'NamedType',
-        name: {
-          kind: 'Name',
-          value: typeName
-        }
-      }
-      if (isNonNull) typeNode = envelopeInNonNull(typeNode)
-      return {
-        commit: () =>
-          accumulator.push({
-            kind: 'VariableDefinition',
-            type: iterateOverVariableType(listConfig, typeNode),
-            variable: {
-              kind: 'Variable',
-              name: {
-                kind: 'Name',
-                value: key
-              }
-            }
-          })
-      }
-    },
-    // accumulator.push({
-    //   kind: 'VariableDefinition',
-    //   type: {
-    //     kind: 'NamedType',
-    //     name: {
-    //       kind: 'Name',
-    //       value: type
-    //     }
-    //   },
-    //   variable: {
-    //     kind: 'Variable',
-    //     name: {
-    //       kind: 'Name',
-    //       value: key
-    //     }
-    //   }
-    // }),
-    commit: () => accumulator
-  }
-}
-
-function envelopeInNonNull(type: NonNullTypeNode['type']): NonNullTypeNode {
-  return {
-    kind: 'NonNullType',
-    type: type
-  }
-}
-
-function iterateOverVariableType(
-  listConfig: Array<boolean>,
-  acc: TypeNode,
-  index: number = listConfig.length - 1
-): TypeNode {
-  if (index < 0) return acc
-  let typeNode: TypeNode = { kind: 'ListType', type: acc }
-  if (listConfig[index]) typeNode = envelopeInNonNull(typeNode)
-  return iterateOverVariableType(listConfig, typeNode, index - 1)
-}
+// const { accumulate, commit } = variablesHandler()
+// accumulate('test', 'rest', true, [true, false, true]).commit()
+// console.log(util.inspect(commit(), { showHidden: false, depth: null }))
 
 function decodeQueryVector<Vector>(
   decoder: Decoder<Vector, any>,
@@ -267,76 +189,76 @@ const dataDictionary: DictionaryVector = {
   ]
 }
 
-const queryDictionary: DictionaryVector = {
-  name: 'Query',
-  config: Config.VECTOR,
-  fields: [
-    {
-      name: `scalar`,
-      config: Config.SCALAR | Config.HAS_ARGUMENTS,
-      handler: {
-        encode: () => new Uint8Array(),
-        decode: () => 'rest'
-      }
-    },
-    {
-      name: `arg`,
-      config: Config.SCALAR | Config.ARGUMENT,
-      handler: {
-        encode: () => new Uint8Array(),
-        decode: () => 'rest'
-      }
-    },
-    {
-      name: `arg2`,
-      config: Config.SCALAR | Config.ARGUMENT,
-      handler: {
-        encode: () => new Uint8Array(),
-        decode: () => 'rest'
-      }
-    },
-    {
-      name: 'vector',
-      config: Config.VECTOR,
-      fields: [
-        {
-          name: `scalar2`,
-          config: Config.SCALAR,
-          handler: {
-            encode: () => new Uint8Array(),
-            decode: () => 'rest'
-          }
-        }
-      ]
-    }
-  ]
-}
+// const queryDictionary: DictionaryVector = {
+//   name: 'Query',
+//   config: Config.VECTOR,
+//   fields: [
+//     {
+//       name: `scalar`,
+//       config: Config.SCALAR | Config.HAS_ARGUMENTS,
+//       handler: {
+//         encode: () => new Uint8Array(),
+//         decode: () => 'rest'
+//       }
+//     },
+//     {
+//       name: `arg`,
+//       config: Config.SCALAR | Config.ARGUMENT,
+//       handler: {
+//         encode: () => new Uint8Array(),
+//         decode: () => 'rest'
+//       }
+//     },
+//     {
+//       name: `arg2`,
+//       config: Config.SCALAR | Config.ARGUMENT,
+//       handler: {
+//         encode: () => new Uint8Array(),
+//         decode: () => 'rest'
+//       }
+//     },
+//     {
+//       name: 'vector',
+//       config: Config.VECTOR,
+//       fields: [
+//         {
+//           name: `scalar2`,
+//           config: Config.SCALAR,
+//           handler: {
+//             encode: () => new Uint8Array(),
+//             decode: () => 'rest'
+//           }
+//         }
+//       ]
+//     }
+//   ]
+// }
 
-const query = new Uint8Array([
-  Operation.mutation,
-  0,
-  1,
-  2,
-  3,
-  0,
-  END,
-  // Variables start here
-  0,
-  1,
-  2,
-  3,
-  4,
-  END,
-  1,
-  0,
-  1,
-  END,
-  1,
-  0,
-  1,
-  END
-])
+// const query = new Uint8Array([
+//   Operation.mutation,
+//   0,
+//   1,
+//   2,
+//   3,
+//   0,
+//   END,
+//   // Variables start here
+//   0,
+//   1,
+//   2,
+//   3,
+//   4,
+//   END,
+//   1,
+//   0,
+//   1,
+//   END,
+//   1,
+//   0,
+//   1,
+//   END
+// ])
 
-const decodedQuery = decode(queryDictionary, query)
-// console.log(util.inspect(decodedData, { showHidden: false, depth: null }))
-console.log(util.inspect(decodedQuery, { showHidden: false, depth: null }))
+// const decodedQuery = decode(queryDictionary, query)
+// // console.log(util.inspect(decodedData, { showHidden: false, depth: null }))
+// console.log(util.inspect(decodedQuery, { showHidden: false, depth: null }))
