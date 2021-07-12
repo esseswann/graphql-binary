@@ -3,7 +3,6 @@ export const END = 255
 export const ASCII_OFFSET = 65
 
 import { DocumentNode } from 'graphql/language/ast'
-import { ByteIterator } from '../iterator'
 
 export enum Operation {
   query = 0 << 0,
@@ -19,7 +18,7 @@ export enum Flags {
 
 type DecodeResult = {
   document: DocumentNode
-  variables: object
+  // variables: object
 }
 
 interface Decoder<Vector, List> {
@@ -54,46 +53,12 @@ export enum Config {
   ARGUMENT = 1 << 1,
   LIST = 1 << 2,
   INPUT = 1 << 3,
-  HAS_ARGUMENTS = 1 << 4
+  HAS_ARGUMENTS = 1 << 4,
+  NON_NULL = 1 << 5
 }
 
 type Variables = Map<number, string>
 
 type Context = {
   variables: Variables
-}
-
-interface DictionaryInterface {
-  name: string
-  config: Config
-}
-
-interface DictionaryScalar<T extends any> extends DictionaryInterface {
-  handler: TypeHandler<T>
-}
-
-interface DictionaryVector extends DictionaryInterface {
-  fields: DictionaryEntry[]
-}
-
-interface DictionaryList extends DictionaryInterface {
-  nesting: number
-}
-
-type DictionaryUnaryEntry = DictionaryScalar<any> | DictionaryVector
-type DictionaryListEntry = DictionaryListScalar<any> | DictionaryListVector
-
-type DictionaryEntry = DictionaryUnaryEntry | DictionaryListEntry
-
-interface DictionaryListVector extends DictionaryList {
-  ofType: DictionaryScalar<any> | DictionaryVector
-}
-
-interface DictionaryListScalar<T extends any>
-  extends DictionaryList,
-    DictionaryScalar<T> {}
-
-interface TypeHandler<T extends any> {
-  encode: (data: T) => Uint8Array
-  decode: (data: ByteIterator<number>) => T
 }
