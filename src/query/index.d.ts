@@ -28,15 +28,6 @@ interface Decoder<Vector, List> {
   list?: ListHandler<List>
 }
 
-type ScalarHandlers = {
-  [key: string]: ScalarHandler<any>
-}
-
-interface ScalarHandler<T> {
-  encode: (data: T) => Uint8Array
-  decode: (data: ByteIterator<number>) => T
-}
-
 type VectorHandler<T> = () => VectorAccumulator<T>
 
 interface VectorAccumulator<T> {

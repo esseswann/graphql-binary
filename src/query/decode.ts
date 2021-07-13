@@ -1,15 +1,14 @@
-import { buildSchema, GraphQLObjectType, GraphQLSchema } from 'graphql'
+import { GraphQLObjectType, GraphQLSchema } from 'graphql'
 import {
   DocumentNode,
-  OperationTypeNode,
-  TypeNode,
-  SelectionSetNode,
   FieldDefinitionNode,
-  NamedTypeNode
+  NamedTypeNode,
+  OperationTypeNode,
+  SelectionSetNode,
+  TypeNode
 } from 'graphql/language/ast'
-import util from 'util'
-import fs from 'fs'
 
+import scalarHandlers, { ScalarHandlers } from '../scalarHandlers'
 import { ByteIterator, createIterator } from '../iterator'
 import { documentDecoder } from './documentDecoder'
 import {
@@ -17,10 +16,9 @@ import {
   Decoder,
   DecodeResult,
   END,
-  Operation,
   KeyHandler,
-  VariablesHandler,
-  ScalarHandlers
+  Operation,
+  VariablesHandler
 } from './index.d'
 import jsonDecoder from './jsonDecoder'
 
@@ -152,44 +150,4 @@ class MyDecoder {
   }
 }
 
-const scalarHandlers: ScalarHandlers = {
-  Int: {
-    encode: (data: number) => new Uint8Array([data]),
-    decode: (data) => data.take()
-  },
-  Boolean: {
-    encode: (data: boolean) => new Uint8Array([data ? 1 : 0]),
-    decode: (data) => !!data.take()
-  },
-  ID: {
-    encode: (data: string) => new Uint8Array([]),
-    decode: (data) => 'id'
-  }
-}
-
-const query = new Uint8Array([
-  Operation.query,
-  4,
-  0,
-  1,
-  0,
-  END,
-  END,
-  7,
-  8,
-  13,
-  END,
-  // Variables start here
-  15,
-  0,
-  1,
-  0,
-  END
-])
-
-const schema = fs.readFileSync('./src/fixtures/schema.graphql', 'utf-8')
-
-const builtSchema = buildSchema(schema)
-const decoder = new MyDecoder(builtSchema)
-const decodedQuery = decoder.decode(query)
-console.log(util.inspect(decodedQuery, { showHidden: false, depth: null }))
+export default MyDecoder
