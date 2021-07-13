@@ -3,6 +3,7 @@ export const END = 255
 export const ASCII_OFFSET = 65
 
 import { DocumentNode, TypeNode } from 'graphql/language/ast'
+import { ByteIterator } from '../iterator'
 
 export enum Operation {
   query = 0 << 0,
@@ -23,7 +24,17 @@ type DecodeResult = {
 
 interface Decoder<Vector, List> {
   vector: VectorHandler<Vector>
+  variables?: () => VariablesHandler<any>
   list?: ListHandler<List>
+}
+
+type ScalarHandlers = {
+  [key: string]: ScalarHandler<any>
+}
+
+interface ScalarHandler<T> {
+  encode: (data: T) => Uint8Array
+  decode: (data: ByteIterator<number>) => T
 }
 
 type VectorHandler<T> = () => VectorAccumulator<T>

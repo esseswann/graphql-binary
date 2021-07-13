@@ -49,26 +49,23 @@ export const documentDecoder: Decoder<SelectionSetNode, FieldNode> = {
         }
       }
     }
-  }
-}
-
-export function variablesHandler(): VariablesHandler<
-  Array<VariableDefinitionNode>
-> {
-  const accumulator: Array<VariableDefinitionNode> = []
-  return {
-    accumulate: (key, type) =>
-      accumulator.push({
-        kind: 'VariableDefinition',
-        type: type,
-        variable: {
-          kind: 'Variable',
-          name: {
-            kind: 'Name',
-            value: key
+  },
+  variables(): VariablesHandler<Array<VariableDefinitionNode>> {
+    const accumulator: Array<VariableDefinitionNode> = []
+    return {
+      accumulate: (key, type) =>
+        accumulator.push({
+          kind: 'VariableDefinition',
+          type: type,
+          variable: {
+            kind: 'Variable',
+            name: {
+              kind: 'Name',
+              value: key
+            }
           }
-        }
-      }),
-    commit: () => accumulator
+        }),
+      commit: () => accumulator
+    }
   }
 }
