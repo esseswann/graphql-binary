@@ -22,7 +22,7 @@ import {
 } from './index.d'
 import jsonDecoder from './jsonDecoder'
 
-class MyDecoder {
+class Decoder {
   private readonly schema: GraphQLSchema
   private readonly queryDecoder: QueryDecoder<any, any>
   private readonly dataDecoder: DataDecoder<any, any, any>
@@ -150,4 +150,4 @@ class MyDecoder {
   }
 }
 
-export default MyDecoder
+export default Decoder
