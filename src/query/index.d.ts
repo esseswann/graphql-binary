@@ -2,7 +2,7 @@ export const MIN_LENGTH = 3
 export const END = 255
 export const ASCII_OFFSET = 65
 
-import { DocumentNode } from 'graphql/language/ast'
+import { DocumentNode, TypeNode } from 'graphql/language/ast'
 
 export enum Operation {
   query = 0 << 0,
@@ -68,9 +68,4 @@ interface VariablesHandler<T> {
   commit: () => T
 }
 
-type AccumulateVariables = (
-  key: string,
-  typeName: string,
-  isNonNull: boolean,
-  listConfig: Array<boolean>
-) => () => void
+type AccumulateVariables = (key: string, type: TypeNode) => void

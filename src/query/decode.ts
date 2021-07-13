@@ -81,8 +81,8 @@ function decodeQuery<Vector>(
           callbacks.addArg(arg.name.value, String.fromCharCode(currentVariable))
           data.take()
           currentVariable += 1
-          console.log(arg)
-          variablesHandler(arg.name.value, arg.type.name.value, true, [true])()
+          // FIXME this direct callback with type definition breaks abstraction gap
+          variablesHandler(arg.name.value, arg.type)
         } else break
       }
     }
