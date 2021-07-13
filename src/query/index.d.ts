@@ -57,8 +57,20 @@ export enum Config {
   NON_NULL = 1 << 5
 }
 
-type Variables = Map<number, string>
+// type Variables = Map<number, string>
 
-type Context = {
-  variables: Variables
+// type Context = {
+//   variables: Variables
+// }
+
+interface VariablesHandler<T> {
+  accumulate: AccumulateVariables
+  commit: () => T
 }
+
+type AccumulateVariables = (
+  key: string,
+  typeName: string,
+  isNonNull: boolean,
+  listConfig: Array<boolean>
+) => () => void

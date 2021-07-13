@@ -7,7 +7,7 @@ import { ByteIterator, createIterator } from '../iterator'
 import { documentDecoder, variablesHandler } from './documentDecoder'
 import {
   ASCII_OFFSET,
-  Config,
+  AccumulateVariables,
   Decoder,
   DecodeResult,
   END,
@@ -29,9 +29,11 @@ function decode(schema: GraphQLSchema, data: Uint8Array): DecodeResult {
   const selectionSet = decodeQuery(
     documentDecoder, // FIXME add context
     schema.getType('Query') as GraphQLObjectType,
-    byteIterator
-    // variables.accumulate
+    byteIterator,
+    variables.accumulate
   )
+
+  const variableDefinitions = variables.commit()
 
   const document: DocumentNode = {
     kind: 'Document',
@@ -39,7 +41,8 @@ function decode(schema: GraphQLSchema, data: Uint8Array): DecodeResult {
       {
         kind: 'OperationDefinition',
         operation: operation,
-        selectionSet: selectionSet
+        selectionSet: selectionSet,
+        ...(variableDefinitions && { variableDefinitions })
       }
     ]
   }
@@ -57,6 +60,7 @@ function decodeQuery<Vector>(
   decoder: Decoder<Vector, any>,
   definition: GraphQLObjectType,
   data: ByteIterator<number>,
+  variablesHandler: AccumulateVariables,
   currentVariable: number = ASCII_OFFSET
 ) {
   const { accumulate, commit } = decoder.vector()
@@ -77,12 +81,16 @@ function decodeQuery<Vector>(
           callbacks.addArg(arg.name.value, String.fromCharCode(currentVariable))
           data.take()
           currentVariable += 1
+          console.log(arg)
+          variablesHandler(arg.name.value, arg.type.name.value, true, [true])()
         } else break
       }
     }
 
     if (type.getFields)
-      callbacks.addValue(decodeQuery(decoder, type, data, currentVariable))
+      callbacks.addValue(
+        decodeQuery(decoder, type, data, variablesHandler, currentVariable)
+      )
 
     callbacks.commit()
   }

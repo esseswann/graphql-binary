@@ -6,7 +6,7 @@ import {
   VariableDefinitionNode,
   NonNullTypeNode
 } from 'graphql/language/ast'
-import { Decoder } from './index.d'
+import { Decoder, VariablesHandler } from './index.d'
 
 export const documentDecoder: Decoder<SelectionSetNode, FieldNode> = {
   vector: () => {
@@ -52,7 +52,9 @@ export const documentDecoder: Decoder<SelectionSetNode, FieldNode> = {
   }
 }
 
-export function variablesHandler() {
+export function variablesHandler(): VariablesHandler<
+  Array<VariableDefinitionNode>
+> {
   const accumulator: Array<VariableDefinitionNode> = []
   return {
     accumulate: (
@@ -69,20 +71,18 @@ export function variablesHandler() {
         }
       }
       if (isNonNull) typeNode = envelopeInNonNull(typeNode)
-      return {
-        commit: () =>
-          accumulator.push({
-            kind: 'VariableDefinition',
-            type: iterateOverVariableType(listConfig, typeNode),
-            variable: {
-              kind: 'Variable',
-              name: {
-                kind: 'Name',
-                value: key
-              }
+      return () =>
+        accumulator.push({
+          kind: 'VariableDefinition',
+          type: iterateOverVariableType(listConfig, typeNode),
+          variable: {
+            kind: 'Variable',
+            name: {
+              kind: 'Name',
+              value: key
             }
-          })
-      }
+          }
+        })
     },
     commit: () => accumulator
   }
