@@ -1,6 +1,10 @@
 import { buildSchema, GraphQLObjectType, GraphQLSchema } from 'graphql'
 import fs from 'fs'
-import { DocumentNode, OperationTypeNode } from 'graphql/language/ast'
+import {
+  DocumentNode,
+  OperationTypeNode,
+  VariableDefinitionNode
+} from 'graphql/language/ast'
 import util from 'util'
 
 import { ByteIterator, createIterator } from '../iterator'
@@ -47,12 +51,25 @@ function decode(schema: GraphQLSchema, data: Uint8Array): DecodeResult {
     ]
   }
 
-  // Move to data
-  byteIterator.take()
-
   return {
-    document
-    // variables: decodeValue(jsonDecoder, dataDictionary, byteIterator) // FIXME generate dataDictionary
+    document,
+    variables: decodeVariables(
+      jsonDecoder,
+      variableDefinitions,
+      scalarHandlers,
+      byteIterator
+    ) // FIXME generate dataDictionary
+  }
+}
+
+const scalarHandlers: ScalarHandlers = {
+  Int: {
+    encode: (data: number) => new Uint8Array([data]),
+    decode: (data) => data.take()
+  },
+  Boolean: {
+    encode: (data: boolean) => new Uint8Array([data ? 1 : 0]),
+    decode: (data) => !!data.take()
   }
 }
 
@@ -78,6 +95,7 @@ function decodeQuery<Vector>(
       while (!data.atEnd()) {
         const arg = field.arguments[data.current() - index - 1]
         if (arg) {
+          // FIXME check if actually an argument
           callbacks.addArg(arg.name.value, String.fromCharCode(currentVariable))
           data.take()
           currentVariable += 1
@@ -95,7 +113,34 @@ function decodeQuery<Vector>(
     callbacks.commit()
   }
 
+  data.take()
+
   return commit()
+}
+
+type ScalarHandlers = {
+  [key: string]: ScalarHandler<any>
+}
+
+interface ScalarHandler<T> {
+  encode: (data: T) => Uint8Array
+  decode: (data: ByteIterator<number>) => T
+}
+
+function decodeVariables<Vector, List>(
+  decoder: Decoder<Vector, List>,
+  dictionary: Array<VariableDefinitionNode>,
+  scalarHandlers: ScalarHandlers,
+  data: ByteIterator<number>
+) {
+  const vector = decoder.vector()
+  for (let index = 0; index < dictionary.length; index++) {
+    const { type, variable } = dictionary[index]
+    const { addValue } = vector.accumulate(variable.name.value)
+    const value = scalarHandlers[type.name.value].decode(data)
+    addValue(value)
+  }
+  return vector.commit()
 }
 
 // function decodeValue<Vector, List>(
@@ -103,28 +148,28 @@ function decodeQuery<Vector>(
 //   dictionary: DictionaryEntry,
 //   data: ByteIterator<number>
 // ): any {
-//   // Important to check if LIST first
-//   if (has(dictionary.config, Config.LIST))
-//     return decodeList(decoder, dictionary as DictionaryListEntry, data)
-
-//   if (has(dictionary.config, Config.VECTOR))
-//     return decodeVector(decoder, dictionary as DictionaryVector, data)
-
-//   if (has(dictionary.config, Config.SCALAR))
-//     return (dictionary as DictionaryScalar<any>).handler.decode(data)
+// // Important to check if LIST first
+// if (has(dictionary.config, Config.LIST))
+//   return decodeList(decoder, dictionary as DictionaryListEntry, data)
+// if (has(dictionary.config, Config.VECTOR))
+//   return decodeVector(decoder, dictionary as DictionaryVector, data)
+// if (has(dictionary.config, Config.SCALAR))
+//   return (dictionary as DictionaryScalar<any>).handler.decode(data)
 // }
 
 // function decodeVector<Vector, List>(
 //   decoder: Decoder<Vector, List>,
-//   dictionary: DictionaryVector,
+//   dictionary: Array<VariableDefinitionNode>,
 //   data: ByteIterator<number>
 // ) {
 //   const vector = decoder.vector()
+//   console.log(dictionary)
 
 //   while (!data.atEnd()) {
-//     const field: DictionaryEntry = dictionary.fields[data.take()]
-//     const { addValue } = vector.accumulate(field.name)
-//     addValue(decodeValue(decoder, field, data))
+//     const field = dictionary
+//   const field: DictionaryEntry = dictionary.fields[data.take()]
+//   const { addValue } = vector.accumulate(field.name)
+//   addValue(decodeValue(decoder, field, data))
 //   }
 
 //   return vector.commit()
@@ -132,22 +177,22 @@ function decodeQuery<Vector>(
 
 // function decodeList<Vector, List>(
 //   decoder: Decoder<Vector, List>,
-//   dictionary: DictionaryListEntry,
+//   dictionary: Array<VariableDefinitionNode>,
 //   data: ByteIterator<number>
 // ) {
 //   const list = decoder.list()
 
-//   while (!data.atEnd())
-//     if (has(dictionary.config, Config.VECTOR))
-//       list.accumulate(
-//         decodeValue(decoder, (dictionary as DictionaryListVector).ofType, data)
-//       )
-//     else
-//       list.accumulate(
-//         (dictionary as DictionaryListScalar<any>).handler.decode(data)
-//       )
+// while (!data.atEnd())
+//   if (has(dictionary.config, Config.VECTOR))
+//     list.accumulate(
+//       decodeValue(decoder, (dictionary as DictionaryListVector).ofType, data)
+//     )
+//   else
+//     list.accumulate(
+//       (dictionary as DictionaryListScalar<any>).handler.decode(data)
+//     )
 
-//   data.take()
+// data.take()
 
 //   return list.commit()
 // }
@@ -262,28 +307,20 @@ function decodeQuery<Vector>(
 
 const query = new Uint8Array([
   Operation.query,
-  7,
-  8,
-  10,
-  0,
-  1,
-  2,
-  3,
   4,
   0,
   1,
   0,
   END,
-  END
-  // 0,
-  // 1,
-  // 2,
-  // 3,
-  // 0,
-  // END,
-  // // Variables start here
-  // 0,
-  // 1,
+  END,
+  7,
+  8,
+  10,
+  END,
+  // Variables start here
+  15,
+  0
+  // 0
   // 2,
   // 3,
   // 4,
