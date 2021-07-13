@@ -2,37 +2,24 @@ import {
   ArgumentNode,
   FieldNode,
   SelectionSetNode,
-  TypeNode,
-  VariableDefinitionNode,
-  NonNullTypeNode
+  VariableDefinitionNode
 } from 'graphql/language/ast'
-import { Decoder, VariablesHandler } from './index.d'
+import { QueryDecoder } from './index.d'
 
-export const documentDecoder: Decoder<SelectionSetNode, FieldNode> = {
+export const documentDecoder: QueryDecoder<
+  SelectionSetNode,
+  Array<VariableDefinitionNode>
+> = {
   vector: () => {
     const accumulator: Array<FieldNode> = []
     return {
-      commit: () => ({
-        kind: 'SelectionSet',
-        selections: accumulator
-      }),
       accumulate: (key) => {
-        let args: Array<ArgumentNode>
+        const args: Array<ArgumentNode> = []
         let selectionSet: SelectionSetNode
         return {
-          commit: () =>
-            accumulator.push({
-              kind: 'Field',
-              name: {
-                kind: 'Name',
-                value: key
-              },
-              ...(args && { arguments: args }),
-              ...(selectionSet && { selectionSet })
-            }),
           addValue: (value) => (selectionSet = value),
           addArg: (key, variableName) =>
-            (args || (args = [])).push({
+            args.push({
               kind: 'Argument',
               value: {
                 kind: 'Variable',
@@ -45,12 +32,26 @@ export const documentDecoder: Decoder<SelectionSetNode, FieldNode> = {
                 kind: 'Name',
                 value: key
               }
+            }),
+          commit: () =>
+            accumulator.push({
+              kind: 'Field',
+              name: {
+                kind: 'Name',
+                value: key
+              },
+              ...(args.length && { arguments: args }),
+              ...(selectionSet && { selectionSet })
             })
         }
-      }
+      },
+      commit: (): SelectionSetNode => ({
+        kind: 'SelectionSet',
+        selections: accumulator
+      })
     }
   },
-  variables(): VariablesHandler<Array<VariableDefinitionNode>> {
+  variables: () => {
     const accumulator: Array<VariableDefinitionNode> = []
     return {
       accumulate: (key, type) =>

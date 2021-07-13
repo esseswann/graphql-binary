@@ -7,25 +7,25 @@ import {
   SelectionSetNode,
   TypeNode
 } from 'graphql/language/ast'
-
 import defaultScalarHandlers, { ScalarHandlers } from '../scalarHandlers'
 import { ByteIterator, createIterator } from '../iterator'
 import { documentDecoder } from './documentDecoder'
 import {
   ASCII_OFFSET,
-  Decoder,
+  QueryDecoder,
   DecodeResult,
   END,
-  KeyHandler,
   Operation,
-  VariablesHandler
+  VariablesHandler,
+  DataDecoder,
+  QueryKeyHandler
 } from './index.d'
 import jsonDecoder from './jsonDecoder'
 
 class MyDecoder {
   private readonly schema: GraphQLSchema
-  private readonly queryDecoder: Decoder<any, any>
-  private readonly dataDecoder: Decoder<any, any>
+  private readonly queryDecoder: QueryDecoder<any, any>
+  private readonly dataDecoder: DataDecoder<any, any, any>
   private readonly scalarHandlers: ScalarHandlers
 
   private data: ByteIterator<number>
@@ -94,7 +94,7 @@ class MyDecoder {
   private decodeArguments(
     field: FieldDefinitionNode,
     index: number,
-    addArg: KeyHandler<any>['addArg']
+    addArg: QueryKeyHandler<any>['addArg']
   ): void {
     while (!this.data.atEnd()) {
       const arg = field.arguments[this.data.current() - index - 1]

@@ -3,7 +3,6 @@ export const END = 255
 export const ASCII_OFFSET = 65
 
 import { DocumentNode, TypeNode } from 'graphql/language/ast'
-import { ByteIterator } from '../iterator'
 
 export enum Operation {
   query = 0 << 0,
@@ -22,29 +21,39 @@ type DecodeResult = {
   variables: object
 }
 
-interface Decoder<Vector, List> {
-  vector: VectorHandler<Vector>
-  variables?: () => VariablesHandler<any>
-  list?: ListHandler<List>
+interface QueryDecoder<Vector, Variable> {
+  vector: () => VectorHandler<Vector, QueryKeyHandler<Vector>>
+  variables: () => VariablesHandler<Variable>
 }
 
-type VectorHandler<T> = () => VectorAccumulator<T>
+interface QueryKeyHandler<T> extends KeyHandler<T> {
+  addArg: (key: string, type: any) => void
+  addDirective?: (key: string, type: any) => void
+  commit: () => void
+}
 
-interface VectorAccumulator<T> {
-  accumulate: (key: string) => KeyHandler<any>
+interface VariablesHandler<T> {
+  accumulate: AccumulateVariables
   commit: () => T
+}
+
+type AccumulateVariables = (key: string, type: TypeNode) => void
+
+interface VectorHandler<T, KeyHandler> {
+  accumulate: (key: string) => KeyHandler
+  commit: () => T
+}
+
+interface DataDecoder<Vector, List, Value> {
+  vector: () => VectorHandler<Vector, KeyHandler<Value>>
+  list: () => ListHandler<List>
 }
 
 interface KeyHandler<T> {
   addValue: (value: T) => void
-  addArg?: (key: string, variableName: string) => void
-  addDirective?: (key: string) => void
-  commit?: () => T
 }
 
-type ListHandler<T> = () => ListAccumulator<T>
-
-interface ListAccumulator<T> {
+interface ListHandler<T> {
   accumulate: (value: any) => void
   commit: () => T
 }
@@ -58,16 +67,3 @@ export enum Config {
   HAS_ARGUMENTS = 1 << 4,
   NON_NULL = 1 << 5
 }
-
-// type Variables = Map<number, string>
-
-// type Context = {
-//   variables: Variables
-// }
-
-interface VariablesHandler<T> {
-  accumulate: AccumulateVariables
-  commit: () => T
-}
-
-type AccumulateVariables = (key: string, type: TypeNode) => void

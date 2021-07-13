@@ -1,6 +1,6 @@
-import { Decoder } from './index.d'
+import { DataDecoder } from './index.d'
 
-const jsonDecoder: Decoder<Object, Array<any>> = {
+const jsonDecoder: DataDecoder<Object, Array<any>, any> = {
   list: () => {
     const accumulator = []
     return {
