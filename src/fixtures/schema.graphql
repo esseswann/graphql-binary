@@ -12,7 +12,13 @@ type Query {
     boolean: Boolean
     string: String
     enum: Enumerable
+    inputMap: InputMap
   ): String
+}
+
+input InputMap {
+  scalar: ID
+  inputMap: InputMap
 }
 
 type Mutation {

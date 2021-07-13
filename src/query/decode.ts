@@ -1,8 +1,14 @@
-import { buildSchema, GraphQLObjectType, GraphQLSchema } from 'graphql'
+import {
+  buildSchema,
+  GraphQLObjectType,
+  GraphQLSchema,
+  GraphQLType
+} from 'graphql'
 import fs from 'fs'
 import {
   DocumentNode,
   OperationTypeNode,
+  TypeNode,
   VariableDefinitionNode
 } from 'graphql/language/ast'
 import util from 'util'
@@ -39,6 +45,13 @@ function decode(schema: GraphQLSchema, data: Uint8Array): DecodeResult {
 
   const variableDefinitions = variables.commit()
 
+  const dataDecoder = new DataDecoder(
+    schema,
+    jsonDecoder,
+    byteIterator,
+    scalarHandlers
+  )
+
   const document: DocumentNode = {
     kind: 'Document',
     definitions: [
@@ -53,12 +66,7 @@ function decode(schema: GraphQLSchema, data: Uint8Array): DecodeResult {
 
   return {
     document,
-    variables: decodeVariables(
-      jsonDecoder,
-      variableDefinitions,
-      scalarHandlers,
-      byteIterator
-    ) // FIXME generate dataDictionary
+    variables: dataDecoder.decode(variableDefinitions)
   }
 }
 
@@ -70,6 +78,68 @@ const scalarHandlers: ScalarHandlers = {
   Boolean: {
     encode: (data: boolean) => new Uint8Array([data ? 1 : 0]),
     decode: (data) => !!data.take()
+  },
+  ID: {
+    encode: (data: string) => new Uint8Array([]),
+    decode: (data) => 'id'
+  }
+}
+
+class DataDecoder<Vector, List> {
+  schema: GraphQLSchema
+  decoder: Decoder<Vector, List>
+  data: ByteIterator<number>
+  scalarHandlers: ScalarHandlers
+
+  constructor(
+    schema: GraphQLSchema,
+    decoder: Decoder<Vector, List>,
+    data: ByteIterator<number>,
+    scalarHandlers: ScalarHandlers
+  ) {
+    this.schema = schema
+    this.decoder = decoder
+    this.data = data
+    this.scalarHandlers = scalarHandlers
+  }
+
+  decode(dictionary: Array<VariableDefinitionNode>) {
+    const vector = this.decoder.vector()
+    for (let index = 0; index < dictionary.length; index++) {
+      const { type, variable } = dictionary[index]
+      const { addValue } = vector.accumulate(variable.name.value)
+      addValue(this.value(type))
+    }
+    return vector.commit()
+  }
+
+  list(type: TypeNode) {
+    const list = this.decoder.list()
+    while (!this.data.atEnd()) list.accumulate(this.value(type))
+    this.data.take()
+    return list.commit()
+  }
+
+  value(type: TypeNode) {
+    if (type.kind === 'NonNullType') type = type.type
+    if (type.kind === 'NamedType') {
+      const definition = this.schema.getType(type.name.value)
+      return (definition as GraphQLObjectType).getFields
+        ? this.vector(definition as GraphQLObjectType)
+        : this.scalarHandlers[type.name.value].decode(this.data)
+    } else this.list(type)
+  }
+
+  vector(type: GraphQLObjectType) {
+    const vector = this.decoder.vector()
+    const fields = type.astNode.fields
+    while (!this.data.atEnd()) {
+      const field = fields[this.data.take()]
+      const { addValue } = vector.accumulate(field.name.value)
+      addValue(this.value(field.type))
+    }
+    this.data.take()
+    return vector.commit()
   }
 }
 
@@ -94,13 +164,14 @@ function decodeQuery<Vector>(
     if (field.arguments.length > 0) {
       while (!data.atEnd()) {
         const arg = field.arguments[data.current() - index - 1]
+        // FIXME check if actually an argument
         if (arg) {
-          // FIXME check if actually an argument
-          callbacks.addArg(arg.name.value, String.fromCharCode(currentVariable))
+          const variableName = String.fromCharCode(currentVariable)
+          callbacks.addArg(arg.name.value, variableName)
           data.take()
           currentVariable += 1
           // FIXME this direct callback with type definition breaks abstraction gap
-          variablesHandler(arg.name.value, arg.type)
+          variablesHandler(variableName, arg.type)
         } else break
       }
     }
@@ -127,34 +198,64 @@ interface ScalarHandler<T> {
   decode: (data: ByteIterator<number>) => T
 }
 
-function decodeVariables<Vector, List>(
-  decoder: Decoder<Vector, List>,
-  dictionary: Array<VariableDefinitionNode>,
-  scalarHandlers: ScalarHandlers,
-  data: ByteIterator<number>
-) {
-  const vector = decoder.vector()
-  for (let index = 0; index < dictionary.length; index++) {
-    const { type, variable } = dictionary[index]
-    const { addValue } = vector.accumulate(variable.name.value)
-    const value = scalarHandlers[type.name.value].decode(data)
-    addValue(value)
-  }
-  return vector.commit()
-}
+// function decodeVariables<Vector, List>(
+//   decoder: Decoder<Vector, List>,
+//   schema: GraphQLSchema,
+//   dictionary: Array<VariableDefinitionNode>,
+//   scalarHandlers: ScalarHandlers,
+//   data: ByteIterator<number>
+// ) {
+//   const vector = decoder.vector()
+//   for (let index = 0; index < dictionary.length; index++) {
+//     const { type, variable } = dictionary[index]
+//     const { addValue } = vector.accumulate(variable.name.value)
+//     addValue(decodeValue(decoder, schema, type, scalarHandlers, data))
+//     // console.log(type)
+//     // const scalarHandler = scalarHandlers[type.name.value]
+//     // const value = scalarHandlers[type.name.value].decode(data)
+//     // addValue(value)
+//   }
+//   return vector.commit()
+// }
 
 // function decodeValue<Vector, List>(
 //   decoder: Decoder<Vector, List>,
-//   dictionary: DictionaryEntry,
+//   schema: GraphQLSchema,
+//   typeNode: TypeNode,
+//   scalarHandlers: ScalarHandlers,
 //   data: ByteIterator<number>
 // ): any {
-// // Important to check if LIST first
-// if (has(dictionary.config, Config.LIST))
-//   return decodeList(decoder, dictionary as DictionaryListEntry, data)
-// if (has(dictionary.config, Config.VECTOR))
-//   return decodeVector(decoder, dictionary as DictionaryVector, data)
-// if (has(dictionary.config, Config.SCALAR))
-//   return (dictionary as DictionaryScalar<any>).handler.decode(data)
+//   const type = schema.getType(typeNode.name.value)
+//   if ((type as GraphQLObjectType).getFields)
+//     return decodeVector(decoder, type as GraphQLObjectType, data)
+//   // console.log('vector')
+//   // Important to check if LIST first
+//   // if (has(dictionary.config, Config.LIST))
+//   //   return decodeList(decoder, dictionary as DictionaryListEntry, data)
+//   // if (has(dictionary.config, Config.VECTOR))
+//   //   return decodeVector(decoder, dictionary as DictionaryVector, data)
+//   // if (has(dictionary.config, Config.SCALAR))
+//   //   return (dictionary as DictionaryScalar<any>).handler.decode(data)
+// }
+
+// function decodeVector<Vector, List>(
+//   decoder: Decoder<Vector, List>,
+//   definition: GraphQLObjectType,
+//   data: ByteIterator<number>
+// ) {
+//   const { accumulate, commit } = decoder.vector()
+//   const fieldsArray = definition.astNode.fields
+//   const fieldsMap = definition.getFields()
+
+//   while (!data.atEnd()) {
+//     const index = data.take()
+//     const field = fieldsArray[index]
+//     const callbacks = accumulate(field.name.value)
+//     const type = fieldsMap[field.name.value].type as GraphQLObjectType
+//     callbacks.addValue(decodeValue())
+//   }
+
+//   return commit()
 // }
 
 // function decodeVector<Vector, List>(
@@ -307,32 +408,22 @@ function decodeVariables<Vector, List>(
 
 const query = new Uint8Array([
   Operation.query,
-  4,
-  0,
-  1,
-  0,
-  END,
-  END,
+  // 4,
+  // 0,
+  // 1,
+  // 0,
+  // END,
+  // END,
   7,
   8,
-  10,
+  13,
   END,
   // Variables start here
   15,
-  0
-  // 0
-  // 2,
-  // 3,
-  // 4,
-  // END,
-  // 1,
-  // 0,
-  // 1,
-  // END,
-  // 1,
-  // 0,
-  // 1,
-  // END
+  0,
+  1,
+  0,
+  END
 ])
 
 // const decodedQuery = decode(queryDictionary, query)
@@ -342,4 +433,6 @@ const schema = fs.readFileSync('./src/fixtures/schema.graphql', 'utf-8')
 
 const builtSchema = buildSchema(schema)
 const decodedQuery = decode(builtSchema, query)
-console.log(util.inspect(decodedQuery, { showHidden: false, depth: null }))
+console.log(
+  util.inspect(decodedQuery.variables, { showHidden: false, depth: null })
+)
