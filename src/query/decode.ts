@@ -8,7 +8,7 @@ import {
   TypeNode
 } from 'graphql/language/ast'
 
-import scalarHandlers, { ScalarHandlers } from '../scalarHandlers'
+import defaultScalarHandlers, { ScalarHandlers } from '../scalarHandlers'
 import { ByteIterator, createIterator } from '../iterator'
 import { documentDecoder } from './documentDecoder'
 import {
@@ -32,11 +32,11 @@ class MyDecoder {
   private currentVariableIndex: number
   private variablesHandler: VariablesHandler<any>
 
-  constructor(schema: GraphQLSchema) {
+  constructor(schema: GraphQLSchema, customScalarHandlers?: ScalarHandlers) {
     this.schema = schema
     this.queryDecoder = documentDecoder
     this.dataDecoder = jsonDecoder
-    this.scalarHandlers = scalarHandlers
+    this.scalarHandlers = { ...defaultScalarHandlers, ...customScalarHandlers }
   }
 
   decode(data: Uint8Array): DecodeResult {
