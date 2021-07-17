@@ -20,11 +20,6 @@ class Encoder {
     this.scalarHandlers = { ...defaultScalarHandlers, ...customScalarHandlers }
   }
 
-  getOperationType(operation: string) {
-    const type = operation.charAt(0).toUpperCase() + operation.slice(1)
-    return this.schema[`get${type}Type`]()
-  }
-
   encode(query: DocumentNode): EncodeResult {
     this.result = []
     const { definitions } = this.prepareDocument(query)
@@ -42,6 +37,11 @@ class Encoder {
     return query
   }
 
+  private getOperationType(operation: string) {
+    const type = operation.charAt(0).toUpperCase() + operation.slice(1)
+    return this.schema[`get${type}Type`]()
+  }
+
   private encodeVector(
     type: GraphQLObjectType,
     selectionSet: SelectionSetNode
@@ -53,7 +53,11 @@ class Encoder {
         ({ name }) => name.value === selection.name.value
       )
       this.result.push(fieldIndex)
-      // FIXME add arguments
+
+      if (selection.arguments)
+        for (let index = 0; index < selection.arguments.length; index++)
+          this.result.push(fieldIndex + index + 1)
+
       if (selection.selectionSet) {
         const typeName = extractTargetType(fieldsArray[fieldIndex].type)
         const type = this.schema.getType(typeName) as GraphQLObjectType

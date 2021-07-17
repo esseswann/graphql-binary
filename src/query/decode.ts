@@ -111,6 +111,8 @@ class Decoder {
   }
 
   private decodeVariables() {
+    if (this.data.current() === undefined)
+      throw new Error('Expected variables data for this query')
     const dictionary = this.variablesHandler.commit()
     const vector = this.dataDecoder.vector()
     for (let index = 0; index < dictionary.length; index++) {

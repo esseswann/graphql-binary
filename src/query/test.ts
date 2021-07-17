@@ -23,6 +23,5 @@ const decoder = new Decoder(schema)
 const encoder = new Encoder(schema)
 const encodeResult = encoder.encode(query) as Uint8Array
 const test = decoder.decode(encodeResult)
-console.log(test)
 // test('decoded query matches encoded', () =>
 //   expect(decoder.decode(encoder.encode(query) as Uint8Array)).toEqual(query))
