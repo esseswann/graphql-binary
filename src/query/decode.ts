@@ -21,6 +21,7 @@ import {
   QueryKeyHandler
 } from './index.d'
 import jsonDecoder from './jsonDecoder'
+import extractTargetType from './extractTargetType'
 
 class Decoder {
   private readonly schema: GraphQLSchema
@@ -81,7 +82,7 @@ class Decoder {
       if (field.arguments.length > 0)
         this.decodeArguments(field, index, callbacks.addArg)
 
-      const typeName = (field.type as NamedTypeNode).name.value
+      const typeName = extractTargetType(field.type)
       const fieldType = this.schema.getType(typeName) as GraphQLObjectType
       if (fieldType.getFields) callbacks.addValue(this.decodeQuery(fieldType))
       // CODE UNIQUE FOR QUERY

@@ -4,7 +4,7 @@ import compress from 'graphql-query-compress'
 import { print } from 'graphql/language/printer'
 
 import generateDictionary from '../dictionary'
-import Encoder from './encode_old'
+import Encoder from './encode'
 import Decoder from './decode'
 
 // import query from '../fixtures/basicQuery.graphql'
@@ -19,8 +19,10 @@ const schemaFile = fs.readFileSync('./src/fixtures/schema.graphql', 'utf8')
 const schema = buildSchema(schemaFile)
 const query = parse(queryFile, { noLocation: true })
 
-const decode = new Decoder(schema)
-const encode = new Encoder(schema)
-
-test('decoded query matches encoded', () =>
-  expect(decode(encode(query))).toEqual(query))
+const decoder = new Decoder(schema)
+const encoder = new Encoder(schema)
+const encodeResult = encoder.encode(query) as Uint8Array
+const test = decoder.decode(encodeResult)
+console.log(test)
+// test('decoded query matches encoded', () =>
+//   expect(decoder.decode(encoder.encode(query) as Uint8Array)).toEqual(query))

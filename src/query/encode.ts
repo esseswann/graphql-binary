@@ -1,21 +1,68 @@
-import { DocumentNode, GraphQLSchema } from 'graphql'
+import {
+  DocumentNode,
+  FieldNode,
+  GraphQLObjectType,
+  GraphQLSchema,
+  OperationDefinitionNode,
+  SelectionSetNode
+} from 'graphql'
+import { END, Operation } from './index.d'
 import defaultScalarHandlers, { ScalarHandlers } from '../scalarHandlers'
+import extractTargetType from './extractTargetType'
 
 class Encoder {
   private readonly schema: GraphQLSchema
   private readonly scalarHandlers: ScalarHandlers
+  private result: Array<number>
 
   constructor(schema: GraphQLSchema, customScalarHandlers?: ScalarHandlers) {
     this.schema = schema
     this.scalarHandlers = { ...defaultScalarHandlers, ...customScalarHandlers }
   }
 
-  encode(query: DocumentNode): EncodeResult {
-    const preparedNode = this.prepareDocument(query)
-    return new Uint8Array([]) as EncodeResultOnlyQuery
+  getOperationType(operation: string) {
+    const type = operation.charAt(0).toUpperCase() + operation.slice(1)
+    return this.schema[`get${type}Type`]()
   }
 
-  prepareDocument(query: DocumentNode) {}
+  encode(query: DocumentNode): EncodeResult {
+    this.result = []
+    const { definitions } = this.prepareDocument(query)
+    const definition = definitions[0] as OperationDefinitionNode
+    const operation = definition.operation
+    this.result.push(Operation[operation])
+    const result = this.encodeVector(
+      this.getOperationType(operation),
+      definition.selectionSet
+    )
+    return new Uint8Array(result)
+  }
+
+  private prepareDocument(query: DocumentNode) {
+    return query
+  }
+
+  private encodeVector(
+    type: GraphQLObjectType,
+    selectionSet: SelectionSetNode
+  ): Array<number> {
+    const fieldsArray = type.astNode.fields
+    for (let index = 0; index < selectionSet.selections.length; index++) {
+      const selection = selectionSet.selections[index] as FieldNode
+      const fieldIndex = fieldsArray.findIndex(
+        ({ name }) => name.value === selection.name.value
+      )
+      this.result.push(fieldIndex)
+      // FIXME add arguments
+      if (selection.selectionSet) {
+        const typeName = extractTargetType(fieldsArray[fieldIndex].type)
+        const type = this.schema.getType(typeName) as GraphQLObjectType
+        this.encodeVector(type, selection.selectionSet)
+      }
+    }
+    this.result.push(END)
+    return this.result
+  }
 }
 
 type EncodeResult = EncodeResultWithVariables | EncodeResultOnlyQuery
@@ -62,5 +109,7 @@ function mergeArrays(...arrays: Uint8Array[]): Uint8Array {
 function lengthsReducer(result: number, data: ArrayLike<any>) {
   return result + data.length
 }
+
+// [reference, config, stringLength, ...stringBody]
 
 export default Encoder
