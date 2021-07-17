@@ -2,7 +2,6 @@ import { GraphQLObjectType, GraphQLSchema } from 'graphql'
 import {
   DocumentNode,
   FieldDefinitionNode,
-  NamedTypeNode,
   OperationTypeNode,
   SelectionSetNode,
   TypeNode
