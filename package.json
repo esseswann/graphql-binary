@@ -12,23 +12,22 @@
     "dev": "nodemon --exec babel-node --extensions .ts"
   },
   "dependencies": {
-    "capitalize": "2.0.3",
-    "graphql": "15.3.0",
-    "lodash": "4.17.20"
+    "graphql": "15.5.1",
+    "lodash": "4.17.21"
   },
   "devDependencies": {
-    "@babel/cli": "7.11.6",
-    "@babel/core": "7.11.6",
-    "@babel/node": "7.10.5",
-    "@babel/preset-env": "7.11.5",
+    "@babel/cli": "7.14.8",
+    "@babel/core": "7.14.8",
+    "@babel/node": "7.14.7",
+    "@babel/preset-env": "7.14.8",
     "@babel/preset-typescript": "7.14.5",
-    "@types/jest": "^26.0.24",
-    "babel-jest": "26.3.0",
-    "babel-plugin-import-graphql": "2.7.0",
-    "babel-plugin-module-resolver": "4.0.0",
+    "@types/jest": "26.0.24",
+    "babel-jest": "27.0.6",
+    "babel-plugin-import-graphql": "2.8.1",
+    "babel-plugin-module-resolver": "4.1.0",
     "graphql-query-compress": "1.2.4",
-    "graphql-tools": "5.0.0",
-    "jest": "26.4.2",
+    "graphql-tools": "7.0.5",
+    "jest": "27.0.6",
     "nodemon": "2.0.12",
     "prettier": "2.3.2"
   },
