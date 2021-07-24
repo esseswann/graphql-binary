@@ -13,7 +13,7 @@ import {
   EncodeResult,
   END,
   Operation
-} from './index.d'
+} from './types'
 import defaultScalarHandlers, { ScalarHandlers } from '../scalarHandlers'
 import extractTargetType from './extractTargetType'
 
@@ -54,16 +54,21 @@ class Encoder {
     return query
   }
 
-  private getOperationType(operation: string) {
-    const type = operation.charAt(0).toUpperCase() + operation.slice(1)
-    return this.schema[`get${type}Type`]()
+  private getOperationType(operation: string): GraphQLObjectType {
+    if (operation === 'query')
+      return this.schema.getQueryType() as GraphQLObjectType
+    else if (operation === 'mutation')
+      return this.schema.getMutationType() as GraphQLObjectType
+    else if (operation === 'subscription')
+      return this.schema.getMutationType() as GraphQLObjectType
+    else throw new Error(`Unsupported operation type ${operation}`)
   }
 
   private encodeQueryVector(
     type: GraphQLObjectType,
     selectionSet: SelectionSetNode
   ): Array<number> {
-    const fieldsArray = type.astNode.fields || []
+    const fieldsArray = type.astNode?.fields || []
     for (let index = 0; index < selectionSet.selections.length; index++) {
       const selection = selectionSet.selections[index] as FieldNode
       const fieldIndex = fieldsArray.findIndex(

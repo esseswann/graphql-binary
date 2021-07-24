@@ -1,10 +1,9 @@
 import { GraphQLObjectType, GraphQLSchema } from 'graphql'
 import {
   DocumentNode,
-  FieldDefinitionNode,
   OperationTypeNode,
-  SelectionSetNode,
-  TypeNode
+  TypeNode,
+  VariableDefinitionNode
 } from 'graphql/language/ast'
 import defaultScalarHandlers, { ScalarHandlers } from '../scalarHandlers'
 import { ByteIterator, createIterator } from '../iterator'
@@ -16,21 +15,16 @@ import {
   END,
   Operation,
   VariablesHandler,
-  DataDecoder,
-  QueryKeyHandler
-} from './index.d'
+  DataDecoder
+} from './types'
 import jsonDecoder from './jsonDecoder'
 import extractTargetType from './extractTargetType'
 
 class Decoder {
-  private readonly schema: GraphQLSchema
-  private readonly queryDecoder: QueryDecoder<any, any>
-  private readonly dataDecoder: DataDecoder<any, any, any>
-  private readonly scalarHandlers: ScalarHandlers
-
-  private data: ByteIterator<number>
-  private currentVariableIndex: number
-  private variablesHandler: VariablesHandler<any>
+  readonly schema: GraphQLSchema
+  readonly queryDecoder: QueryDecoder<any, any>
+  readonly dataDecoder: DataDecoder<any, any, any>
+  readonly scalarHandlers: ScalarHandlers
 
   constructor(schema: GraphQLSchema, customScalarHandlers?: ScalarHandlers) {
     this.schema = schema
@@ -40,17 +34,17 @@ class Decoder {
   }
 
   decode(data: Uint8Array): DecodeResult {
-    this.data = createIterator(data, END)
-    this.currentVariableIndex = ASCII_OFFSET
-    this.variablesHandler = this.queryDecoder.variables()
+    const iterator = createIterator(data, END)
 
-    const operation = Operation[this.data.take()] as OperationTypeNode
+    const operation = Operation[iterator.take()] as OperationTypeNode
 
-    const selectionSet: SelectionSetNode = this.decodeQuery(
-      this.schema.getType('Query') as GraphQLObjectType
+    const { selectionSet, variableDefinitions } = decodeQuery(
+      this,
+      this.schema.getType('Query') as GraphQLObjectType,
+      iterator,
+      this.queryDecoder.variables()
     )
 
-    const variableDefinitions = this.variablesHandler.commit()
     const hasVariables = variableDefinitions.length
 
     const document: DocumentNode = {
@@ -67,90 +61,120 @@ class Decoder {
 
     return {
       document,
-      ...(hasVariables && { variables: this.decodeVariables() })
+      ...(hasVariables && {
+        variables: decodeVariables(this, variableDefinitions, iterator)
+      })
     }
   }
+}
 
-  private decodeQuery(type: GraphQLObjectType) {
-    const vector = this.queryDecoder.vector()
-    const fields = type.astNode.fields
-    while (!this.data.atEnd()) {
-      const index = this.data.take()
+function decodeQuery(
+  decoder: Decoder,
+  type: GraphQLObjectType,
+  data: ByteIterator<number>,
+  variablesHandler: VariablesHandler<any>
+) {
+  const vector = decoder.queryDecoder.vector()
+  const fields = type.astNode?.fields
+  if (fields)
+    // FIXME should be invariant
+    while (!data.atEnd()) {
+      const index = data.take()
       const field = fields[index]
       const callbacks = vector.accumulate(field.name.value)
-      // CODE UNIQUE FOR QUERY
-      if (field.arguments.length > 0)
-        this.decodeArguments(field, index, callbacks.addArg)
+
+      // Arguments
+      if (field.arguments && field.arguments.length > 0)
+        while (!data.atEnd()) {
+          const arg = field.arguments[data.current() - index - 1]
+          if (arg) {
+            const variableName = String.fromCharCode(
+              variablesHandler.commit().length + ASCII_OFFSET
+            )
+            callbacks.addArg(arg.name.value, variableName)
+            data.take()
+            // FIXME direct callback with type definition breaks abstraction gap
+            variablesHandler.accumulate(variableName, arg.type)
+          } else break
+        }
 
       const typeName = extractTargetType(field.type)
-      const fieldType = this.schema.getType(typeName) as GraphQLObjectType
-      if (fieldType.getFields) callbacks.addValue(this.decodeQuery(fieldType))
-      // CODE UNIQUE FOR QUERY
+      const fieldType = decoder.schema.getType(typeName)
+      if ((fieldType as GraphQLObjectType).getFields)
+        callbacks.addValue(
+          decodeQuery(
+            decoder,
+            fieldType as GraphQLObjectType,
+            data,
+            variablesHandler
+          )
+        )
       callbacks.commit()
     }
-    this.data.take()
-    return vector.commit()
+  data.take()
+  return {
+    selectionSet: vector.commit(),
+    variableDefinitions: variablesHandler.commit()
   }
+}
 
-  private decodeArguments(
-    field: FieldDefinitionNode,
-    index: number,
-    addArg: QueryKeyHandler<any>['addArg']
-  ): void {
-    while (!this.data.atEnd()) {
-      const arg = field.arguments[this.data.current() - index - 1]
-      if (arg) {
-        const variableName = String.fromCharCode(this.currentVariableIndex)
-        addArg(arg.name.value, variableName)
-        this.data.take()
-        this.currentVariableIndex += 1
-        // FIXME this direct callback with type definition breaks abstraction gap
-        this.variablesHandler.accumulate(variableName, arg.type)
-      } else break
-    }
+function decodeVariables(
+  decoder: Decoder,
+  dictionary: Array<VariableDefinitionNode>,
+  data: ByteIterator<number>
+) {
+  if (data.current() === undefined)
+    throw new Error('Expected variables data for query')
+  const vector = decoder.dataDecoder.vector()
+  for (let index = 0; index < dictionary.length; index++) {
+    const { type, variable } = dictionary[index]
+    const { addValue } = vector.accumulate(variable.name.value)
+    addValue(decodeValue(decoder, type, data))
   }
+  return vector.commit()
+}
 
-  private decodeVariables() {
-    if (this.data.current() === undefined)
-      throw new Error('Expected variables data for this query')
-    const dictionary = this.variablesHandler.commit()
-    const vector = this.dataDecoder.vector()
-    for (let index = 0; index < dictionary.length; index++) {
-      const { type, variable } = dictionary[index]
-      const { addValue } = vector.accumulate(variable.name.value)
-      addValue(this.decodeValue(type))
-    }
-    return vector.commit()
-  }
+function decodeValue(
+  decoder: Decoder,
+  type: TypeNode,
+  data: ByteIterator<number>
+) {
+  if (type.kind === 'NonNullType') type = type.type
+  if (type.kind === 'NamedType') {
+    const definition = decoder.schema.getType(type.name.value)
+    return (definition as GraphQLObjectType).getFields
+      ? decodeVector(decoder, definition as GraphQLObjectType, data)
+      : decoder.scalarHandlers[type.name.value].decode(data)
+  } else decodeList(decoder, type, data)
+}
 
-  private decodeValue(type: TypeNode) {
-    if (type.kind === 'NonNullType') type = type.type
-    if (type.kind === 'NamedType') {
-      const definition = this.schema.getType(type.name.value)
-      return (definition as GraphQLObjectType).getFields
-        ? this.decodeVector(definition as GraphQLObjectType)
-        : this.scalarHandlers[type.name.value].decode(this.data)
-    } else this.decodeList(type)
-  }
+function decodeList<T>(
+  decoder: Decoder,
+  type: TypeNode,
+  data: ByteIterator<number>
+): T {
+  const list = decoder.dataDecoder.list()
+  while (!data.atEnd()) list.accumulate(decodeValue(decoder, type, data))
+  data.take()
+  return list.commit()
+}
 
-  private decodeVector(type: GraphQLObjectType) {
-    const vector = this.dataDecoder.vector()
-    const fields = type.astNode.fields
-    while (!this.data.atEnd()) {
-      const field = fields[this.data.take()]
+function decodeVector<T>(
+  decoder: Decoder,
+  type: GraphQLObjectType,
+  data: ByteIterator<number>
+): T {
+  const vector = decoder.dataDecoder.vector()
+  const fields = type.astNode?.fields
+  if (fields)
+    // FIXME should be invariant
+    while (!data.atEnd()) {
+      const field = fields[data.take()]
       const { addValue } = vector.accumulate(field.name.value)
-      addValue(this.decodeValue(field.type))
+      addValue(decodeValue(decoder, field.type, data))
     }
-    this.data.take()
-    return vector.commit()
-  }
-
-  private decodeList(type: TypeNode) {
-    const list = this.dataDecoder.list()
-    while (!this.data.atEnd()) list.accumulate(this.decodeValue(type))
-    this.data.take()
-    return list.commit()
-  }
+  data.take()
+  return vector.commit()
 }
 
 export default Decoder

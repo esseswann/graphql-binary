@@ -4,7 +4,7 @@ import {
   SelectionSetNode,
   VariableDefinitionNode
 } from 'graphql/language/ast'
-import { QueryDecoder } from './index.d'
+import { QueryDecoder } from './types'
 
 export const documentDecoder: QueryDecoder<
   SelectionSetNode,

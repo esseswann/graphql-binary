@@ -1,15 +1,15 @@
-import { DataDecoder } from './index.d'
+import { DataDecoder } from './types'
 
 const jsonDecoder: DataDecoder<Object, Array<any>, any> = {
   list: () => {
-    const accumulator = []
+    const accumulator: Array<any> = []
     return {
       accumulate: (value) => accumulator.push(value),
       commit: () => accumulator
     }
   },
   vector: () => {
-    const accumulator = {}
+    const accumulator: { [key: string]: any } = {}
     return {
       accumulate: (key) => ({
         addValue: (value) => (accumulator[key] = value)

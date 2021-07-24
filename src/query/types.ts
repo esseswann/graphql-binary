@@ -16,57 +16,57 @@ export enum Flags {
   Directives = 1 << 5
 }
 
-type DecodeResult = {
+export type DecodeResult = {
   document: DocumentNode
   variables: object | undefined
 }
 
-interface QueryDecoder<Vector, Variable> {
+export interface QueryDecoder<Vector, Variable> {
   vector: () => VectorHandler<Vector, QueryKeyHandler<Vector>>
   variables: () => VariablesHandler<Variable>
 }
 
-interface QueryKeyHandler<T> extends KeyHandler<T> {
+export interface QueryKeyHandler<T> extends KeyHandler<T> {
   addArg: (key: string, type: any) => void
   addDirective?: (key: string, type: any) => void
   commit: () => void
 }
 
-interface VariablesHandler<T> {
+export interface VariablesHandler<T> {
   accumulate: AccumulateVariables
   commit: () => T
 }
 
-type AccumulateVariables = (key: string, type: TypeNode) => void
+export type AccumulateVariables = (key: string, type: TypeNode) => void
 
-interface VectorHandler<T, KeyHandler> {
+export interface VectorHandler<T, KeyHandler> {
   accumulate: (key: string) => KeyHandler
   commit: () => T
 }
 
-interface DataDecoder<Vector, List, Value> {
+export interface DataDecoder<Vector, List, Value> {
   vector: () => VectorHandler<Vector, KeyHandler<Value>>
   list: () => ListHandler<List>
 }
 
-interface KeyHandler<T> {
+export interface KeyHandler<T> {
   addValue: (value: T) => void
 }
 
-interface ListHandler<T> {
+export interface ListHandler<T> {
   accumulate: (value: any) => void
   commit: () => T
 }
 
-type EncodeResult<Result, Variables> =
+export type EncodeResult<Result, Variables> =
   | VariablesEncoder<Result, Variables>
   | EncodedQueryWithHandler<Result>
 
-type VariablesEncoder<Result, Variables> = (
+export type VariablesEncoder<Result, Variables> = (
   variables: Variables
 ) => EncodedQueryWithHandler<Result>
 
-interface EncodedQueryWithHandler<Result> {
+export interface EncodedQueryWithHandler<Result> {
   query: Uint8Array
   handleResponse: (data: Uint8Array) => Result
 }

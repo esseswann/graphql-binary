@@ -6,7 +6,7 @@ import { buildSchema, parse } from 'graphql'
 // import generateDictionary from '../dictionary'
 import Encoder from './encode'
 import Decoder from './decode'
-import { EncodedQueryWithHandler, VariablesEncoder } from './index.d'
+import { EncodedQueryWithHandler, VariablesEncoder } from './types'
 
 // import query from '../fixtures/basicQuery.graphql'
 // import mutation from '../fixtures/mutation.graphql'
