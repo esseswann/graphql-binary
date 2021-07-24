@@ -3,34 +3,51 @@ import {
   FieldNode,
   GraphQLObjectType,
   GraphQLSchema,
+  GraphQLType,
   OperationDefinitionNode,
   SelectionSetNode
 } from 'graphql'
-import { END, Operation } from './index.d'
+import {
+  // VariablesEncoder,
+  EncodedQueryWithHandler,
+  EncodeResult,
+  END,
+  Operation
+} from './index.d'
 import defaultScalarHandlers, { ScalarHandlers } from '../scalarHandlers'
 import extractTargetType from './extractTargetType'
 
 class Encoder {
   private readonly schema: GraphQLSchema
   private readonly scalarHandlers: ScalarHandlers
-  private result: Array<number>
+  private result: Array<number> = []
 
   constructor(schema: GraphQLSchema, customScalarHandlers?: ScalarHandlers) {
     this.schema = schema
     this.scalarHandlers = { ...defaultScalarHandlers, ...customScalarHandlers }
   }
 
-  encode(query: DocumentNode): EncodeResult {
+  // FIXME not sure if making a default type argument value is a good idea
+  encode<Result, Variables = void>(
+    query: DocumentNode
+  ): EncodeResult<Result, Variables> {
     this.result = []
     const { definitions } = this.prepareDocument(query)
     const definition = definitions[0] as OperationDefinitionNode
     const operation = definition.operation
     this.result.push(Operation[operation])
-    const result = this.encodeVector(
+    const result = this.encodeQueryVector(
       this.getOperationType(operation),
       definition.selectionSet
     )
-    return new Uint8Array(result)
+    // const variablesEncoder = new VariablesEncoder<Result, Variables>()
+    return {
+      query: new Uint8Array(result),
+      handleResponse: () => ({} as Result)
+    }
+    // variablesEncoder.encodeVariables
+    // (variables: Variables) => ({
+    // })
   }
 
   private prepareDocument(query: DocumentNode) {
@@ -42,11 +59,11 @@ class Encoder {
     return this.schema[`get${type}Type`]()
   }
 
-  private encodeVector(
+  private encodeQueryVector(
     type: GraphQLObjectType,
     selectionSet: SelectionSetNode
   ): Array<number> {
-    const fieldsArray = type.astNode.fields
+    const fieldsArray = type.astNode.fields || []
     for (let index = 0; index < selectionSet.selections.length; index++) {
       const selection = selectionSet.selections[index] as FieldNode
       const fieldIndex = fieldsArray.findIndex(
@@ -61,7 +78,7 @@ class Encoder {
       if (selection.selectionSet) {
         const typeName = extractTargetType(fieldsArray[fieldIndex].type)
         const type = this.schema.getType(typeName) as GraphQLObjectType
-        this.encodeVector(type, selection.selectionSet)
+        this.encodeQueryVector(type, selection.selectionSet)
       }
     }
     this.result.push(END)
@@ -69,50 +86,49 @@ class Encoder {
   }
 }
 
-type EncodeResult = EncodeResultWithVariables | EncodeResultOnlyQuery
-type EncodeResultWithVariables = (data: object) => Uint8Array
-type EncodeResultOnlyQuery = Uint8Array
+// class VariablesEncoder<Result, Variables> {
+//   schema: GraphQLSchema
+//   encodedQuery: Uint8Array
+//   variablesBits: Array<Uint8Array>
+//   variablesMap: Map<string, VariableConfig>
 
-type EncodeVariables = (data: object) => Uint8Array
+//   encodeVariables(data: Variables): EncodedQueryWithHandler<Result> {
+//     const variableBits = [...this.variablesBits]
+//     for (const property in data) {
+//       // FIXME there are cases when people really want to use null
+//       if (data[property] != null) {
+//         const { typeName, index } = this.variablesMap.get(property)
+//         // variableBits.splice(index, 0, this.encodeValue(data[property]))
+//       }
+//     }
+//     return {
+//       query: mergeArrays(this.encodedQuery, ...variableBits),
+//       handleResponse: () => ({} as Result)
+//     }
+//   }
 
-class EncoderWithVariables {
-  encodedQuery: Uint8Array
-  variablesBits: Array<Uint8Array>
-  variablesMap: Map<string, VariableConfig>
+//   encodeValue(type: GraphQLType, data: any): Uint8Array {
+//     if (data.hasOwnProperty('length')) console.log(data)
+//     return new Uint8Array([])
+//   }
+// }
 
-  encode(data: object) {
-    const variableBits = [...this.variablesBits]
-    for (const property in data) {
-      // FIXME there are cases when people really want to use null
-      if (data[property] != null) {
-        const { typeName, index } = this.variablesMap.get(property)
-        variableBits.splice(index, 0, this.encodeValue(data[property]))
-      }
-    }
-    return mergeArrays(this.encodedQuery, ...variableBits)
-  }
+// type VariableConfig = {
+//   typeName: string
+//   index: number
+// }
 
-  encodeValue(data: any): Uint8Array {
-    return new Uint8Array([])
-  }
-}
+// // Somewhat efficient Uint8Array merging
+// function mergeArrays(...arrays: Uint8Array[]): Uint8Array {
+//   const myArray = new Uint8Array(arrays.reduce<number>(lengthsReducer, 0))
+//   for (let i = 0; i < arrays.length; i++)
+//     myArray.set(arrays[i], arrays[i - 1]?.length || 0)
+//   return myArray
+// }
 
-type VariableConfig = {
-  typeName: string
-  index: number
-}
-
-// Somewhat efficient Uint8Array merging
-function mergeArrays(...arrays: Uint8Array[]): Uint8Array {
-  const myArray = new Uint8Array(arrays.reduce<number>(lengthsReducer, 0))
-  for (let i = 0; i < arrays.length; i++)
-    myArray.set(arrays[i], arrays[i - 1]?.length || 0)
-  return myArray
-}
-
-function lengthsReducer(result: number, data: ArrayLike<any>) {
-  return result + data.length
-}
+// function lengthsReducer(result: number, data: ArrayLike<any>) {
+//   return result + data.length
+// }
 
 // [reference, config, stringLength, ...stringBody]
 

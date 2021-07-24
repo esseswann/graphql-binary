@@ -58,6 +58,19 @@ interface ListHandler<T> {
   commit: () => T
 }
 
+type EncodeResult<Result, Variables> =
+  | VariablesEncoder<Result, Variables>
+  | EncodedQueryWithHandler<Result>
+
+type VariablesEncoder<Result, Variables> = (
+  variables: Variables
+) => EncodedQueryWithHandler<Result>
+
+interface EncodedQueryWithHandler<Result> {
+  query: Uint8Array
+  handleResponse: (data: Uint8Array) => Result
+}
+
 export enum Config {
   SCALAR = 0,
   VECTOR = 1 << 0,
