@@ -51,6 +51,7 @@ class Decoder {
     )
 
     const variableDefinitions = this.variablesHandler.commit()
+    const hasVariables = variableDefinitions.length
 
     const document: DocumentNode = {
       kind: 'Document',
@@ -59,14 +60,14 @@ class Decoder {
           kind: 'OperationDefinition',
           operation: operation,
           selectionSet: selectionSet,
-          ...(variableDefinitions.length && { variableDefinitions })
+          ...(hasVariables && { variableDefinitions })
         }
       ]
     }
 
     return {
       document,
-      variables: this.decodeVariables()
+      ...(hasVariables && { variables: this.decodeVariables() })
     }
   }
 

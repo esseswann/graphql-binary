@@ -18,7 +18,7 @@ export enum Flags {
 
 type DecodeResult = {
   document: DocumentNode
-  variables: object
+  variables: object | undefined
 }
 
 interface QueryDecoder<Vector, Variable> {

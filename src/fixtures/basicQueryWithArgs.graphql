@@ -3,7 +3,13 @@ query BasicQuery {
   float
   boolean
   string
-  withArgs
+  withArgs (
+    int: 1
+    float: 1.5
+    boolean: true
+    string: "string"
+    enum: FIRST
+  )
   scalarArray 
   mapArray {
     id
