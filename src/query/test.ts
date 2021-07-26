@@ -1,4 +1,4 @@
-import { basicQuery, schema } from '../fixtures'
+import { basicQuery, schema, basicQueryWithArgs } from '../fixtures'
 // import compress from 'graphql-query-compress'
 // import { print } from 'graphql/language/printer'
 
@@ -23,12 +23,17 @@ type BasicQueryResult = {
 
 const decoder = new Decoder(schema)
 const encoder = new Encoder(schema)
-const encodeResult = encoder.encode<BasicQueryResult>(
-  basicQuery
+// const encodedBasicQuery = encoder.encode<BasicQueryResult>(
+//   basicQuery
+// ) as EncodedQueryWithHandler<BasicQueryResult>
+// if (encodedBasicQuery.query) {
+//   console.log(decoder.decode(encodedBasicQuery.query))
+// }
+
+const encodedBasicQueryWithArgs = encoder.encode<BasicQueryResult>(
+  basicQueryWithArgs
 ) as EncodedQueryWithHandler<BasicQueryResult>
-if (encodeResult.query) {
-  console.log(decoder.decode(encodeResult.query))
-}
+console.log(encodedBasicQueryWithArgs.query)
 // const test = decoder.decode()
 // test('decoded query matches encoded', () =>
 //   expect(decoder.decode(encoder.encode(query) as Uint8Array)).toEqual(query))

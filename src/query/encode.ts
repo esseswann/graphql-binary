@@ -36,7 +36,9 @@ class Encoder {
     const definition = definitions[0] as OperationDefinitionNode
     const operation = definition.operation
     this.result.push(Operation[operation])
-    const result = this.encodeQueryVector(
+    const result = encodeQueryVector(
+      this.schema,
+      [],
       this.getOperationType(operation),
       definition.selectionSet
     )
@@ -63,32 +65,34 @@ class Encoder {
       return this.schema.getMutationType() as GraphQLObjectType
     else throw new Error(`Unsupported operation type ${operation}`)
   }
+}
 
-  private encodeQueryVector(
-    type: GraphQLObjectType,
-    selectionSet: SelectionSetNode
-  ): Array<number> {
-    const fieldsArray = type.astNode?.fields || []
-    for (let index = 0; index < selectionSet.selections.length; index++) {
-      const selection = selectionSet.selections[index] as FieldNode
-      const fieldIndex = fieldsArray.findIndex(
-        ({ name }) => name.value === selection.name.value
-      )
-      this.result.push(fieldIndex)
+function encodeQueryVector(
+  schema: GraphQLSchema,
+  result: Array<number>,
+  type: GraphQLObjectType,
+  selectionSet: SelectionSetNode
+): Array<number> {
+  const fieldsArray = type.astNode?.fields || []
+  for (let index = 0; index < selectionSet.selections.length; index++) {
+    const selection = selectionSet.selections[index] as FieldNode
+    const fieldIndex = fieldsArray.findIndex(
+      ({ name }) => name.value === selection.name.value
+    )
+    result.push(fieldIndex)
 
-      if (selection.arguments)
-        for (let index = 0; index < selection.arguments.length; index++)
-          this.result.push(fieldIndex + index + 1)
+    if (selection.arguments)
+      for (let index = 0; index < selection.arguments.length; index++)
+        result.push(fieldIndex + index + 1)
 
-      if (selection.selectionSet) {
-        const typeName = extractTargetType(fieldsArray[fieldIndex].type)
-        const type = this.schema.getType(typeName) as GraphQLObjectType
-        this.encodeQueryVector(type, selection.selectionSet)
-      }
+    if (selection.selectionSet) {
+      const typeName = extractTargetType(fieldsArray[fieldIndex].type)
+      const type = schema.getType(typeName) as GraphQLObjectType
+      encodeQueryVector(schema, result, type, selection.selectionSet)
     }
-    this.result.push(END)
-    return this.result
   }
+  result.push(END)
+  return result
 }
 
 // class VariablesEncoder<Result, Variables> {
