@@ -145,7 +145,7 @@ function decodeValue(
     return (definition as GraphQLObjectType).getFields
       ? decodeVector(decoder, definition as GraphQLObjectType, data)
       : decoder.scalarHandlers[type.name.value].decode(data)
-  } else decodeList(decoder, type, data)
+  } else return decodeList(decoder, type, data)
 }
 
 function decodeList<T>(
