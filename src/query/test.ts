@@ -1,4 +1,4 @@
-import { basicQuery, schema, basicQueryWithArgs } from '../fixtures'
+import { basicQuery, schema, queryWithVariables } from '../fixtures'
 // import compress from 'graphql-query-compress'
 // import { print } from 'graphql/language/printer'
 
@@ -31,7 +31,7 @@ const encoder = new Encoder(schema)
 // }
 
 const encodedBasicQueryWithArgs = encoder.encode<BasicQueryResult>(
-  basicQueryWithArgs
+  queryWithVariables
 ) as EncodedQueryWithHandler<BasicQueryResult>
 console.log(encodedBasicQueryWithArgs.query)
 // const test = decoder.decode()

@@ -1,5 +1,6 @@
 import {
   DocumentNode,
+  EnumTypeDefinitionNode,
   FieldNode,
   GraphQLInputObjectType,
   GraphQLNamedType,
@@ -9,13 +10,15 @@ import {
   GraphQLType,
   OperationDefinitionNode,
   SelectionSetNode,
-  TypeNode
+  TypeNode,
+  VariableDefinitionNode
 } from 'graphql'
 import {
   // VariablesEncoder,
   EncodedQueryWithHandler,
   EncodeResult,
   END,
+  Flags,
   Operation
 } from './types'
 import defaultScalarHandlers, { ScalarHandlers } from '../scalarHandlers'
@@ -34,21 +37,29 @@ class Encoder {
   encode<Result, Variables = void>(
     query: DocumentNode
   ): EncodeResult<Result, Variables> {
-    const result = []
+    const result: Array<number> = []
     const { definitions } = this.prepareDocument(query)
-    const definition = definitions[0] as OperationDefinitionNode
-    const operation = definition.operation
-    result.push(Operation[operation])
+    const { operation, variableDefinitions, selectionSet } =
+      definitions[0] as OperationDefinitionNode
+
     encodeQueryVector(
       this.schema,
       result,
       this.getOperationType(operation),
-      definition.selectionSet
+      selectionSet
     )
     // const variablesEncoder = new VariablesEncoder<Result, Variables>()
-    const data = 123
-    const type = this.schema.getType('Int')
-    if (type) encodeValue(this, type, data, new Uint8Array())
+
+    if (variableDefinitions) {
+      let operationCode = Operation[operation]
+      if (variableDefinitions) operationCode |= Flags.Variables
+      result.unshift(operationCode)
+
+      const data = 'FIRST'
+      const encodedVariables = encodeVariables(this, variableDefinitions, data)
+    }
+    // const type = this.schema.getType('Enumerable')
+    // if (type) encodeValue(this, type, data, new Uint8Array())
     return {
       query: new Uint8Array(result),
       handleResponse: () => ({} as Result)
@@ -101,30 +112,55 @@ function encodeQueryVector(
   return result
 }
 
-function encodeValue(
+function encodeVariables(
   encoder: Encoder,
-  type: GraphQLNamedType,
-  data: any,
-  accumulator: Uint8Array
+  variableDefinitions: Readonly<Array<VariableDefinitionNode>>,
+  data: any
 ): Uint8Array {
+  let result: Uint8Array = new Uint8Array()
+  for (let index = 0; index < variableDefinitions.length; index++) {
+    const { type, variable } = variableDefinitions[index]
+    result = mergeArrays(
+      result,
+      encodeValue(encoder, type, data[variable.name.value])
+    )
+  }
+
+  return result
+}
+
+function encodeValue(encoder: Encoder, type: TypeNode, data: any): Uint8Array {
   let result: Uint8Array = new Uint8Array([])
 
-  const kind = type.astNode?.kind
+  if (type.kind === 'NonNullType') type = type.type
+  if (type.kind === 'NamedType') {
+    const definition = encoder.schema.getType(type.name.value)
+    if (!definition) throw new Error(`Unknown type ${type.name.value}`)
 
-  if (!kind && encoder.scalarHandlers[type.name]) {
-    result = encoder.scalarHandlers[type.name].encode(data)
-  } else if (kind === 'ScalarTypeDefinition' && encoder.scalarHandlers[kind]) {
-    result = encoder.scalarHandlers[kind].encode(data)
-  } else if (kind === 'InputObjectTypeDefinition') console.log('input object')
-  else if (kind === 'EnumTypeDefinition') console.log('enum')
-  else throw new Error(`Unknown or non-input type ${type.name} in a variable`)
+    const kind = definition.astNode?.kind
 
-  return mergeArrays(accumulator, result)
+    if (!kind && encoder.scalarHandlers[definition.name])
+      result = encoder.scalarHandlers[definition.name].encode(data)
+    else if (kind === 'ScalarTypeDefinition' && encoder.scalarHandlers[kind])
+      result = encoder.scalarHandlers[kind].encode(data)
+    else if (kind === 'EnumTypeDefinition') {
+      const index = (
+        definition.astNode as EnumTypeDefinitionNode
+      ).values?.findIndex(({ name }) => name.value === data)
+      if (!index) throw new Error(`Unknown Enum value ${data} for ${type.name}`)
+      result = new Uint8Array([index])
+    } else if (kind === 'InputObjectTypeDefinition') {
+      result = encodeVector(encoder, definition as GraphQLInputObjectType, data)
+    } else
+      throw new Error(`Unknown or non-input type ${type.name} in a variable`)
+  }
+
+  return result
 }
 
 function encodeVector(
   encoder: Encoder,
-  type: GraphQLObjectType,
+  type: GraphQLInputObjectType,
   data: object
 ): Uint8Array {
   const fields = type.getFields()
