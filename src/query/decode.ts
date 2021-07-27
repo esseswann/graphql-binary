@@ -71,7 +71,7 @@ class Decoder {
 function decodeQuery(
   decoder: Decoder,
   type: GraphQLObjectType,
-  data: ByteIterator<number>,
+  data: ByteIterator,
   variablesHandler: VariablesHandler<any>
 ) {
   const vector = decoder.queryDecoder.vector()
@@ -121,7 +121,7 @@ function decodeQuery(
 function decodeVariables(
   decoder: Decoder,
   dictionary: Array<VariableDefinitionNode>,
-  data: ByteIterator<number>
+  data: ByteIterator
 ) {
   if (data.current() === undefined)
     throw new Error('Expected variables data for query')
@@ -134,11 +134,7 @@ function decodeVariables(
   return vector.commit()
 }
 
-function decodeValue(
-  decoder: Decoder,
-  type: TypeNode,
-  data: ByteIterator<number>
-) {
+function decodeValue(decoder: Decoder, type: TypeNode, data: ByteIterator) {
   if (type.kind === 'NonNullType') type = type.type
   if (type.kind === 'NamedType') {
     const definition = decoder.schema.getType(type.name.value)
@@ -151,7 +147,7 @@ function decodeValue(
 function decodeList<T>(
   decoder: Decoder,
   type: TypeNode,
-  data: ByteIterator<number>
+  data: ByteIterator
 ): T {
   const list = decoder.dataDecoder.list()
   while (!data.atEnd()) list.accumulate(decodeValue(decoder, type, data))
@@ -162,7 +158,7 @@ function decodeList<T>(
 function decodeVector<T>(
   decoder: Decoder,
   type: GraphQLObjectType,
-  data: ByteIterator<number>
+  data: ByteIterator
 ): T {
   const vector = decoder.dataDecoder.vector()
   const fields = type.astNode?.fields
