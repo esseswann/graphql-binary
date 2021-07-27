@@ -16,6 +16,8 @@ type Query {
   ): String
 }
 
+scalar Kek
+
 input InputMap {
   scalar: ID
   inputMap: InputMap

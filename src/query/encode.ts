@@ -1,11 +1,15 @@
 import {
   DocumentNode,
   FieldNode,
+  GraphQLInputObjectType,
+  GraphQLNamedType,
   GraphQLObjectType,
+  GraphQLScalarType,
   GraphQLSchema,
   GraphQLType,
   OperationDefinitionNode,
-  SelectionSetNode
+  SelectionSetNode,
+  TypeNode
 } from 'graphql'
 import {
   // VariablesEncoder,
@@ -18,9 +22,8 @@ import defaultScalarHandlers, { ScalarHandlers } from '../scalarHandlers'
 import extractTargetType from './extractTargetType'
 
 class Encoder {
-  private readonly schema: GraphQLSchema
-  private readonly scalarHandlers: ScalarHandlers
-  private result: Array<number> = []
+  readonly schema: GraphQLSchema
+  readonly scalarHandlers: ScalarHandlers
 
   constructor(schema: GraphQLSchema, customScalarHandlers?: ScalarHandlers) {
     this.schema = schema
@@ -31,18 +34,21 @@ class Encoder {
   encode<Result, Variables = void>(
     query: DocumentNode
   ): EncodeResult<Result, Variables> {
-    this.result = []
+    const result = []
     const { definitions } = this.prepareDocument(query)
     const definition = definitions[0] as OperationDefinitionNode
     const operation = definition.operation
-    this.result.push(Operation[operation])
-    const result = encodeQueryVector(
+    result.push(Operation[operation])
+    encodeQueryVector(
       this.schema,
-      [],
+      result,
       this.getOperationType(operation),
       definition.selectionSet
     )
     // const variablesEncoder = new VariablesEncoder<Result, Variables>()
+    const data = 123
+    const type = this.schema.getType('Int')
+    if (type) encodeValue(this, type, data, new Uint8Array())
     return {
       query: new Uint8Array(result),
       handleResponse: () => ({} as Result)
@@ -95,6 +101,48 @@ function encodeQueryVector(
   return result
 }
 
+function encodeValue(
+  encoder: Encoder,
+  type: GraphQLNamedType,
+  data: any,
+  accumulator: Uint8Array
+): Uint8Array {
+  let result: Uint8Array = new Uint8Array([])
+
+  const kind = type.astNode?.kind
+
+  if (!kind && encoder.scalarHandlers[type.name]) {
+    result = encoder.scalarHandlers[type.name].encode(data)
+  } else if (kind === 'ScalarTypeDefinition' && encoder.scalarHandlers[kind]) {
+    result = encoder.scalarHandlers[kind].encode(data)
+  } else if (kind === 'InputObjectTypeDefinition') console.log('input object')
+  else if (kind === 'EnumTypeDefinition') console.log('enum')
+  else throw new Error(`Unknown or non-input type ${type.name} in a variable`)
+
+  return mergeArrays(accumulator, result)
+}
+
+function encodeVector(
+  encoder: Encoder,
+  type: GraphQLObjectType,
+  data: object
+): Uint8Array {
+  const fields = type.getFields()
+  for (const key in data) {
+    const definition = fields[key]
+    console.log(definition)
+  }
+  return new Uint8Array()
+}
+
+function encodeList(
+  encoder: Encoder,
+  type: TypeNode,
+  data: Array<any>
+): Uint8Array {
+  return new Uint8Array()
+}
+
 // class VariablesEncoder<Result, Variables> {
 //   schema: GraphQLSchema
 //   encodedQuery: Uint8Array
@@ -127,17 +175,17 @@ function encodeQueryVector(
 //   index: number
 // }
 
-// // Somewhat efficient Uint8Array merging
-// function mergeArrays(...arrays: Uint8Array[]): Uint8Array {
-//   const myArray = new Uint8Array(arrays.reduce<number>(lengthsReducer, 0))
-//   for (let i = 0; i < arrays.length; i++)
-//     myArray.set(arrays[i], arrays[i - 1]?.length || 0)
-//   return myArray
-// }
+// Somewhat efficient Uint8Array merging
+function mergeArrays(...arrays: Uint8Array[]): Uint8Array {
+  const myArray = new Uint8Array(arrays.reduce<number>(lengthsReducer, 0))
+  for (let i = 0; i < arrays.length; i++)
+    myArray.set(arrays[i], arrays[i - 1]?.length || 0)
+  return myArray
+}
 
-// function lengthsReducer(result: number, data: ArrayLike<any>) {
-//   return result + data.length
-// }
+function lengthsReducer(result: number, data: ArrayLike<any>) {
+  return result + data.length
+}
 
 // [reference, config, stringLength, ...stringBody]
 
