@@ -14,6 +14,14 @@ const scalarHandlers: ScalarHandlers = {
     encode: (data: number) => new Uint8Array([data]),
     decode: (data) => data.take()
   },
+  Float: {
+    encode: (data: number) => new Uint8Array([data]),
+    decode: (data) => data.take()
+  },
+  String: {
+    encode: (data: number) => new Uint8Array([data]),
+    decode: (data) => data.take()
+  },
   Boolean: {
     encode: (data: boolean) => new Uint8Array([data ? 1 : 0]),
     decode: (data) => !!data.take()

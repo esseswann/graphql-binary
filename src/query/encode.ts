@@ -55,8 +55,20 @@ class Encoder {
       if (variableDefinitions) operationCode |= Flags.Variables
       result.unshift(operationCode)
 
-      const data = 'FIRST'
-      const encodedVariables = encodeVariables(this, variableDefinitions, data)
+      // FIXME should prepare the variables
+      const preparedVariables = {
+        A: 1,
+        B: 2,
+        C: true,
+        D: 'test',
+        E: 'THIRD'
+      }
+      const encodedVariables = encodeVariables(
+        this,
+        variableDefinitions,
+        preparedVariables
+      )
+      console.log(encodedVariables)
     }
     // const type = this.schema.getType('Enumerable')
     // if (type) encodeValue(this, type, data, new Uint8Array())
@@ -147,12 +159,15 @@ function encodeValue(encoder: Encoder, type: TypeNode, data: any): Uint8Array {
       const index = (
         definition.astNode as EnumTypeDefinitionNode
       ).values?.findIndex(({ name }) => name.value === data)
-      if (!index) throw new Error(`Unknown Enum value ${data} for ${type.name}`)
+      if (index === -1 || index === undefined)
+        throw new Error(`Unknown Enum value ${data} for ${type.name.value}`)
       result = new Uint8Array([index])
     } else if (kind === 'InputObjectTypeDefinition') {
       result = encodeVector(encoder, definition as GraphQLInputObjectType, data)
     } else
-      throw new Error(`Unknown or non-input type ${type.name} in a variable`)
+      throw new Error(
+        `Unknown or non-input type ${type.name.value} in a variable`
+      )
   }
 
   return result

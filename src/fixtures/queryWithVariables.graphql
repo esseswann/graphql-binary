@@ -3,6 +3,16 @@ query QueryWithVariables(
   # so to not break the test an uppercased
   # alphabetic char sequence should be used
   $A: Int
+  $B: Float
+  $C: Boolean
+  $D: String
+  $E: Enumerable
 ) {
-  withArgs(int: $A)
+  withArgs(
+    int: $A
+    float: $B
+    boolean: $C
+    string: $D
+    enum: $E
+  )
 }
