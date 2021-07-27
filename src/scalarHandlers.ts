@@ -19,13 +19,13 @@ const scalarHandlers: ScalarHandlers = {
   },
   Float: {
     encode: (data: number) => {
-      const array = new Float32Array(data) // FIXME we need to make precision variable
+      const array = new Float32Array(1) // FIXME we need to make precision variable
       array[0] = data
       return new Uint8Array(array.buffer)
     },
     decode: (data: ByteIterator) => {
       const view = new DataView(data.take(4).buffer)
-      return view.getFloat64(0, true) // FIXME probably doesn't work
+      return view.getFloat32(0, true) // FIXME probably doesn't work
     }
   },
   String: {
