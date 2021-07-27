@@ -1,6 +1,7 @@
 import { ByteIterator } from './iterator'
 import { decodeVarInt, encodeVarInt } from './varint'
-import { TextEncoder, TextDecoder } from 'util'
+import { TextEncoder, TextDecoder } from 'util' // FIXME should use some crossplatform solution
+import mergeArrays from './mergeArrays'
 
 export type ScalarHandlers = {
   [key: string]: ScalarHandler<any>
@@ -17,14 +18,21 @@ const scalarHandlers: ScalarHandlers = {
     decode: decodeVarInt
   },
   Float: {
-    encode: (data: number) => new Uint8Array([data]),
-    decode: (data) => data.take()
+    encode: (data: number) => {
+      const array = new Float32Array(data) // FIXME we need to make precision variable
+      array[0] = data
+      return new Uint8Array(array.buffer)
+    },
+    decode: (data: ByteIterator) => {
+      const view = new DataView(data.take(4).buffer)
+      return view.getFloat64(0, true) // FIXME probably doesn't work
+    }
   },
   String: {
     encode: (data: string) => {
       const textEncoder = new TextEncoder()
       const result = textEncoder.encode(data)
-      return new Uint8Array([...encodeVarInt(result.length), ...result])
+      return mergeArrays(encodeVarInt(result.length), result)
     },
     decode: (data: ByteIterator) => {
       const length = decodeVarInt(data)

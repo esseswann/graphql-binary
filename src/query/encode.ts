@@ -59,7 +59,7 @@ class Encoder {
       // FIXME should prepare the variables
       const preparedVariables = {
         A: 1,
-        B: 2,
+        B: 2.5,
         C: true,
         D: 'test',
         E: 'THIRD'
