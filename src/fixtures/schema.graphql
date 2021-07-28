@@ -19,7 +19,7 @@ type Query {
 scalar Kek
 
 input InputMap {
-  scalar: ID
+  int: Int
   inputMap: InputMap
 }
 

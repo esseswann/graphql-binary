@@ -62,7 +62,12 @@ class Encoder {
         B: 2.5,
         C: true,
         D: 'test',
-        E: 'THIRD'
+        E: 'THIRD',
+        F: {
+          inputMap: {
+            int: 123
+          }
+        }
       }
       const encodedVariables = encodeVariables(
         this,
@@ -177,14 +182,24 @@ function encodeValue(encoder: Encoder, type: TypeNode, data: any): Uint8Array {
 function encodeVector(
   encoder: Encoder,
   type: GraphQLInputObjectType,
-  data: object
-): Uint8Array {
-  const fields = type.getFields()
-  for (const key in data) {
-    const definition = fields[key]
-    console.log(definition)
+  data: {
+    [key: string]: any
   }
-  return new Uint8Array()
+): Uint8Array {
+  let result = new Uint8Array()
+  const fields = type.astNode?.fields
+  if (fields)
+    for (const key in data) {
+      const index = fields.findIndex(({ name }) => name.value === key)
+      const { type } = fields[index]
+      result = mergeArrays(
+        result,
+        new Uint8Array([index]),
+        encodeValue(encoder, type, data[key])
+      )
+    }
+  result = mergeArrays(result, new Uint8Array([END]))
+  return result
 }
 
 function encodeList(
