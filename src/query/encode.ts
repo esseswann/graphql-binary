@@ -8,6 +8,7 @@ import {
   GraphQLScalarType,
   GraphQLSchema,
   GraphQLType,
+  ListTypeNode,
   OperationDefinitionNode,
   SelectionSetNode,
   TypeNode,
@@ -65,7 +66,14 @@ class Encoder {
         E: 'THIRD',
         F: {
           inputMap: {
-            int: 123
+            int: 123,
+            inputListScalar: [1, 2, 3, 4, 2],
+            inputListMap: [
+              {
+                int: 123,
+                inputListScalar: [1, 2, 3, 4]
+              }
+            ]
           }
         }
       }
@@ -148,7 +156,7 @@ function encodeVariables(
 }
 
 function encodeValue(encoder: Encoder, type: TypeNode, data: any): Uint8Array {
-  let result: Uint8Array = new Uint8Array([])
+  let result = new Uint8Array([])
 
   if (type.kind === 'NonNullType') type = type.type
   if (type.kind === 'NamedType') {
@@ -174,8 +182,7 @@ function encodeValue(encoder: Encoder, type: TypeNode, data: any): Uint8Array {
       throw new Error(
         `Unknown or non-input type ${type.name.value} in a variable`
       )
-  }
-
+  } else result = encodeList(encoder, type, data)
   return result
 }
 
@@ -191,11 +198,13 @@ function encodeVector(
   if (fields)
     for (const key in data) {
       const index = fields.findIndex(({ name }) => name.value === key)
-      const { type } = fields[index]
+      if (index === -1)
+        throw new Error(`No field with name ${key} found in ${type.name}`)
+      const fieldType = fields[index]
       result = mergeArrays(
         result,
         new Uint8Array([index]),
-        encodeValue(encoder, type, data[key])
+        encodeValue(encoder, fieldType.type, data[key])
       )
     }
   result = mergeArrays(result, new Uint8Array([END]))
@@ -204,10 +213,13 @@ function encodeVector(
 
 function encodeList(
   encoder: Encoder,
-  type: TypeNode,
+  type: ListTypeNode,
   data: Array<any>
 ): Uint8Array {
-  return new Uint8Array()
+  let result = new Uint8Array([])
+  for (let index = 0; index < data.length; index++)
+    result = mergeArrays(result, encodeValue(encoder, type.type, data[index]))
+  return mergeArrays(result, new Uint8Array([END]))
 }
 
 // class VariablesEncoder<Result, Variables> {

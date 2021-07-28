@@ -21,6 +21,8 @@ scalar Kek
 input InputMap {
   int: Int
   inputMap: InputMap
+  inputListScalar: [Int]
+  inputListMap: [InputMap]
 }
 
 type Mutation {
