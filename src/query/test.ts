@@ -30,10 +30,11 @@ const encoder = new Encoder(schema)
 //   console.log(decoder.decode(encodedBasicQuery.query))
 // }
 
-const encodedBasicQueryWithArgs = encoder.encode<BasicQueryResult>(
+const encoded = encoder.encode<BasicQueryResult>(
   queryWithVariables
 ) as EncodedQueryWithHandler<BasicQueryResult>
-console.log(encodedBasicQueryWithArgs.query)
-// const test = decoder.decode()
+// console.log(encodedBasicQueryWithArgs.query)
+const test = decoder.decode(encoded.query)
+console.log(test.variables)
 // test('decoded query matches encoded', () =>
 //   expect(decoder.decode(encoder.encode(query) as Uint8Array)).toEqual(query))

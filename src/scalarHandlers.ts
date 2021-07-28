@@ -24,8 +24,9 @@ const scalarHandlers: ScalarHandlers = {
       return new Uint8Array(array.buffer)
     },
     decode: (data: ByteIterator) => {
-      const view = new DataView(data.take(4).buffer)
-      return view.getFloat32(0, true) // FIXME probably doesn't work
+      const takenData = data.take(4)
+      const view = new DataView(takenData.buffer)
+      return view.getFloat32(0, true)
     }
   },
   String: {

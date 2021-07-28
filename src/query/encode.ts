@@ -52,6 +52,7 @@ class Encoder {
     )
     // const variablesEncoder = new VariablesEncoder<Result, Variables>()
 
+    let encodedVariables = new Uint8Array([])
     if (variableDefinitions) {
       let operationCode = Operation[operation]
       if (variableDefinitions) operationCode |= Flags.Variables
@@ -77,17 +78,14 @@ class Encoder {
           }
         }
       }
-      const encodedVariables = encodeVariables(
+      encodedVariables = encodeVariables(
         this,
         variableDefinitions,
         preparedVariables
       )
-      console.log(encodedVariables)
     }
-    // const type = this.schema.getType('Enumerable')
-    // if (type) encodeValue(this, type, data, new Uint8Array())
     return {
-      query: new Uint8Array(result),
+      query: mergeArrays(new Uint8Array(result), encodedVariables),
       handleResponse: () => ({} as Result)
     }
     // variablesEncoder.encodeVariables

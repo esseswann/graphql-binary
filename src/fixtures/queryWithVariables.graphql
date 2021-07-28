@@ -6,15 +6,15 @@ query QueryWithVariables(
   $B: Float
   $C: Boolean
   $D: String
-  $E: Enumerable
-  $F: InputMap
+  # $E: Enumerable
+  # $F: InputMap
 ) {
   withArgs(
     int: $A
     float: $B
     boolean: $C
     string: $D
-    enum: $E
-    input: $F
+    # enum: $E
+    # input: $F
   )
 }
