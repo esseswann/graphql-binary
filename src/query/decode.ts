@@ -1,4 +1,4 @@
-import { GraphQLObjectType, GraphQLSchema } from 'graphql'
+import { GraphQLEnumType, GraphQLObjectType, GraphQLSchema } from 'graphql'
 import {
   DocumentNode,
   OperationTypeNode,
@@ -140,6 +140,8 @@ function decodeValue(decoder: Decoder, type: TypeNode, data: ByteIterator) {
     const definition = decoder.schema.getType(type.name.value)
     return (definition as GraphQLObjectType).getFields
       ? decodeVector(decoder, definition as GraphQLObjectType, data)
+      : (definition as GraphQLEnumType).getValues
+      ? (definition as GraphQLEnumType).getValues()[data.take()].value
       : decoder.scalarHandlers[type.name.value].decode(data)
   } else return decodeList(decoder, type, data)
 }

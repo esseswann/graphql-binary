@@ -6,7 +6,7 @@ query QueryWithVariables(
   $B: Float
   $C: Boolean
   $D: String
-  # $E: Enumerable
+  $E: Enumerable
   # $F: InputMap
 ) {
   withArgs(
@@ -14,7 +14,7 @@ query QueryWithVariables(
     float: $B
     boolean: $C
     string: $D
-    # enum: $E
+    enum: $E
     # input: $F
   )
 }
