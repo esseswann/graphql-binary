@@ -36,10 +36,20 @@ class Encoder {
   encode<Result, Variables = void>(
     query: DocumentNode
   ): EncodeResult<Result, Variables> {
-    const result: Array<number> = []
+    let result: Array<number> = []
     const { definitions } = this.prepareDocument(query)
-    const { operation, variableDefinitions, selectionSet } =
+    const { operation, variableDefinitions, selectionSet, name } =
       definitions[0] as OperationDefinitionNode
+
+    let configBitmask = Operation[operation]
+
+    if (name.value) {
+      configBitmask |= Flags.Name
+      result = [
+        configBitmask,
+        ...Array.from(this.scalarHandlers.String.encode(name.value))
+      ]
+    }
 
     encodeQueryVector(
       this.schema,
@@ -48,11 +58,9 @@ class Encoder {
       selectionSet
     )
 
-    if (variableDefinitions) {
-      let operationCode = Operation[operation]
-      operationCode |= Flags.Variables
-      result.unshift(operationCode)
-    }
+    if (variableDefinitions) configBitmask |= Flags.Variables
+
+    result.unshift(configBitmask)
     return (variables: Variables) => ({
       query: mergeArrays(
         new Uint8Array(result),

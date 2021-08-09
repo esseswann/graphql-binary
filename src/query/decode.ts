@@ -1,6 +1,7 @@
 import { GraphQLEnumType, GraphQLObjectType, GraphQLSchema } from 'graphql'
 import {
   DocumentNode,
+  NameNode,
   OperationTypeNode,
   TypeNode,
   VariableDefinitionNode
@@ -16,7 +17,8 @@ import {
   END,
   Operation,
   VariablesHandler,
-  DataDecoder
+  DataDecoder,
+  Flags
 } from './types'
 import jsonDecoder from './jsonDecoder'
 import extractTargetType from './extractTargetType'
@@ -49,6 +51,16 @@ class Decoder {
         : null
     ) as OperationTypeNode
 
+    iterator.take()
+
+    const name =
+      (configBitmask & Flags.Name) === Flags.Name
+        ? ({
+            kind: 'Name',
+            value: this.scalarHandlers.String.decode(iterator)
+          } as NameNode)
+        : undefined
+
     const { selectionSet, variableDefinitions } = decodeQuery(
       this,
       this.schema.getType('Query') as GraphQLObjectType,
@@ -62,10 +74,10 @@ class Decoder {
       kind: 'Document',
       definitions: [
         {
+          name,
           kind: 'OperationDefinition',
           operation: operation,
           selectionSet: selectionSet,
-          name: undefined, // FIXME requires support
           ...(hasVariables && { variableDefinitions })
         }
       ]
