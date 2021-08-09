@@ -8,7 +8,7 @@
   "license": "MIT",
   "private": false,
   "scripts": {
-    "test": "jest --watch --runInBand",
+    "test": "jest --watch",
     "dev": "nodemon --exec ts-node"
   },
   "dependencies": {
@@ -23,8 +23,9 @@
     "jest": "27.0.6",
     "nodemon": "2.0.12",
     "prettier": "2.3.2",
-    "ts-node": "^10.1.0",
-    "typescript": "^4.3.5"
+    "ts-jest": "27.0.4",
+    "ts-node": "10.1.0",
+    "typescript": "4.3.5"
   },
   "nodemonConfig": {
     "watch": [
@@ -40,10 +41,15 @@
     "trailingComma": "none"
   },
   "jest": {
-    "moduleFileExtensions": [
-      "js",
-      "ts",
-      "graphql"
-    ]
+    "roots": [
+      "<rootDir>/src"
+    ],
+    "testMatch": [
+      "**/__tests__/**/*.+(ts)",
+      "**/?(*.)+(test).+(ts)"
+    ],
+    "transform": {
+      "^.+\\.(ts|tsx|js)$": "ts-jest"
+    }
   }
 }

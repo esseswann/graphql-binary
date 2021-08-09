@@ -34,7 +34,7 @@ const encoded = encoder.encode<BasicQueryResult>(
   queryWithVariables
 ) as EncodedQueryWithHandler<BasicQueryResult>
 // console.log(encodedBasicQueryWithArgs.query)
-const test = decoder.decode(encoded.query)
-console.log(test.variables)
-// test('decoded query matches encoded', () =>
-//   expect(decoder.decode(encoder.encode(query) as Uint8Array)).toEqual(query))
+// const test = decoder.decode(encoded.query)
+// console.log(queryWithVariables, test.document)
+test('decoded query matches encoded', () =>
+  expect(decoder.decode(encoded.query).document).toEqual(queryWithVariables))

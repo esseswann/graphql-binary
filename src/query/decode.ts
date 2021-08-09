@@ -5,6 +5,8 @@ import {
   TypeNode,
   VariableDefinitionNode
 } from 'graphql/language/ast'
+import assoc from 'lodash/fp/assoc'
+import isObject from 'lodash/fp/isObject'
 import defaultScalarHandlers, { ScalarHandlers } from '../scalarHandlers'
 import { ByteIterator, createIterator } from '../iterator'
 import { documentDecoder } from './documentDecoder'
@@ -15,7 +17,8 @@ import {
   END,
   Operation,
   VariablesHandler,
-  DataDecoder
+  DataDecoder,
+  Flags
 } from './types'
 import jsonDecoder from './jsonDecoder'
 import extractTargetType from './extractTargetType'
@@ -36,7 +39,17 @@ class Decoder {
   decode(data: Uint8Array): DecodeResult {
     const iterator = createIterator(data, END)
 
-    const operation = Operation[iterator.take()] as OperationTypeNode
+    const configBitmask = iterator.take()
+    // FIXME this should be done more elegantly
+    const operation = (
+      (configBitmask & Operation.query) === Operation.query
+        ? 'query'
+        : (configBitmask & Operation.mutation) === Operation.mutation
+        ? 'mutation'
+        : (configBitmask & Operation.subscription) === Operation.subscription
+        ? 'subscription'
+        : null
+    ) as OperationTypeNode
 
     const { selectionSet, variableDefinitions } = decodeQuery(
       this,
@@ -54,9 +67,12 @@ class Decoder {
           kind: 'OperationDefinition',
           operation: operation,
           selectionSet: selectionSet,
-          ...(hasVariables && { variableDefinitions })
+          ...(hasVariables && { variableDefinitions }),
+          directives: [], // FIXME requires support
+          loc: undefined
         }
-      ]
+      ],
+      loc: undefined
     }
 
     return {
@@ -94,7 +110,7 @@ function decodeQuery(
             callbacks.addArg(arg.name.value, variableName)
             data.take()
             // FIXME direct callback with type definition breaks abstraction gap
-            variablesHandler.accumulate(variableName, arg.type)
+            variablesHandler.accumulate(variableName, cleanLocations(arg.type))
           } else break
         }
 
@@ -116,6 +132,11 @@ function decodeQuery(
     selectionSet: vector.commit(),
     variableDefinitions: variablesHandler.commit()
   }
+}
+
+// FIXME this is wrong
+function cleanLocations(object: TypeNode): TypeNode {
+  return assoc('loc', undefined, assoc('name.loc', undefined, object))
 }
 
 function decodeVariables(

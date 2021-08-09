@@ -1,4 +1,3 @@
-// FIXME should use something standard
 // https://github.com/stoklund/varint#prefixvarint
 // WebAssembly/design#601
 import { ByteIterator } from '../iterator'
