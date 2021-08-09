@@ -68,6 +68,7 @@ class Decoder {
           operation: operation,
           selectionSet: selectionSet,
           directives: [], // FIXME requires support
+          name: undefined, // FIXME requires support
           loc: undefined,
           ...(hasVariables && { variableDefinitions })
         }
