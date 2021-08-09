@@ -1,4 +1,4 @@
-query BasicQuery {
+query Basic {
   int
   float
   boolean

@@ -1,4 +1,4 @@
-query(
+query WithVariables (
   # Variable names will not be preserved
   # so to not break the test an uppercased
   # alphabetic char sequence should be used

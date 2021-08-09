@@ -50,44 +50,22 @@ class Encoder {
       this.getOperationType(operation),
       selectionSet
     )
-    // const variablesEncoder = new VariablesEncoder<Result, Variables>()
 
-    let encodedVariables = new Uint8Array([])
     if (variableDefinitions) {
       let operationCode = Operation[operation]
-      if (variableDefinitions) operationCode |= Flags.Variables
-      result.unshift(operationCode)
-
-      // FIXME should prepare the variables
-      const preparedVariables = {
-        A: 1,
-        B: 2.5,
-        C: true,
-        D: 'test',
-        E: 'THIRD',
-        F: {
-          inputMap: {
-            int: 123,
-            inputListScalar: [1, 2, 3, 4, 2],
-            inputListMap: [
-              {
-                int: 123,
-                inputListScalar: [1, 2, 3, 4]
-              }
-            ]
-          }
-        }
-      }
-      encodedVariables = encodeVariables(
-        this,
-        variableDefinitions,
-        preparedVariables
-      )
+      operationCode |= Flags.Variables
     }
-    return {
-      query: mergeArrays(new Uint8Array(result), encodedVariables),
+    return (variables: Variables) => ({
+      query: mergeArrays(
+        new Uint8Array(result),
+        encodeVariables(this, variableDefinitions, variables)
+      ),
       handleResponse: () => ({} as Result)
-    }
+    })
+    // {
+    //   query: mergeArrays(new Uint8Array(result), encodedVariables),
+    //   handleResponse: () => ({} as Result)
+    // }
     // variablesEncoder.encodeVariables
     // (variables: Variables) => ({
     // })

@@ -1,0 +1,9 @@
+overwrite: true
+schema: src/fixtures/schema.graphql
+documents: src/fixtures/*
+generates:
+  src/fixtures/index.ts:
+    plugins:
+      - typescript
+      - typescript-operations
+      - typed-document-node

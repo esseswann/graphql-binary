@@ -1,25 +1,21 @@
-import { basicQuery, schema, queryWithVariables } from '../fixtures'
+import fs from 'fs'
+import { buildSchema } from 'graphql'
+import {
+  Enumerable,
+  WithVariablesDocument,
+  WithVariablesQuery,
+  WithVariablesQueryVariables
+} from '../fixtures'
+import Decoder from './decode'
 // import compress from 'graphql-query-compress'
 // import { print } from 'graphql/language/printer'
-
 // import generateDictionary from '../dictionary'
 import Encoder from './encode'
-import Decoder from './decode'
-import { EncodedQueryWithHandler, VariablesEncoder } from './types'
+import { VariablesEncoder } from './types'
+// import { EncodedQueryWithHandler, VariablesEncoder } from './types'
 
-// import query from '../fixtures/basicQuery.graphql'
-// import mutation from '../fixtures/mutation.graphql'
-// import schema from '../fixtures/schema.graphql'
-// import subscription from '../fixtures/subscription.graphql'
-// import queryWithVariables from '../fixtures/variables/query.graphql'
-// import variablesSchema from '../fixtures/variables/schema.graphql'
-
-type BasicQueryResult = {
-  int: number
-  float: number
-  boolean: boolean
-  string: string
-}
+const schemaString = fs.readFileSync('src/fixtures/schema.graphql', 'utf8')
+const schema = buildSchema(schemaString)
 
 const decoder = new Decoder(schema)
 const encoder = new Encoder(schema)
@@ -30,11 +26,36 @@ const encoder = new Encoder(schema)
 //   console.log(decoder.decode(encodedBasicQuery.query))
 // }
 
-const encoded = encoder.encode<BasicQueryResult>(
-  queryWithVariables
-) as EncodedQueryWithHandler<BasicQueryResult>
+const preparedVariables = {
+  A: 1,
+  B: 2.5,
+  C: true,
+  D: 'test',
+  E: Enumerable.First,
+  F: {
+    inputMap: {
+      int: 123,
+      inputListScalar: [1, 2, 3, 4, 2],
+      inputListMap: [
+        {
+          int: 123,
+          inputListScalar: [1, 2, 3, 4]
+        }
+      ]
+    }
+  }
+}
+
+const handleVariables = encoder.encode<
+  WithVariablesQuery,
+  WithVariablesQueryVariables
+>(WithVariablesDocument) as VariablesEncoder<
+  WithVariablesQuery,
+  WithVariablesQueryVariables
+>
+handleVariables(preparedVariables)
 // console.log(encodedBasicQueryWithArgs.query)
 // const test = decoder.decode(encoded.query)
 // console.log(queryWithVariables, test.document)
-test('decoded query matches encoded', () =>
-  expect(decoder.decode(encoded.query).document).toEqual(queryWithVariables))
+// test('decoded query matches encoded', () =>
+//   expect(decoder.decode(encoded.query).document).toEqual(queryWithVariables))

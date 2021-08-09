@@ -16,6 +16,10 @@
     "lodash": "4.17.21"
   },
   "devDependencies": {
+    "@graphql-codegen/cli": "2.0.1",
+    "@graphql-codegen/typescript": "2.0.0",
+    "@graphql-codegen/typescript-operations": "2.0.1",
+    "@graphql-codegen/typed-document-node": "2.0.0",
     "@types/jest": "26.0.24",
     "@types/node": "16.4.2",
     "graphql-query-compress": "1.2.4",
