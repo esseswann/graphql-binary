@@ -5,8 +5,7 @@ import {
   TypeNode,
   VariableDefinitionNode
 } from 'graphql/language/ast'
-import assoc from 'lodash/fp/assoc'
-import isObject from 'lodash/fp/isObject'
+import dissoc from 'lodash/fp/dissoc'
 import defaultScalarHandlers, { ScalarHandlers } from '../scalarHandlers'
 import { ByteIterator, createIterator } from '../iterator'
 import { documentDecoder } from './documentDecoder'
@@ -17,8 +16,7 @@ import {
   END,
   Operation,
   VariablesHandler,
-  DataDecoder,
-  Flags
+  DataDecoder
 } from './types'
 import jsonDecoder from './jsonDecoder'
 import extractTargetType from './extractTargetType'
@@ -67,13 +65,10 @@ class Decoder {
           kind: 'OperationDefinition',
           operation: operation,
           selectionSet: selectionSet,
-          directives: [], // FIXME requires support
           name: undefined, // FIXME requires support
-          loc: undefined,
           ...(hasVariables && { variableDefinitions })
         }
-      ],
-      loc: undefined
+      ]
     }
 
     return {
@@ -137,7 +132,7 @@ function decodeQuery(
 
 // FIXME this is wrong
 function cleanLocations(object: TypeNode): TypeNode {
-  return assoc('loc', undefined, assoc('name.loc', undefined, object))
+  return dissoc('loc', dissoc('name.loc', object))
 }
 
 function decodeVariables(

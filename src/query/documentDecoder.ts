@@ -21,42 +21,33 @@ export const documentDecoder: QueryDecoder<
           addArg: (key, variableName) =>
             args.push({
               kind: 'Argument',
-              loc: undefined,
               value: {
                 kind: 'Variable',
-                loc: undefined,
                 name: {
                   kind: 'Name',
-                  value: variableName,
-                  loc: undefined
+                  value: variableName
                 }
               },
               name: {
                 kind: 'Name',
-                value: key,
-                loc: undefined
+                value: key
               }
             }),
           commit: () =>
             accumulator.push({
               kind: 'Field',
-              alias: undefined, // FIXME probably should handle
-              directives: [],
               name: {
                 kind: 'Name',
-                loc: undefined,
                 value: key
               },
               ...(args.length && { arguments: args }),
-              ...(selectionSet && { selectionSet }),
-              loc: undefined
+              ...(selectionSet && { selectionSet })
             })
         }
       },
       commit: (): SelectionSetNode => ({
         kind: 'SelectionSet',
-        selections: accumulator,
-        loc: undefined
+        selections: accumulator
       })
     }
   },
@@ -67,16 +58,11 @@ export const documentDecoder: QueryDecoder<
         accumulator.push({
           kind: 'VariableDefinition',
           type: type,
-          loc: undefined,
-          directives: [], // FIXME requires support
-          defaultValue: undefined, // FIXME requires support
           variable: {
             kind: 'Variable',
-            loc: undefined,
             name: {
               kind: 'Name',
-              value: key,
-              loc: undefined
+              value: key
             }
           }
         }),

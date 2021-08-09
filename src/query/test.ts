@@ -56,6 +56,8 @@ const handleVariables = encoder.encode<
 handleVariables(preparedVariables)
 // console.log(encodedBasicQueryWithArgs.query)
 // const test = decoder.decode(encoded.query)
-// console.log(queryWithVariables, test.document)
-// test('decoded query matches encoded', () =>
-//   expect(decoder.decode(encoded.query).document).toEqual(queryWithVariables))
+console.log(handleVariables(preparedVariables).query)
+test('decoded query matches encoded', () =>
+  expect(
+    decoder.decode(handleVariables(preparedVariables).query).document
+  ).toEqual(WithVariablesDocument))

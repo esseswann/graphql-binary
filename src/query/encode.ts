@@ -3,11 +3,8 @@ import {
   EnumTypeDefinitionNode,
   FieldNode,
   GraphQLInputObjectType,
-  GraphQLNamedType,
   GraphQLObjectType,
-  GraphQLScalarType,
   GraphQLSchema,
-  GraphQLType,
   ListTypeNode,
   OperationDefinitionNode,
   SelectionSetNode,
@@ -54,6 +51,7 @@ class Encoder {
     if (variableDefinitions) {
       let operationCode = Operation[operation]
       operationCode |= Flags.Variables
+      result.unshift(operationCode)
     }
     return (variables: Variables) => ({
       query: mergeArrays(
