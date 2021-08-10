@@ -18,13 +18,21 @@ export enum Flags {
 
 export type DecodeResult = {
   document: DocumentNode
-  variables: object | undefined
+  variables: object | null
 }
 
 export interface QueryDecoder<Vector, Variable> {
   vector: () => VectorHandler<Vector, QueryKeyHandler<Vector>>
   variables: () => VariablesHandler<Variable>
 }
+
+// export interface DefinitionHandler<Definition, Vector, Variables> {
+//   addVector: (vector: Vector) => void
+//   addVariablesDefinitions: (variables: Variables) => void
+//   addOperation: (operation: String) => void
+//   addName: (name: string) => void
+//   commit: () => Definition
+// }
 
 export interface QueryKeyHandler<T> extends KeyHandler<T> {
   addArg: (key: string, type: any) => void

@@ -85,9 +85,9 @@ class Decoder {
 
     return {
       document,
-      ...(hasVariables && {
-        variables: decodeVariables(this, variableDefinitions, iterator)
-      })
+      variables: hasVariables
+        ? decodeVariables(this, variableDefinitions, iterator)
+        : null
     }
   }
 }
