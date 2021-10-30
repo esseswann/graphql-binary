@@ -28,6 +28,11 @@ class Decoder {
   readonly queryDecoder: QueryDecoder<any, any>
   readonly dataDecoder: DataDecoder<any, any, any>
   readonly scalarHandlers: ScalarHandlers
+  readonly topLevelTypes = { // FIXME
+    query: 'getQueryType',
+    mutation: 'getMutationType',
+    subscription: 'getSubscriptionType'
+  }
 
   constructor(schema: GraphQLSchema, customScalarHandlers?: ScalarHandlers) {
     this.schema = schema
@@ -42,15 +47,15 @@ class Decoder {
     const configBitmask = iterator.take()
     // FIXME this should be done more elegantly
     const operation = (
-      (configBitmask & Operation.query) === Operation.query
-        ? 'query'
-        : (configBitmask & Operation.mutation) === Operation.mutation
+      // Order is important
+      (configBitmask & Operation.mutation) === Operation.mutation
         ? 'mutation'
         : (configBitmask & Operation.subscription) === Operation.subscription
         ? 'subscription'
+        : (configBitmask & Operation.query) === Operation.query
+        ? 'query'
         : null
     ) as OperationTypeNode
-
     const name =
       (configBitmask & Flags.Name) === Flags.Name
         ? ({
@@ -61,7 +66,7 @@ class Decoder {
 
     const { selectionSet, variableDefinitions } = decodeQuery(
       this,
-      this.schema.getType('Query') as GraphQLObjectType,
+      this.schema[this.topLevelTypes[operation]]() as GraphQLObjectType,
       iterator,
       this.queryDecoder.variables()
     )

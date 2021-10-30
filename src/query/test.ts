@@ -1,32 +1,24 @@
 import fs from 'fs'
 import { buildSchema } from 'graphql'
 import {
+  NoArgsMutation,
   BasicDocument,
   BasicQuery,
   Enumerable,
   WithVariablesDocument,
   WithVariablesQuery,
-  WithVariablesQueryVariables
+  WithVariablesQueryVariables,
+  NoArgsDocument
 } from '../fixtures'
 import Decoder from './decode'
-// import compress from 'graphql-query-compress'
-// import { print } from 'graphql/language/printer'
-// import generateDictionary from '../dictionary'
 import Encoder from './encode'
 import { EncodedQueryWithHandler, EncodeResult, VariablesEncoder } from './types'
-// import { EncodedQueryWithHandler, VariablesEncoder } from './types'
 
 const schemaString = fs.readFileSync('src/fixtures/schema.graphql', 'utf8')
 const schema = buildSchema(schemaString)
 
 const decoder = new Decoder(schema)
 const encoder = new Encoder(schema)
-// const encodedBasicQuery = encoder.encode<BasicQueryResult>(
-//   basicQuery
-// ) as EncodedQueryWithHandler<BasicQueryResult>
-// if (encodedBasicQuery.query) {
-//   console.log(decoder.decode(encodedBasicQuery.query))
-// }
 
 const preparedVariables: WithVariablesQueryVariables = {
   A: 1,
@@ -47,8 +39,6 @@ const preparedVariables: WithVariablesQueryVariables = {
   //   }
   // }
 }
-// console.log(encodedBasicQueryWithArgs.query)
-// const test = decoder.decode(encoded.query)
 
 test('decoded query matches encoded', () => {
   const result = encoder.encode<BasicQuery>(BasicDocument) as EncodedQueryWithHandler<BasicQuery>
@@ -69,4 +59,11 @@ test('decoded variables query matches encoded', () => {
   expect(
     decoder.decode(handleVariables(preparedVariables).query).document
   ).toEqual(WithVariablesDocument)
+})
+
+test('decoded mutation matches encoded', () => {
+  const result = encoder.encode<NoArgsMutation>(NoArgsDocument) as EncodedQueryWithHandler<NoArgsMutation>
+  expect(
+    decoder.decode(result.query).document
+  ).toEqual(NoArgsDocument)
 })
