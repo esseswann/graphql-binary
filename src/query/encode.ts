@@ -128,6 +128,8 @@ function encodeVariables(
   let result: Uint8Array = new Uint8Array()
   for (let index = 0; index < variableDefinitions.length; index++) {
     const { type, variable } = variableDefinitions[index]
+    if (!data.hasOwnProperty(variable.name.value))
+      throw new Error(`Variable ${variable.name.value} was not provided`)
     result = mergeArrays(
       result,
       encodeValue(encoder, type, data[variable.name.value])
