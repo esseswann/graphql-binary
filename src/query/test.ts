@@ -8,7 +8,9 @@ import {
   WithVariablesDocument,
   WithVariablesQuery,
   WithVariablesQueryVariables,
-  NoArgsDocument
+  NoArgsDocument,
+  NoArgsSubscriptionSubscription,
+  NoArgsSubscriptionDocument
 } from '../fixtures'
 import Decoder from './decode'
 import Encoder from './encode'
@@ -66,4 +68,11 @@ test('decoded mutation matches encoded', () => {
   expect(
     decoder.decode(result.query).document
   ).toEqual(NoArgsDocument)
+})
+
+test('decoded subscription matches encoded', () => {
+  const result = encoder.encode<NoArgsSubscriptionSubscription>(NoArgsSubscriptionDocument) as EncodedQueryWithHandler<NoArgsSubscriptionSubscription>
+  expect(
+    decoder.decode(result.query).document
+  ).toEqual(NoArgsSubscriptionDocument)
 })
