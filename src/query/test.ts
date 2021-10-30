@@ -28,18 +28,18 @@ const preparedVariables: WithVariablesQueryVariables = {
   C: true,
   D: 'test',
   E: Enumerable.First,
-  // F: {
-  //   inputMap: {
-  //     int: 123,
-  //     inputListScalar: [1, 2, 3, 4, 2],
-  //     inputListMap: [
-  //       {
-  //         int: 123,
-  //         inputListScalar: [1, 2, 3, 4]
-  //       }
-  //     ]
-  //   }
-  // }
+  F: {
+    inputMap: {
+      int: 123,
+      inputListScalar: [1, 2, 3, 4, 2],
+      inputListMap: [
+        {
+          int: 123,
+          inputListScalar: [1, 2, 3, 4]
+        }
+      ]
+    }
+  }
 }
 
 test('decoded query matches encoded', () => {
@@ -58,9 +58,10 @@ test('decoded variables query matches encoded', () => {
     WithVariablesQuery,
     WithVariablesQueryVariables
   >
-  expect(
-    decoder.decode(handleVariables(preparedVariables).query).document
-  ).toEqual(WithVariablesDocument)
+  const result = handleVariables(preparedVariables)
+  const decoded = decoder.decode(result.query)
+  expect(decoded.document).toEqual(WithVariablesDocument)
+  expect(decoded.variables).toEqual(preparedVariables)
 })
 
 test('decoded mutation matches encoded', () => {

@@ -4,6 +4,7 @@ import {
   NameNode,
   OperationTypeNode,
   TypeNode,
+  ListTypeNode,
   VariableDefinitionNode
 } from 'graphql/language/ast'
 import dissoc from 'lodash/fp/dissoc'
@@ -182,11 +183,11 @@ function decodeValue(decoder: Decoder, type: TypeNode, data: ByteIterator) {
 
 function decodeList<T>(
   decoder: Decoder,
-  type: TypeNode,
+  type: ListTypeNode,
   data: ByteIterator
 ): T {
   const list = decoder.dataDecoder.list()
-  while (!data.atEnd()) list.accumulate(decodeValue(decoder, type, data))
+  while (!data.atEnd()) list.accumulate(decodeValue(decoder, type.type, data))
   data.take()
   return list.commit()
 }

@@ -7,7 +7,7 @@ query WithVariables (
   $C: Boolean
   $D: String
   $E: Enumerable
-  # $F: InputMap
+  $F: InputMap
 ) {
   withArgs(
     int: $A
@@ -15,6 +15,6 @@ query WithVariables (
     boolean: $C
     string: $D
     enum: $E
-    # input: $F
+    inputMap: $F
   )
 }
