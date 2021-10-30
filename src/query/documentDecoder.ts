@@ -1,3 +1,4 @@
+import { Kind } from 'graphql'
 import {
   ArgumentNode,
   FieldNode,
@@ -20,24 +21,24 @@ export const documentDecoder: QueryDecoder<
           addValue: (value) => (selectionSet = value),
           addArg: (key, variableName) =>
             args.push({
-              kind: 'Argument',
+              kind: Kind.ARGUMENT,
               value: {
-                kind: 'Variable',
+                kind: Kind.VARIABLE,
                 name: {
-                  kind: 'Name',
+                  kind: Kind.NAME,
                   value: variableName
                 }
               },
               name: {
-                kind: 'Name',
+                kind: Kind.NAME,
                 value: key
               }
             }),
           commit: () =>
             accumulator.push({
-              kind: 'Field',
+              kind: Kind.FIELD,
               name: {
-                kind: 'Name',
+                kind: Kind.NAME,
                 value: key
               },
               ...(args.length && { arguments: args }),
@@ -46,7 +47,7 @@ export const documentDecoder: QueryDecoder<
         }
       },
       commit: (): SelectionSetNode => ({
-        kind: 'SelectionSet',
+        kind: Kind.SELECTION_SET,
         selections: accumulator
       })
     }
@@ -56,12 +57,12 @@ export const documentDecoder: QueryDecoder<
     return {
       accumulate: (key, type) =>
         accumulator.push({
-          kind: 'VariableDefinition',
+          kind: Kind.VARIABLE_DEFINITION,
           type: type,
           variable: {
-            kind: 'Variable',
+            kind: Kind.VARIABLE,
             name: {
-              kind: 'Name',
+              kind: Kind.NAME,
               value: key
             }
           }

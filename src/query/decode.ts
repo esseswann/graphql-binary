@@ -1,4 +1,4 @@
-import { GraphQLEnumType, GraphQLObjectType, GraphQLSchema } from 'graphql'
+import { GraphQLEnumType, GraphQLObjectType, GraphQLSchema, Kind } from 'graphql'
 import {
   DocumentNode,
   NameNode,
@@ -71,11 +71,11 @@ class Decoder {
     const hasVariables = variableDefinitions.length
 
     const document: DocumentNode = {
-      kind: 'Document',
+      kind: Kind.DOCUMENT,
       definitions: [
         {
           name,
-          kind: 'OperationDefinition',
+          kind: Kind.OPERATION_DEFINITION,
           operation: operation,
           selectionSet: selectionSet,
           ...(hasVariables && { variableDefinitions })
