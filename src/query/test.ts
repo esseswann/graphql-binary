@@ -1,6 +1,8 @@
 import fs from 'fs'
 import { buildSchema } from 'graphql'
 import {
+  BasicDocument,
+  BasicQuery,
   Enumerable,
   WithVariablesDocument,
   WithVariablesQuery,
@@ -11,7 +13,7 @@ import Decoder from './decode'
 // import { print } from 'graphql/language/printer'
 // import generateDictionary from '../dictionary'
 import Encoder from './encode'
-import { VariablesEncoder } from './types'
+import { EncodedQueryWithHandler, EncodeResult, VariablesEncoder } from './types'
 // import { EncodedQueryWithHandler, VariablesEncoder } from './types'
 
 const schemaString = fs.readFileSync('src/fixtures/schema.graphql', 'utf8')
@@ -26,37 +28,45 @@ const encoder = new Encoder(schema)
 //   console.log(decoder.decode(encodedBasicQuery.query))
 // }
 
-const preparedVariables = {
+const preparedVariables: WithVariablesQueryVariables = {
   A: 1,
   B: 2.5,
   C: true,
   D: 'test',
   E: Enumerable.First,
-  F: {
-    inputMap: {
-      int: 123,
-      inputListScalar: [1, 2, 3, 4, 2],
-      inputListMap: [
-        {
-          int: 123,
-          inputListScalar: [1, 2, 3, 4]
-        }
-      ]
-    }
-  }
+  // F: {
+  //   inputMap: {
+  //     int: 123,
+  //     inputListScalar: [1, 2, 3, 4, 2],
+  //     inputListMap: [
+  //       {
+  //         int: 123,
+  //         inputListScalar: [1, 2, 3, 4]
+  //       }
+  //     ]
+  //   }
+  // }
 }
-
-const handleVariables = encoder.encode<
-  WithVariablesQuery,
-  WithVariablesQueryVariables
->(WithVariablesDocument) as VariablesEncoder<
-  WithVariablesQuery,
-  WithVariablesQueryVariables
->
-handleVariables(preparedVariables)
 // console.log(encodedBasicQueryWithArgs.query)
 // const test = decoder.decode(encoded.query)
-test('decoded query matches encoded', () =>
+
+test('decoded query matches encoded', () => {
+  const result = encoder.encode<BasicQuery>(BasicDocument) as EncodedQueryWithHandler<BasicQuery>
+  expect(
+    decoder.decode(result.query).document
+  ).toEqual(BasicDocument)
+})
+
+test('decoded variables query matches encoded', () => {
+  const handleVariables = encoder.encode<
+    WithVariablesQuery,
+    WithVariablesQueryVariables
+  >(WithVariablesDocument) as
+  VariablesEncoder<
+    WithVariablesQuery,
+    WithVariablesQueryVariables
+  >
   expect(
     decoder.decode(handleVariables(preparedVariables).query).document
-  ).toEqual(WithVariablesDocument))
+  ).toEqual(WithVariablesDocument)
+})

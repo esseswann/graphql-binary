@@ -20,12 +20,11 @@ export enum Enumerable {
 }
 
 export type InputMap = {
-  int?: Maybe<Scalars['Int']>;
-  inputMap?: Maybe<InputMap>;
-  inputListScalar?: Maybe<Array<Maybe<Scalars['Int']>>>;
   inputListMap?: Maybe<Array<Maybe<InputMap>>>;
+  inputListScalar?: Maybe<Array<Maybe<Scalars['Int']>>>;
+  inputMap?: Maybe<InputMap>;
+  int?: Maybe<Scalars['Int']>;
 };
-
 
 export type Map = {
   __typename?: 'Map';
@@ -41,24 +40,24 @@ export type Mutation = {
 
 export type Query = {
   __typename?: 'Query';
-  int?: Maybe<Scalars['Int']>;
-  float?: Maybe<Scalars['Float']>;
   boolean?: Maybe<Scalars['Boolean']>;
-  string?: Maybe<Scalars['String']>;
+  float?: Maybe<Scalars['Float']>;
+  int?: Maybe<Scalars['Int']>;
   map?: Maybe<Map>;
-  scalarArray?: Maybe<Array<Maybe<Scalars['String']>>>;
   mapArray?: Maybe<Array<Maybe<Map>>>;
+  scalarArray?: Maybe<Array<Maybe<Scalars['String']>>>;
+  string?: Maybe<Scalars['String']>;
   withArgs?: Maybe<Scalars['String']>;
 };
 
 
 export type QueryWithArgsArgs = {
-  int?: Maybe<Scalars['Int']>;
-  float?: Maybe<Scalars['Float']>;
   boolean?: Maybe<Scalars['Boolean']>;
-  string?: Maybe<Scalars['String']>;
   enum?: Maybe<Enumerable>;
+  float?: Maybe<Scalars['Float']>;
   inputMap?: Maybe<InputMap>;
+  int?: Maybe<Scalars['Int']>;
+  string?: Maybe<Scalars['String']>;
 };
 
 export type Subscription = {
@@ -69,17 +68,17 @@ export type Subscription = {
 export type BasicQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type BasicQuery = { __typename?: 'Query', int?: Maybe<number>, float?: Maybe<number>, boolean?: Maybe<boolean>, string?: Maybe<string>, withArgs?: Maybe<string>, scalarArray?: Maybe<Array<Maybe<string>>>, mapArray?: Maybe<Array<Maybe<{ __typename?: 'Map', id?: Maybe<string>, map?: Maybe<{ __typename?: 'Map', id?: Maybe<string>, maps?: Maybe<Array<Maybe<{ __typename?: 'Map', id?: Maybe<string> }>>> }> }>>>, map?: Maybe<{ __typename?: 'Map', id?: Maybe<string>, map?: Maybe<{ __typename?: 'Map', id?: Maybe<string>, map?: Maybe<{ __typename?: 'Map', id?: Maybe<string> }> }> }> };
+export type BasicQuery = { __typename?: 'Query', int?: number | null | undefined, float?: number | null | undefined, boolean?: boolean | null | undefined, string?: string | null | undefined, withArgs?: string | null | undefined, scalarArray?: Array<string | null | undefined> | null | undefined, mapArray?: Array<{ __typename?: 'Map', id?: string | null | undefined, map?: { __typename?: 'Map', id?: string | null | undefined, maps?: Array<{ __typename?: 'Map', id?: string | null | undefined } | null | undefined> | null | undefined } | null | undefined } | null | undefined> | null | undefined, map?: { __typename?: 'Map', id?: string | null | undefined, map?: { __typename?: 'Map', id?: string | null | undefined, map?: { __typename?: 'Map', id?: string | null | undefined } | null | undefined } | null | undefined } | null | undefined };
 
 export type WithArgsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type WithArgsQuery = { __typename?: 'Query', int?: Maybe<number>, float?: Maybe<number>, boolean?: Maybe<boolean>, string?: Maybe<string>, withArgs?: Maybe<string>, scalarArray?: Maybe<Array<Maybe<string>>>, mapArray?: Maybe<Array<Maybe<{ __typename?: 'Map', id?: Maybe<string>, map?: Maybe<{ __typename?: 'Map', id?: Maybe<string>, maps?: Maybe<Array<Maybe<{ __typename?: 'Map', id?: Maybe<string> }>>> }> }>>>, map?: Maybe<{ __typename?: 'Map', id?: Maybe<string>, map?: Maybe<{ __typename?: 'Map', id?: Maybe<string>, map?: Maybe<{ __typename?: 'Map', id?: Maybe<string> }> }> }> };
+export type WithArgsQuery = { __typename?: 'Query', int?: number | null | undefined, float?: number | null | undefined, boolean?: boolean | null | undefined, string?: string | null | undefined, withArgs?: string | null | undefined, scalarArray?: Array<string | null | undefined> | null | undefined, mapArray?: Array<{ __typename?: 'Map', id?: string | null | undefined, map?: { __typename?: 'Map', id?: string | null | undefined, maps?: Array<{ __typename?: 'Map', id?: string | null | undefined } | null | undefined> | null | undefined } | null | undefined } | null | undefined> | null | undefined, map?: { __typename?: 'Map', id?: string | null | undefined, map?: { __typename?: 'Map', id?: string | null | undefined, map?: { __typename?: 'Map', id?: string | null | undefined } | null | undefined } | null | undefined } | null | undefined };
 
 export type NoArgsMutationVariables = Exact<{ [key: string]: never; }>;
 
 
-export type NoArgsMutation = { __typename?: 'Mutation', noArgs?: Maybe<string> };
+export type NoArgsMutation = { __typename?: 'Mutation', noArgs?: string | null | undefined };
 
 export type WithVariablesQueryVariables = Exact<{
   A?: Maybe<Scalars['Int']>;
@@ -90,12 +89,12 @@ export type WithVariablesQueryVariables = Exact<{
 }>;
 
 
-export type WithVariablesQuery = { __typename?: 'Query', withArgs?: Maybe<string> };
+export type WithVariablesQuery = { __typename?: 'Query', withArgs?: string | null | undefined };
 
 export type BasicNoArgsSubscriptionVariables = Exact<{ [key: string]: never; }>;
 
 
-export type BasicNoArgsSubscription = { __typename?: 'Subscription', noArgs?: Maybe<string> };
+export type BasicNoArgsSubscription = { __typename?: 'Subscription', noArgs?: string | null | undefined };
 
 
 export const BasicDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"Basic"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"int"}},{"kind":"Field","name":{"kind":"Name","value":"float"}},{"kind":"Field","name":{"kind":"Name","value":"boolean"}},{"kind":"Field","name":{"kind":"Name","value":"string"}},{"kind":"Field","name":{"kind":"Name","value":"withArgs"}},{"kind":"Field","name":{"kind":"Name","value":"scalarArray"}},{"kind":"Field","name":{"kind":"Name","value":"mapArray"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"map"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"maps"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"map"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"map"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"map"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]}}]} as unknown as DocumentNode<BasicQuery, BasicQueryVariables>;

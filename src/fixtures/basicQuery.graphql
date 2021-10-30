@@ -4,7 +4,7 @@ query Basic {
   boolean
   string
   withArgs
-  scalarArray 
+  scalarArray
   mapArray {
     id
     map {

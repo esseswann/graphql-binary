@@ -51,8 +51,6 @@ class Decoder {
         : null
     ) as OperationTypeNode
 
-    iterator.take()
-
     const name =
       (configBitmask & Flags.Name) === Flags.Name
         ? ({
@@ -124,15 +122,17 @@ function decodeQuery(
 
       const typeName = extractTargetType(field.type)
       const fieldType = decoder.schema.getType(typeName)
-      if ((fieldType as GraphQLObjectType).getFields)
-        callbacks.addValue(
-          decodeQuery(
-            decoder,
-            fieldType as GraphQLObjectType,
-            data,
-            variablesHandler
-          )
+      // console.log(typeName, (fieldType as GraphQLObjectType).astNode)
+      if ((fieldType as GraphQLObjectType).getFields) {
+        const children = decodeQuery(
+          decoder,
+          fieldType as GraphQLObjectType,
+          data,
+          variablesHandler
         )
+        // FIXME abstraction should work without selectionSet subkey
+        callbacks.addValue(children.selectionSet)
+      }
       callbacks.commit()
     }
   data.take()
@@ -164,14 +164,14 @@ function decodeVariables(
 }
 
 function decodeValue(decoder: Decoder, type: TypeNode, data: ByteIterator) {
-  if (type.kind === 'NonNullType') type = type.type
-  if (type.kind === 'NamedType') {
+  if (type.kind === Kind.NON_NULL_TYPE) type = type.type
+  if (type.kind === Kind.NAMED_TYPE) {
     const definition = decoder.schema.getType(type.name.value)
     return (definition as GraphQLObjectType).getFields
       ? decodeVector(decoder, definition as GraphQLObjectType, data)
       : (definition as GraphQLEnumType).getValues
-      ? (definition as GraphQLEnumType).getValues()[data.take()].value
-      : decoder.scalarHandlers[type.name.value].decode(data)
+        ? (definition as GraphQLEnumType).getValues()[data.take()].value
+        : decoder.scalarHandlers[type.name.value].decode(data)
   } else return decodeList(decoder, type, data)
 }
 
