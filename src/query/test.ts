@@ -4,7 +4,6 @@ import {
   NoArgsMutation,
   BasicDocument,
   BasicQuery,
-  Enumerable,
   WithVariablesDocument,
   WithVariablesQuery,
   WithVariablesQueryVariables,
@@ -12,35 +11,16 @@ import {
   NoArgsSubscriptionSubscription,
   NoArgsSubscriptionDocument
 } from '../fixtures'
+import withVariablesVariables from '../fixtures/queryWithVariablesVariables'
 import Decoder from './decode'
 import Encoder from './encode'
-import { EncodedQueryWithHandler, EncodeResult, VariablesEncoder } from './types'
+import { EncodedQueryWithHandler, VariablesEncoder } from './types'
 
 const schemaString = fs.readFileSync('src/fixtures/schema.graphql', 'utf8')
 const schema = buildSchema(schemaString)
 
 const decoder = new Decoder(schema)
 const encoder = new Encoder(schema)
-
-const preparedVariables: WithVariablesQueryVariables = {
-  A: 1,
-  B: 2.5,
-  C: true,
-  D: 'test',
-  E: Enumerable.First,
-  F: {
-    inputMap: {
-      int: 123,
-      inputListScalar: [1, 2, 3, 4, 2],
-      inputListMap: [
-        {
-          int: 123,
-          inputListScalar: [1, 2, 3, 4]
-        }
-      ]
-    }
-  }
-}
 
 test('decoded query matches encoded', () => {
   const result = encoder.encode<BasicQuery>(BasicDocument) as EncodedQueryWithHandler<BasicQuery>
@@ -58,10 +38,10 @@ test('decoded variables query matches encoded', () => {
     WithVariablesQuery,
     WithVariablesQueryVariables
   >
-  const result = handleVariables(preparedVariables)
+  const result = handleVariables(withVariablesVariables)
   const decoded = decoder.decode(result.query)
   expect(decoded.document).toEqual(WithVariablesDocument)
-  expect(decoded.variables).toEqual(preparedVariables)
+  expect(decoded.variables).toEqual(withVariablesVariables)
 })
 
 test('decoded mutation matches encoded', () => {
