@@ -1,5 +1,5 @@
 import fs from 'fs'
-import { buildSchema } from 'graphql'
+import { buildSchema, print } from 'graphql'
 import {
   NoArgsMutation,
   BasicDocument,
@@ -56,4 +56,10 @@ test('decoded subscription matches encoded', () => {
   expect(
     decoder.decode(result.query).document
   ).toEqual(NoArgsSubscriptionDocument)
+})
+
+test('binary representation at least twice smaller than string representation', () => {
+  const encoded = encoder.encode<BasicQuery>(BasicDocument) as EncodedQueryWithHandler<BasicQuery>
+  const graphql = print(BasicDocument) // FIXME should compress
+  expect(encoded.query.length / graphql.length).toBeLessThan(0.3)
 })
