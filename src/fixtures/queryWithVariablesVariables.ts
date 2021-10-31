@@ -9,6 +9,7 @@ const preparedVariables: WithVariablesQueryVariables = {
   F: {
     inputMap: {
       int: 123,
+      // FIXME [1, 2, 3, 4, 5, 255]
       inputListScalar: [1, 2, 3, 4, 2],
       inputListMap: [
         {
