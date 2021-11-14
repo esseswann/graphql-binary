@@ -12,6 +12,9 @@ import {
   TypeNode,
   VariableDefinitionNode
 } from 'graphql'
+import mergeArrays from '../mergeArrays'
+import defaultScalarHandlers, { ScalarHandlers } from '../scalarHandlers'
+import extractTargetType from './extractTargetType'
 import {
   // VariablesEncoder,
   // EncodedQueryWithHandler,
@@ -20,9 +23,6 @@ import {
   Flags,
   Operation
 } from './types'
-import defaultScalarHandlers, { ScalarHandlers } from '../scalarHandlers'
-import extractTargetType from './extractTargetType'
-import mergeArrays from '../mergeArrays'
 
 class Encoder {
   readonly schema: GraphQLSchema

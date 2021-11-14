@@ -1,28 +1,36 @@
-import { GraphQLEnumType, GraphQLObjectType, GraphQLSchema, Kind } from 'graphql'
+import {
+  GraphQLEnumType,
+  GraphQLObjectType,
+  GraphQLSchema,
+  Kind
+} from 'graphql'
 import {
   DocumentNode,
+  ListTypeNode,
   NameNode,
   OperationTypeNode,
   TypeNode,
-  ListTypeNode,
   VariableDefinitionNode
 } from 'graphql/language/ast'
 import dissoc from 'lodash/fp/dissoc'
+import {
+  ByteIterator,
+  createIterator
+} from '../iterator'
 import defaultScalarHandlers, { ScalarHandlers } from '../scalarHandlers'
-import { ByteIterator, createIterator } from '../iterator'
 import { documentDecoder } from './documentDecoder'
+import extractTargetType from './extractTargetType'
+import jsonDecoder from './jsonDecoder'
 import {
   ASCII_OFFSET,
-  QueryDecoder,
+  DataDecoder,
   DecodeResult,
   END,
+  Flags,
   Operation,
-  VariablesHandler,
-  DataDecoder,
-  Flags
+  QueryDecoder,
+  VariablesHandler
 } from './types'
-import jsonDecoder from './jsonDecoder'
-import extractTargetType from './extractTargetType'
 
 class Decoder {
   readonly schema: GraphQLSchema
@@ -128,7 +136,6 @@ function decodeQuery(
 
       const typeName = extractTargetType(field.type)
       const fieldType = decoder.schema.getType(typeName)
-      // console.log(typeName, (fieldType as GraphQLObjectType).astNode)
       if ((fieldType as GraphQLObjectType).getFields) {
         const children = decodeQuery(
           decoder,

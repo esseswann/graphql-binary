@@ -1,20 +1,23 @@
 import fs from 'fs'
 import { buildSchema, print } from 'graphql'
 import {
-  NoArgsMutation,
   BasicDocument,
   BasicQuery,
+  NoArgsDocument,
+  NoArgsMutation,
+  NoArgsSubscriptionDocument,
+  NoArgsSubscriptionSubscription,
   WithVariablesDocument,
   WithVariablesQuery,
-  WithVariablesQueryVariables,
-  NoArgsDocument,
-  NoArgsSubscriptionSubscription,
-  NoArgsSubscriptionDocument
+  WithVariablesQueryVariables
 } from '../fixtures'
 import withVariablesVariables from '../fixtures/queryWithVariablesVariables'
 import Decoder from './decode'
 import Encoder from './encode'
-import { EncodedQueryWithHandler, VariablesEncoder } from './types'
+import {
+  EncodedQueryWithHandler,
+  VariablesEncoder
+} from './types'
 
 const schemaString = fs.readFileSync('src/fixtures/schema.graphql', 'utf8')
 const schema = buildSchema(schemaString)
