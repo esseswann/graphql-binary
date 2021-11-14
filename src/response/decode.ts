@@ -13,7 +13,6 @@ function decode<Result> (
   if (document.definitions.length > 1 || operation.kind !== Kind.OPERATION_DEFINITION)
     throw new Error('Only single fragmentless operation definition allowed')
 
-  console.log(data)
   const byteIterator = createIterator(data, END)
   const result = decodeVector(
     decoder,
