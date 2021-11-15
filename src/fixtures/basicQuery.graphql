@@ -9,7 +9,7 @@ query Basic {
     id
     map {
       id
-      maps {
+      map {
         id
       }
     }

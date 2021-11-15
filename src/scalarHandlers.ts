@@ -12,6 +12,21 @@ interface ScalarHandler<T> {
   decode: (data: ByteIterator) => T
 }
 
+const stringHandler: ScalarHandler<string> = {
+  encode: (data: string) => {
+    const textEncoder = new TextEncoder()
+    const result = textEncoder.encode(data)
+    return mergeArrays(encodeVarInt(result.length), result)
+  },
+  decode: (data: ByteIterator) => {
+    const length = decodeVarInt(data)
+    const textDecoder = new TextDecoder()
+    // FIXME this is probably incorrect
+    const result = textDecoder.decode(data.take(length))
+    return result
+  }
+}
+ 
 const scalarHandlers: ScalarHandlers = {
   Int: {
     encode: encodeVarInt,
@@ -29,28 +44,12 @@ const scalarHandlers: ScalarHandlers = {
       return view.getFloat32(0, true)
     }
   },
-  String: {
-    encode: (data: string) => {
-      const textEncoder = new TextEncoder()
-      const result = textEncoder.encode(data)
-      return mergeArrays(encodeVarInt(result.length), result)
-    },
-    decode: (data: ByteIterator) => {
-      const length = decodeVarInt(data)
-      const textDecoder = new TextDecoder()
-      // FIXME this is probably incorrect
-      const result = textDecoder.decode(data.take(length))
-      return result
-    }
-  },
+  String: stringHandler,
   Boolean: {
     encode: (data: boolean) => new Uint8Array([data ? 1 : 0]),
     decode: (data) => !!data.take()
   },
-  ID: {
-    encode: (data: string) => new Uint8Array([]),
-    decode: (data) => 'id'
-  }
+  ID: stringHandler
 }
 
 export default scalarHandlers

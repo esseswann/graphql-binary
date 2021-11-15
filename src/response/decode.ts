@@ -1,10 +1,10 @@
 import { DocumentNode, FieldNode, GraphQLObjectType, isObjectType, isScalarType, Kind, ListTypeNode, SelectionNode, TypeNode } from 'graphql'
 import { ByteIterator, createIterator } from '../iterator'
-import Decoder from '../query/decode'
+import Encoder from '../query/encode'
 import { END } from '../query/types'
 
 function decode<Result> (
-  decoder: Decoder,
+  encoder: Encoder,
   document: DocumentNode,
   data: Uint8Array
 ): Result {
@@ -15,8 +15,8 @@ function decode<Result> (
 
   const byteIterator = createIterator(data, END)
   const result = decodeVector(
-    decoder,
-    decoder.schema.getQueryType(),
+    encoder,
+    encoder.schema.getQueryType(),
     operation.selectionSet.selections,
     byteIterator
   )
@@ -24,7 +24,7 @@ function decode<Result> (
 }
 
 function decodeVector(
-  decoder: Decoder,
+  encoder: Encoder,
   type: GraphQLObjectType,
   selections: Readonly<SelectionNode[]>,
   data: ByteIterator,
@@ -33,38 +33,38 @@ function decodeVector(
   for (let index = 0; index < selections.length; index++) {
     const element = selections[index] as FieldNode // FIXME support fragments and union spread
     const field = type.astNode.fields.find((field) => element.name.value === field.name.value)
-    result[element.name.value] = decodeValue(decoder, field.type, element, data)
+    result[element.name.value] = decodeValue(encoder, field.type, element, data)
   }
   return result
 }
 
 function decodeValue(
-  decoder: Decoder,
+  encoder: Encoder,
   type: TypeNode,
   field: FieldNode,
   data: ByteIterator,
 ) {
   if (type.kind === Kind.NON_NULL_TYPE) type = type.type
   if (type.kind === Kind.NAMED_TYPE) {
-    const schemaType = decoder.schema.getType(type.name.value)
+    const schemaType = encoder.schema.getType(type.name.value)
     if (isScalarType(schemaType))
-      return decoder.scalarHandlers[schemaType.name].decode(data)
+      return encoder.scalarHandlers[schemaType.name].decode(data)
     if (isObjectType(schemaType))
-      return decodeVector(decoder, schemaType, field.selectionSet.selections, data)
+      return decodeVector(encoder, schemaType, field.selectionSet.selections, data)
   } else
-      return decodeList(decoder, type, field, data)
+      return decodeList(encoder, type, field, data)
   return null
 }
 
 function decodeList (
-  decoder: Decoder,
+  encoder: Encoder,
   type: ListTypeNode,
   field: FieldNode,
   data: ByteIterator,
 ) {
   const result = []
   while (!data.atEnd())
-    result.push(decodeValue(decoder, type.type, field, data))
+    result.push(decodeValue(encoder, type.type, field, data))
   return result
 }
 
