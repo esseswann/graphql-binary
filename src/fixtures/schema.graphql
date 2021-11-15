@@ -14,9 +14,10 @@ type Query {
     enum: Enumerable
     inputMap: InputMap
   ): String
+  date: UDateS
 }
 
-scalar Kek
+scalar UDateS
 
 input InputMap {
   int: Int

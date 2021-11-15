@@ -2,7 +2,8 @@ import { addMocksToSchema } from '@graphql-tools/mock'
 import { makeExecutableSchema } from '@graphql-tools/schema'
 import fs from 'fs'
 import { buildSchema, graphql, print } from 'graphql'
-import { BasicDocument } from '../fixtures'
+import { BasicDocument, CustomScalarQueryDocument } from '../fixtures'
+import customScalarHandlers from '../fixtures/customScalarHandlers'
 import Decoder from '../query/decode'
 import Encoder from '../query/encode'
 import decode from './decode'
@@ -11,8 +12,8 @@ import encode from './encode'
 const schemaString = fs.readFileSync('src/fixtures/schema.graphql', 'utf8')
 const schema = buildSchema(schemaString)
 
-const decoder = new Decoder(schema)
-const encoder = new Encoder(schema)
+const decoder = new Decoder(schema, customScalarHandlers)
+const encoder = new Encoder(schema, customScalarHandlers)
 
 const executableSchema = makeExecutableSchema({ typeDefs: schema })
 const schemaWithMocks = addMocksToSchema({
@@ -33,8 +34,16 @@ test('decoded response matches encoded', async () => {
   expect(decodedResponse).toEqual(response.data)
 })
 
-// test('extendable types are applied', () =>
-//   generateDictionary(buildSchema(extendableTypesSchema), extendableTypes.definitions)
-//     .then(dictionary =>
-//         expect(decodeResponse(extendableTypesQuery, dictionary, encodeResponse(extendableTypesQuery, dictionary, extendableTypes.data)))
-//           .toEqual(extendableTypes.data)))
+test('extendable types are applied', () => {
+  const data = {
+    // Note that we set seconds to zero or tests will fail because we loose precision
+    date: new Date('December 17, 1995 03:24:00')
+  }
+  const encodedResponse = encode(decoder, CustomScalarQueryDocument, data)
+  const decodedResponse = decode(encoder, CustomScalarQueryDocument, encodedResponse)
+  expect(decodedResponse).toEqual(data)
+})
+  // generateDictionary(buildSchema(extendableTypesSchema), extendableTypes.definitions)
+  //   .then(dictionary =>
+  //       expect(decodeResponse(extendableTypesQuery, dictionary, encodeResponse(extendableTypesQuery, dictionary, extendableTypes.data)))
+  //         .toEqual(extendableTypes.data)))
