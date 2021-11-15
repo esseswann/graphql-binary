@@ -1,7 +1,7 @@
+import { TextDecoder, TextEncoder } from 'util' // FIXME should use some crossplatform solution
 import { ByteIterator } from './iterator'
-import { decodeVarInt, encodeVarInt } from './varint'
-import { TextEncoder, TextDecoder } from 'util' // FIXME should use some crossplatform solution
 import mergeArrays from './mergeArrays'
+import { decodeVarInt, encodeVarInt } from './varint'
 
 export type ScalarHandlers = {
   [key: string]: ScalarHandler<any>
