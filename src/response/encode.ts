@@ -2,6 +2,7 @@ import { DocumentNode, FieldNode, GraphQLObjectType, isObjectType, isScalarType,
 import { ByteIterator } from '../iterator'
 import mergeArrays from '../mergeArrays'
 import Decoder from '../query/decode'
+import { END } from '../query/types'
 
 function encode(
   decoder: Decoder,
@@ -62,12 +63,9 @@ function encodeList (
   data: any[],
 ): Uint8Array {
   let result = new Uint8Array()
-  for (const iterator of data) {
-    const encodedValue = encodeValue(decoder, type.type, field, iterator)
-    console.log('LIST', iterator, encodedValue)
-    result = mergeArrays(result, encodedValue)
-  }
-  return result
+  for (const iterator of data)
+    result = mergeArrays(result, encodeValue(decoder, type.type, field, iterator))
+  return mergeArrays(result, new Uint8Array([END]))
 }
 
 export default encode

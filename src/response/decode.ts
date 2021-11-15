@@ -65,6 +65,7 @@ function decodeList (
   const result = []
   while (!data.atEnd())
     result.push(decodeValue(encoder, type.type, field, data))
+  data.take() // FIXME probably wrong
   return result
 }
 
