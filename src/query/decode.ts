@@ -1,7 +1,8 @@
 import {
   GraphQLEnumType,
   GraphQLObjectType,
-  GraphQLSchema, Kind
+  GraphQLSchema,
+  Kind
 } from 'graphql'
 import {
   DocumentNode,
@@ -11,10 +12,7 @@ import {
   TypeNode,
   VariableDefinitionNode
 } from 'graphql/language/ast'
-import {
-  ByteIterator,
-  createIterator
-} from '../iterator'
+import { ByteIterator, createIterator } from '../iterator'
 import defaultScalarHandlers, { ScalarHandlers } from '../scalarHandlers'
 import { documentDecoder } from './documentDecoder'
 import extractTargetType from './extractTargetType'
@@ -35,7 +33,8 @@ class Decoder {
   readonly queryDecoder: QueryDecoder<any, any>
   readonly dataDecoder: DataDecoder<any, any, any>
   readonly scalarHandlers: ScalarHandlers
-  readonly topLevelTypes = { // FIXME
+  readonly topLevelTypes = {
+    // FIXME
     query: 'getQueryType',
     mutation: 'getMutationType',
     subscription: 'getSubscriptionType'
@@ -53,8 +52,8 @@ class Decoder {
 
     const configBitmask = iterator.take()
     // FIXME this should be done more elegantly
-    const operation = (
-      // Order is important
+    const operation = // Order is important
+    (
       (configBitmask & Operation.mutation) === Operation.mutation
         ? 'mutation'
         : (configBitmask & Operation.subscription) === Operation.subscription
@@ -185,8 +184,8 @@ function decodeValue(decoder: Decoder, type: TypeNode, data: ByteIterator) {
     return (definition as GraphQLObjectType).getFields
       ? decodeVector(decoder, definition as GraphQLObjectType, data)
       : (definition as GraphQLEnumType).getValues
-        ? (definition as GraphQLEnumType).getValues()[data.take()].value
-        : decoder.scalarHandlers[type.name.value].decode(data)
+      ? (definition as GraphQLEnumType).getValues()[data.take()].value
+      : decoder.scalarHandlers[type.name.value].decode(data)
   } else return decodeList(decoder, type, data)
 }
 

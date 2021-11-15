@@ -1,4 +1,14 @@
-import { DocumentNode, FieldNode, GraphQLObjectType, isObjectType, isScalarType, Kind, ListTypeNode, SelectionNode, TypeNode } from 'graphql'
+import {
+  DocumentNode,
+  FieldNode,
+  GraphQLObjectType,
+  isObjectType,
+  isScalarType,
+  Kind,
+  ListTypeNode,
+  SelectionNode,
+  TypeNode
+} from 'graphql'
 import { ByteIterator } from '../iterator'
 import mergeArrays from '../mergeArrays'
 import Decoder from '../query/decode'
@@ -11,7 +21,10 @@ function encode(
 ): Uint8Array {
   const operation = document.definitions[0]
 
-  if (document.definitions.length > 1 || operation.kind !== Kind.OPERATION_DEFINITION)
+  if (
+    document.definitions.length > 1 ||
+    operation.kind !== Kind.OPERATION_DEFINITION
+  )
     throw new Error('Only single fragmentless operation definition allowed')
 
   const result = encodeVector(
@@ -27,13 +40,18 @@ function encodeVector(
   decoder: Decoder,
   type: GraphQLObjectType,
   selections: Readonly<SelectionNode[]>,
-  data: ByteIterator,
+  data: ByteIterator
 ): Uint8Array {
   let result = new Uint8Array()
   for (let index = 0; index < selections.length; index++) {
     const element = selections[index] as FieldNode // FIXME support fragments and union spread
-    const field = type.astNode.fields.find((field) => element.name.value === field.name.value)
-    result = mergeArrays(result, encodeValue(decoder, field.type, element, data[element.name.value]))
+    const field = type.astNode.fields.find(
+      (field) => element.name.value === field.name.value
+    )
+    result = mergeArrays(
+      result,
+      encodeValue(decoder, field.type, element, data[element.name.value])
+    )
   }
   return result
 }
@@ -42,7 +60,7 @@ function encodeValue(
   decoder: Decoder,
   type: TypeNode,
   field: FieldNode,
-  data: any,
+  data: any
 ): Uint8Array {
   if (type.kind === Kind.NON_NULL_TYPE) type = type.type
   if (type.kind === Kind.NAMED_TYPE) {
@@ -50,21 +68,28 @@ function encodeValue(
     if (isScalarType(schemaType))
       return decoder.scalarHandlers[schemaType.name].encode(data)
     if (isObjectType(schemaType))
-      return encodeVector(decoder, schemaType, field.selectionSet.selections, data)
-  } else
-      return encodeList(decoder, type, field, data)
+      return encodeVector(
+        decoder,
+        schemaType,
+        field.selectionSet.selections,
+        data
+      )
+  } else return encodeList(decoder, type, field, data)
   return null
 }
 
-function encodeList (
+function encodeList(
   decoder: Decoder,
   type: ListTypeNode,
   field: FieldNode,
-  data: any[],
+  data: any[]
 ): Uint8Array {
   let result = new Uint8Array()
   for (const iterator of data)
-    result = mergeArrays(result, encodeValue(decoder, type.type, field, iterator))
+    result = mergeArrays(
+      result,
+      encodeValue(decoder, type.type, field, iterator)
+    )
   return mergeArrays(result, new Uint8Array([END]))
 }
 

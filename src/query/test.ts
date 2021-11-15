@@ -14,10 +14,7 @@ import {
 import withVariablesVariables from '../fixtures/queryWithVariablesVariables'
 import Decoder from './decode'
 import Encoder from './encode'
-import {
-  EncodedQueryWithHandler,
-  VariablesEncoder
-} from './types'
+import { EncodedQueryWithHandler, VariablesEncoder } from './types'
 
 const schemaString = fs.readFileSync('src/fixtures/schema.graphql', 'utf8')
 const schema = buildSchema(schemaString)
@@ -26,18 +23,17 @@ const decoder = new Decoder(schema)
 const encoder = new Encoder(schema)
 
 test('decoded query matches encoded', () => {
-  const result = encoder.encode<BasicQuery>(BasicDocument) as EncodedQueryWithHandler<BasicQuery>
-  expect(
-    decoder.decode(result.query).document
-  ).toEqual(BasicDocument)
+  const result = encoder.encode<BasicQuery>(
+    BasicDocument
+  ) as EncodedQueryWithHandler<BasicQuery>
+  expect(decoder.decode(result.query).document).toEqual(BasicDocument)
 })
 
 test('decoded variables query matches encoded', () => {
   const handleVariables = encoder.encode<
     WithVariablesQuery,
     WithVariablesQueryVariables
-  >(WithVariablesDocument) as
-  VariablesEncoder<
+  >(WithVariablesDocument) as VariablesEncoder<
     WithVariablesQuery,
     WithVariablesQueryVariables
   >
@@ -48,21 +44,25 @@ test('decoded variables query matches encoded', () => {
 })
 
 test('decoded mutation matches encoded', () => {
-  const result = encoder.encode<NoArgsMutation>(NoArgsDocument) as EncodedQueryWithHandler<NoArgsMutation>
-  expect(
-    decoder.decode(result.query).document
-  ).toEqual(NoArgsDocument)
+  const result = encoder.encode<NoArgsMutation>(
+    NoArgsDocument
+  ) as EncodedQueryWithHandler<NoArgsMutation>
+  expect(decoder.decode(result.query).document).toEqual(NoArgsDocument)
 })
 
 test('decoded subscription matches encoded', () => {
-  const result = encoder.encode<NoArgsSubscriptionSubscription>(NoArgsSubscriptionDocument) as EncodedQueryWithHandler<NoArgsSubscriptionSubscription>
-  expect(
-    decoder.decode(result.query).document
-  ).toEqual(NoArgsSubscriptionDocument)
+  const result = encoder.encode<NoArgsSubscriptionSubscription>(
+    NoArgsSubscriptionDocument
+  ) as EncodedQueryWithHandler<NoArgsSubscriptionSubscription>
+  expect(decoder.decode(result.query).document).toEqual(
+    NoArgsSubscriptionDocument
+  )
 })
 
 test('binary representation at least twice smaller than string representation', () => {
-  const encoded = encoder.encode<BasicQuery>(BasicDocument) as EncodedQueryWithHandler<BasicQuery>
+  const encoded = encoder.encode<BasicQuery>(
+    BasicDocument
+  ) as EncodedQueryWithHandler<BasicQuery>
   const graphql = print(BasicDocument) // FIXME should compress
   expect(encoded.query.length / graphql.length).toBeLessThan(0.3)
 })

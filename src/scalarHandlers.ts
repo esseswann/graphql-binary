@@ -26,7 +26,7 @@ const stringHandler: ScalarHandler<string> = {
     return result
   }
 }
- 
+
 const scalarHandlers: ScalarHandlers = {
   Int: {
     encode: encodeVarInt,

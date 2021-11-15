@@ -67,8 +67,7 @@ class Encoder {
         ),
         handleResponse: () => ({} as Result)
       })
-    }
-    else {
+    } else {
       result.unshift(configBitmask)
 
       return {
@@ -152,7 +151,10 @@ function encodeValue(encoder: Encoder, type: TypeNode, data: any): Uint8Array {
 
     if (!kind && encoder.scalarHandlers[definition.name])
       result = encoder.scalarHandlers[definition.name].encode(data)
-    else if (kind === Kind.SCALAR_TYPE_DEFINITION && encoder.scalarHandlers[kind])
+    else if (
+      kind === Kind.SCALAR_TYPE_DEFINITION &&
+      encoder.scalarHandlers[kind]
+    )
       result = encoder.scalarHandlers[kind].encode(data)
     else if (kind === Kind.ENUM_TYPE_DEFINITION) {
       const index = (

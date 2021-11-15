@@ -12,7 +12,8 @@ export function decodeVarInt(data: ByteIterator): number {
   let index: number = 0
   let byte: number
 
-  while (index < MAX_SHIFTS) { // Prevents infinite shifting attack
+  while (index < MAX_SHIFTS) {
+    // Prevents infinite shifting attack
     byte = data.take()
     number += (byte & 0x7f) << (index * 7)
     if (byte >> 7 === 0) break
