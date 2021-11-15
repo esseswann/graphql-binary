@@ -40,10 +40,10 @@ test('extendable types are applied', () => {
     date: new Date('December 17, 1995 03:24:00')
   }
   const encodedResponse = encode(decoder, CustomScalarQueryDocument, data)
-  const decodedResponse = decode(encoder, CustomScalarQueryDocument, encodedResponse)
+  const decodedResponse = decode(
+    encoder,
+    CustomScalarQueryDocument,
+    encodedResponse
+  )
   expect(decodedResponse).toEqual(data)
 })
-  // generateDictionary(buildSchema(extendableTypesSchema), extendableTypes.definitions)
-  //   .then(dictionary =>
-  //       expect(decodeResponse(extendableTypesQuery, dictionary, encodeResponse(extendableTypesQuery, dictionary, extendableTypes.data)))
-  //         .toEqual(extendableTypes.data)))
