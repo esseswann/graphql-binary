@@ -1,0 +1,20 @@
+query WithVariables (
+  # Variable names will not be preserved
+  # so to not break the test an uppercased
+  # alphabetic char sequence should be used
+  $A: Int
+  $B: Float
+  $C: Boolean
+  $D: String
+  $E: Enumerable
+  $F: InputMap
+) {
+  withArgs(
+    int: $A
+    float: $B
+    boolean: $C
+    string: $D
+    enum: $E
+    inputMap: $F
+  )
+}

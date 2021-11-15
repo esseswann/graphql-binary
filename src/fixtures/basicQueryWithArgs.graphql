@@ -1,15 +1,21 @@
-query Basic {
+query WithArgs {
   int
   float
   boolean
   string
-  withArgs
-  scalarArray
+  withArgs (
+    int: 1
+    float: 1.5
+    boolean: true
+    string: "string"
+    enum: FIRST
+  )
+  scalarArray 
   mapArray {
     id
     map {
       id
-      map {
+      maps {
         id
       }
     }

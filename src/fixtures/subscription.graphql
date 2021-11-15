@@ -1,3 +1,3 @@
-subscription Named {
+subscription NoArgsSubscription {
   noArgs
 }

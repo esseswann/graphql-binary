@@ -72,6 +72,9 @@ yarn test
 ```
 Don't forget to force Jest to rerun tests by inputting `a` in the Jest console
 
+# Limitations
+Currently the implementation will break if schema contains a type that has more than 255 fields
+
 # Support
 All contributions are warmly welcome. Please follow issues section or consider these:
 - Test coverage compatible to graphql-js
