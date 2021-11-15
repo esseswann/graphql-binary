@@ -1,8 +1,7 @@
 import {
   GraphQLEnumType,
   GraphQLObjectType,
-  GraphQLSchema,
-  Kind
+  GraphQLSchema, Kind
 } from 'graphql'
 import {
   DocumentNode,
@@ -12,7 +11,6 @@ import {
   TypeNode,
   VariableDefinitionNode
 } from 'graphql/language/ast'
-import dissoc from 'lodash/fp/dissoc'
 import {
   ByteIterator,
   createIterator
@@ -156,8 +154,12 @@ function decodeQuery(
 }
 
 // FIXME this is wrong
-function cleanLocations(object: TypeNode): TypeNode {
-  return dissoc('loc', dissoc('name.loc', object))
+function cleanLocations({ loc, ...obj }: TypeNode): TypeNode {
+  if (obj.kind === Kind.NAMED_TYPE) {
+    const { loc, ...name } = obj.name
+    obj.name = name
+  }
+  return obj
 }
 
 function decodeVariables(
