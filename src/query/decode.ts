@@ -52,8 +52,7 @@ class Decoder {
 
     const configBitmask = iterator.take()
     // FIXME this should be done more elegantly
-    const operation = // Order is important
-    (
+    const operation = ( // Order is important
       (configBitmask & Operation.mutation) === Operation.mutation
         ? 'mutation'
         : (configBitmask & Operation.subscription) === Operation.subscription
