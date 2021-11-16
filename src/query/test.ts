@@ -1,5 +1,6 @@
 import fs from 'fs'
 import { buildSchema, print } from 'graphql'
+import compress from 'graphql-query-compress'
 import {
   BasicDocument,
   BasicQuery,
@@ -63,6 +64,6 @@ test('binary representation at least twice smaller than string representation', 
   const encoded = encoder.encode<BasicQuery>(
     BasicDocument
   ) as EncodedQueryWithHandler<BasicQuery>
-  const graphql = print(BasicDocument) // FIXME should compress
-  expect(encoded.query.length / graphql.length).toBeLessThan(0.3)
+  const graphql = compress(print(BasicDocument))
+  expect(graphql.length / encoded.query.length).toBeGreaterThanOrEqual(0.3)
 })
