@@ -209,36 +209,4 @@ function encodeList(
   return mergeArrays(result, new Uint8Array([END]))
 }
 
-// class VariablesEncoder<Result, Variables> {
-//   schema: GraphQLSchema
-//   encodedQuery: Uint8Array
-//   variablesBits: Array<Uint8Array>
-//   variablesMap: Map<string, VariableConfig>
-
-//   encodeVariables(data: Variables): EncodedQueryWithHandler<Result> {
-//     const variableBits = [...this.variablesBits]
-//     for (const property in data) {
-//       // FIXME there are cases when people really want to use null
-//       if (data[property] != null) {
-//         const { typeName, index } = this.variablesMap.get(property)
-//         // variableBits.splice(index, 0, this.encodeValue(data[property]))
-//       }
-//     }
-//     return {
-//       query: mergeArrays(this.encodedQuery, ...variableBits),
-//       handleResponse: () => ({} as Result)
-//     }
-//   }
-
-//   encodeValue(type: GraphQLType, data: any): Uint8Array {
-//     if (data.hasOwnProperty('length')) console.log(data)
-//     return new Uint8Array([])
-//   }
-// }
-
-// type VariableConfig = {
-//   typeName: string
-//   index: number
-// }
-
 export default Encoder

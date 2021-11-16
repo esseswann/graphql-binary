@@ -26,14 +26,6 @@ export interface QueryDecoder<Vector, Variable> {
   variables: () => VariablesHandler<Variable>
 }
 
-// export interface DefinitionHandler<Definition, Vector, Variables> {
-//   addVector: (vector: Vector) => void
-//   addVariablesDefinitions: (variables: Variables) => void
-//   addOperation: (operation: String) => void
-//   addName: (name: string) => void
-//   commit: () => Definition
-// }
-
 export interface QueryKeyHandler<T> extends KeyHandler<T> {
   addArg: (key: string, type: any) => void
   addDirective?: (key: string, type: any) => void
