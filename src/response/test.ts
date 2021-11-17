@@ -19,8 +19,7 @@ const executableSchema = makeExecutableSchema({ typeDefs: schema })
 const schemaWithMocks = addMocksToSchema({
   schema: executableSchema,
   mocks: {
-    Int: () => Math.floor(1000 * Math.random()), // FIXME prevent negative integers for now
-    Float: () => 3.5 // FIXME should do something with precision being lost on decodes
+    Float: () => 3.5 // FIXME should do something with precision being lost during decoding
   }
 })
 

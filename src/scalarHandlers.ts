@@ -1,7 +1,12 @@
 import { TextDecoder, TextEncoder } from 'util' // FIXME should use some crossplatform solution
 import { ByteIterator } from './iterator'
 import mergeArrays from './mergeArrays'
-import { decodeVarInt, encodeVarInt } from './varint'
+import {
+  decodeSignedLeb128,
+  decodeUnsignedLeb128,
+  encodeSignedLeb128,
+  encodeUnsignedLeb128
+} from './varint'
 
 export type ScalarHandlers = {
   [key: string]: ScalarHandler<any>
@@ -16,10 +21,10 @@ const stringHandler: ScalarHandler<string> = {
   encode: (data: string) => {
     const textEncoder = new TextEncoder()
     const result = textEncoder.encode(data)
-    return mergeArrays(encodeVarInt(result.length), result)
+    return mergeArrays(encodeUnsignedLeb128(result.length), result)
   },
   decode: (data: ByteIterator) => {
-    const length = decodeVarInt(data)
+    const length = decodeUnsignedLeb128(data)
     const textDecoder = new TextDecoder()
     // FIXME this is probably incorrect
     const result = textDecoder.decode(data.take(length))
@@ -29,8 +34,8 @@ const stringHandler: ScalarHandler<string> = {
 
 const scalarHandlers: ScalarHandlers = {
   Int: {
-    encode: encodeVarInt,
-    decode: decodeVarInt
+    encode: encodeSignedLeb128,
+    decode: decodeSignedLeb128
   },
   Float: {
     encode: (data: number) => {
