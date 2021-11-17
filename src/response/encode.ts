@@ -9,15 +9,14 @@ import {
   SelectionNode,
   TypeNode
 } from 'graphql'
-import { ByteIterator } from '../iterator'
 import mergeArrays from '../mergeArrays'
 import Decoder from '../query/decode'
 import { END } from '../query/types'
 
-function encode(
+function encode<Response>(
   decoder: Decoder,
   document: DocumentNode,
-  data: any
+  data: Response
 ): Uint8Array {
   const operation = document.definitions[0]
 
@@ -40,7 +39,7 @@ function encodeVector(
   decoder: Decoder,
   type: GraphQLObjectType,
   selections: Readonly<SelectionNode[]>,
-  data: ByteIterator
+  data: any
 ): Uint8Array {
   let result = new Uint8Array()
   for (let index = 0; index < selections.length; index++) {

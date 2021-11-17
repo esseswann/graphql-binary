@@ -13,6 +13,7 @@ import {
   VariableDefinitionNode
 } from 'graphql'
 import mergeArrays from '../mergeArrays'
+import { decodeResponse } from '../response'
 import defaultScalarHandlers, { ScalarHandlers } from '../scalarHandlers'
 import extractTargetType from './extractTargetType'
 import {
@@ -65,14 +66,14 @@ class Encoder {
           new Uint8Array(result),
           encodeVariables(this, variableDefinitions, variables)
         ),
-        handleResponse: () => ({} as Result)
+        decodeResponse: (data) => decodeResponse<Result>(this, query, data)
       })
     } else {
       result.unshift(configBitmask)
 
       return {
         query: new Uint8Array(result),
-        handleResponse: () => ({} as Result)
+        decodeResponse: (data) => decodeResponse<Result>(this, query, data)
       }
     }
   }

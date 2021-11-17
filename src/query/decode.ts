@@ -13,6 +13,7 @@ import {
   VariableDefinitionNode
 } from 'graphql/language/ast'
 import { ByteIterator, createIterator } from '../iterator'
+import { encodeResponse } from '../response'
 import defaultScalarHandlers, { ScalarHandlers } from '../scalarHandlers'
 import { documentDecoder } from './documentDecoder'
 import extractTargetType from './extractTargetType'
@@ -47,7 +48,7 @@ class Decoder {
     this.scalarHandlers = { ...defaultScalarHandlers, ...customScalarHandlers }
   }
 
-  decode(data: Uint8Array): DecodeResult {
+  decode<Response>(data: Uint8Array): DecodeResult<Response> {
     const iterator = createIterator(data, END)
 
     const configBitmask = iterator.take()
@@ -92,6 +93,8 @@ class Decoder {
     }
 
     return {
+      encodeResponse: (response: Response) =>
+        encodeResponse(this, document, response),
       document,
       variables: hasVariables
         ? decodeVariables(this, variableDefinitions, iterator)

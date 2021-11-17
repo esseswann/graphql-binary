@@ -16,9 +16,10 @@ export enum Flags {
   Directives = 1 << 5
 }
 
-export type DecodeResult = {
+export type DecodeResult<Result> = {
   document: DocumentNode
   variables: object | null
+  encodeResponse: (response: Result) => Uint8Array
 }
 
 export interface QueryDecoder<Vector, Variable> {
@@ -68,7 +69,7 @@ export type VariablesEncoder<Result, Variables> = (
 
 export interface EncodedQueryWithHandler<Result> {
   query: Uint8Array
-  handleResponse: (data: Uint8Array) => Result
+  decodeResponse: (data: Uint8Array) => Result
 }
 
 export enum Config {
