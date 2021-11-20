@@ -1,4 +1,4 @@
-import { WithVariablesQueryVariables, Enumerable } from '.'
+import { Enumerable, WithVariablesQueryVariables } from '.'
 
 const preparedVariables: WithVariablesQueryVariables = {
   A: 1,
